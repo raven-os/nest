@@ -1,2 +1,3 @@
 # nest
-Raven's package manager using a command line interface
+
+Raven's package manager.
