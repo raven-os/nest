@@ -7,7 +7,6 @@
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
-
 // Clippy
 #![warn(fallible_impl_from)]
 #![warn(float_cmp_const)]
