@@ -1,23 +1,22 @@
 // Rustc
-#![warn(missing_docs)]
 #![warn(missing_debug_implementations)]
 #![warn(trivial_casts)]
 #![warn(trivial_numeric_casts)]
-#![warn(unreachable_pub)]
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
 // Clippy
-#![warn(fallible_impl_from)]
-#![warn(float_cmp_const)]
-#![warn(int_plus_one)]
-#![warn(mem_forget)]
-#![warn(mut_mut)]
-#![warn(mutex_integer)]
-#![warn(nonminimal_bool)]
-#![warn(pub_enum_variant_names)]
-#![warn(range_plus_one)]
-#![warn(stutter)]
+#![cfg_attr(feature = "cargo-clippy", warn(fallible_impl_from))]
+#![cfg_attr(feature = "cargo-clippy", warn(int_plus_one))]
+#![cfg_attr(feature = "cargo-clippy", warn(mem_forget))]
+#![cfg_attr(feature = "cargo-clippy", warn(mut_mut))]
+#![cfg_attr(feature = "cargo-clippy", warn(mutex_integer))]
+#![cfg_attr(feature = "cargo-clippy", warn(pub_enum_variant_names))]
+#![cfg_attr(feature = "cargo-clippy", warn(range_plus_one))]
+#![cfg_attr(feature = "cargo-clippy", warn(stutter))]
+#![cfg_attr(feature = "cargo-clippy", warn(use_debug))]
+#![cfg_attr(feature = "cargo-clippy", warn(used_underscore_binding))]
+#![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
 
 extern crate clap;
 
@@ -30,12 +29,12 @@ fn main() {
         .template("{usage}\n{about}\n\nFLAGS\n{flags}\n\nOPERATIONS\n{subcommands}")
         .usage("nest [FLAGS] OPERATION")
         .about("Raven's package manager")
-        .version(&format!(
+        .version(format!(
             "{}.{}.{}",
             env!("CARGO_PKG_VERSION_MAJOR"),
             env!("CARGO_PKG_VERSION_MINOR"),
             env!("CARGO_PKG_VERSION_PATCH"),
-        ) as &str)
+        ).as_ref())
         .arg(
             Arg::with_name("v")
                 .short("v")
