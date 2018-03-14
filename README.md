@@ -1,4 +1,4 @@
-# nest [![Build Status](https://travis-ci.org/raven-os/nest.svg?branch=master)](https://travis-ci.org/raven-os/nest)
+# Nest [![Build Status](https://travis-ci.org/raven-os/nest.svg?branch=master)](https://travis-ci.org/raven-os/nest)
 
 Raven's package manager.
 
