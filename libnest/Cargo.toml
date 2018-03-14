@@ -1,10 +1,6 @@
 [package]
-name = "nest"
+name = "libnest"
 version = "0.1.0"
 authors = ["Benjamin Grange <benjamin.grange@epitech.eu>"]
 
 [dependencies]
-clap = "2.31"
-libnest = { path = "libnest" }
-
-[workspace]

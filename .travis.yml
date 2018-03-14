@@ -8,10 +8,10 @@ before_script:
     - cargo install clippy || echo "Clippy already installed"
 
 script:
-    - cargo fmt -- --write-mode=diff
-    - cargo clippy -- -D clippy
-    - cargo build
-    - cargo test
+    - cargo fmt --all -- --write-mode=diff
+    - cargo clippy --all -- -D clippy
+    - cargo build --all
+    - cargo test --all
 
 # Discord notifications
 after_success:
