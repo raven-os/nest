@@ -36,7 +36,7 @@ use config::Config;
 pub struct Repository {
     name: String,
     mirrors: Vec<Mirror>,
-    cache: PathBuf,
+    cache: Cache,
 }
 
 impl Repository {
@@ -56,6 +56,7 @@ impl Repository {
     pub fn new(config: &Config, name: &str) -> Repository {
         let mut cache = config.cache().clone();
         cache.push(name);
+        let cache = Cache::new(cache);
         Repository {
             name: String::from(name),
             mirrors: Vec::new(),
@@ -101,7 +102,7 @@ impl Repository {
         &self.mirrors
     }
 
-    /// Returns a `Path` to the cache of the repository.
+    /// Returns a `Cache` representing the locale cache for the repository.
     ///
     /// # Examples
     ///
@@ -109,15 +110,17 @@ impl Repository {
     /// extern crate libnest;
     ///
     /// use std::path::Path;
-    /// use libnest::repository::Repository;
+    ///
     /// use libnest::config::Config;
+    /// use libnest::repository::Repository;
     ///
     /// let config = Config::new();
     /// let repo = Repository::new(&config, "test");
+    /// let cache = repo.cache();
     ///
-    /// assert_eq!(repo.cache(), Path::new("/var/lib/nest/cache/test"));
+    /// assert_eq!(cache.path(), Path::new("/var/lib/nest/cache/test"));
     /// ```
-    pub fn cache(&self) -> &Path {
+    pub fn cache(&self) -> &Cache {
         &self.cache
     }
 
@@ -143,6 +146,20 @@ impl Repository {
 }
 
 /// A mirror for a given repository.
+///
+/// It's basically a wrapper arround an URL.
+///
+/// # Examples
+///
+/// ```
+/// extern crate libnest;
+///
+/// use libnest::repository::Mirror;
+///
+/// let mirror = Mirror::new("http://example.com");
+///
+/// println!("Mirror's url: {}", mirror.url());
+/// ```
 #[derive(Debug)]
 pub struct Mirror {
     url: String,
@@ -181,5 +198,45 @@ impl Mirror {
     /// ```
     pub fn url(&self) -> &str {
         &self.url
+    }
+}
+
+/// The cache of a repository on the filesystem.
+///
+/// This cache holds metadatas about the repository, most notably a list of it's packages
+/// and their name, versions, description, dependencies etc.
+///
+/// This structure is used to browse this cache and retrieve any kind of informations.
+#[derive(Debug)]
+pub struct Cache {
+    path: PathBuf,
+}
+
+impl Cache {
+    /// Creates (or loads) a new cache located at the given path
+    pub(crate) fn new(path: PathBuf) -> Cache {
+        Cache { path }
+    }
+
+    /// Return the path of the cache.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate libnest;
+    ///
+    /// use std::path::Path;
+    ///
+    /// use libnest::config::Config;
+    /// use libnest::repository::Repository;
+    ///
+    /// let config = Config::new();
+    /// let repo = Repository::new(&config, "test");
+    /// let cache = repo.cache();
+    ///
+    /// assert_eq!(cache.path(), Path::new("/var/lib/nest/cache/test"));
+    /// ```
+    pub fn path(&self) -> &Path {
+        &self.path
     }
 }
