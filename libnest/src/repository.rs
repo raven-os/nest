@@ -2,7 +2,7 @@
 
 use std::path::{Path, PathBuf};
 
-use config::NestConfig;
+use config::Config;
 
 /// A repository.
 ///
@@ -13,11 +13,11 @@ use config::NestConfig;
 /// ```
 /// extern crate libnest;
 ///
-/// use libnest::config::NestConfig;
+/// use libnest::config::Config;
 /// use libnest::repository::{Repository, Mirror};
 ///
 /// // We are going to need some configuration
-/// let config = NestConfig::new();
+/// let config = Config::new();
 ///
 /// // First, create an empty repository with name "test":
 /// let mut repo = Repository::new(&config, "test");
@@ -47,13 +47,13 @@ impl Repository {
     /// ```
     /// extern crate libnest;
     ///
-    /// use libnest::config::NestConfig;
+    /// use libnest::config::Config;
     /// use libnest::repository::Repository;
     ///
-    /// let config = NestConfig::new();
+    /// let config = Config::new();
     /// let repo = Repository::new(&config, "test");
     /// ```
-    pub fn new(config: &NestConfig, name: &str) -> Repository {
+    pub fn new(config: &Config, name: &str) -> Repository {
         let mut cache = config.cache().clone();
         cache.push(name);
         Repository {
@@ -70,10 +70,10 @@ impl Repository {
     /// ```
     /// extern crate libnest;
     ///
-    /// use libnest::config::NestConfig;
+    /// use libnest::config::Config;
     /// use libnest::repository::Repository;
     ///
-    /// let config = NestConfig::new();
+    /// let config = Config::new();
     /// let repo = Repository::new(&config, "test");
     /// assert_eq!(repo.name(), "test");
     /// ```
@@ -89,10 +89,10 @@ impl Repository {
     /// ```
     /// extern crate libnest;
     ///
-    /// use libnest::config::NestConfig;
+    /// use libnest::config::Config;
     /// use libnest::repository::Repository;
     ///
-    /// let config = NestConfig::new();
+    /// let config = Config::new();
     /// let repo = Repository::new(&config, "test");
     ///
     /// assert_eq!(repo.mirrors().len(), 0);
@@ -110,9 +110,9 @@ impl Repository {
     ///
     /// use std::path::Path;
     /// use libnest::repository::Repository;
-    /// use libnest::config::NestConfig;
+    /// use libnest::config::Config;
     ///
-    /// let config = NestConfig::new();
+    /// let config = Config::new();
     /// let repo = Repository::new(&config, "test");
     ///
     /// assert_eq!(repo.cache(), Path::new("/var/lib/nest/cache/test"));
@@ -129,9 +129,9 @@ impl Repository {
     /// extern crate libnest;
     ///
     /// use libnest::repository::{Repository, Mirror};
-    /// use libnest::config::NestConfig;
+    /// use libnest::config::Config;
     ///
-    /// let config = NestConfig::new();
+    /// let config = Config::new();
     /// let mut repo = Repository::new(&config, "test");
     ///
     /// repo.add_mirror(Mirror::new("http://example.com"));

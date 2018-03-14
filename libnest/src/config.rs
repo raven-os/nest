@@ -16,17 +16,17 @@ use repository::Repository;
 /// ```
 /// extern crate libnest;
 ///
-/// use libnest::config::NestConfig;
+/// use libnest::config::Config;
 ///
-/// let config = NestConfig::new();
+/// let config = Config::new();
 /// ```
 #[derive(Debug)]
-pub struct NestConfig {
+pub struct Config {
     cache: PathBuf,
     repositories: Vec<Repository>,
 }
 
-impl NestConfig {
+impl Config {
     /// Creates a default configuration.
     ///
     /// The default configuration is:
@@ -38,12 +38,12 @@ impl NestConfig {
     /// ```
     /// extern crate libnest;
     ///
-    /// use libnest::config::NestConfig;
+    /// use libnest::config::Config;
     ///
-    /// let config = NestConfig::new();
+    /// let config = Config::new();
     /// ```
-    pub fn new() -> NestConfig {
-        NestConfig {
+    pub fn new() -> Config {
+        Config {
             cache: PathBuf::from("/var/lib/nest/cache/"),
             repositories: Vec::new(),
         }
@@ -57,9 +57,9 @@ impl NestConfig {
     /// extern crate libnest;
     ///
     /// use std::path::Path;
-    /// use libnest::config::NestConfig;
+    /// use libnest::config::Config;
     ///
-    /// let config = NestConfig::new();
+    /// let config = Config::new();
     ///
     /// assert_eq!(config.cache(), Path::new("/var/lib/nest/cache"));
     /// ```
@@ -75,10 +75,10 @@ impl NestConfig {
     /// ```
     /// extern crate libnest;
     ///
-    /// use libnest::config::NestConfig;
+    /// use libnest::config::Config;
     /// use libnest::repository::Repository;
     ///
-    /// let mut config = NestConfig::new();
+    /// let mut config = Config::new();
     /// let repo = Repository::new(&config, "local");
     ///
     /// config.add_repository(repo);
@@ -94,10 +94,10 @@ impl NestConfig {
     /// ```
     /// extern crate libnest;
     ///
-    /// use libnest::config::NestConfig;
+    /// use libnest::config::Config;
     /// use libnest::repository::Repository;
     ///
-    /// let mut config = NestConfig::new();
+    /// let mut config = Config::new();
     /// let repo = Repository::new(&config, "local");
     ///
     /// assert_eq!(config.repositories().len(), 0);
@@ -109,8 +109,8 @@ impl NestConfig {
     }
 }
 
-impl Default for NestConfig {
+impl Default for Config {
     fn default() -> Self {
-        NestConfig::new()
+        Config::new()
     }
 }
