@@ -8,6 +8,7 @@ Raven's package manager.
 ## Building Nest
 
 Compiling Nest is pretty straightforward:
+
 ```bash
 cargo build
 ```
@@ -15,6 +16,7 @@ cargo build
 ## Running tests
 
 If you want to be sure everything went correctly when compiling Nest, you can run the tests:
+
 ```bash
 cargo test
 ```
@@ -24,6 +26,7 @@ cargo test
 You shouldn't run Nest in an un-protected environnement, as Nest assumes there is no other package manager on the current system.
 
 You can still run it with:
+
 ```bash
 cargo run -- <args>
 ```
