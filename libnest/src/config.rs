@@ -79,7 +79,7 @@ impl NestConfig {
     /// use libnest::repository::Repository;
     ///
     /// let mut config = NestConfig::new();
-    /// let repo = Repository::new("local");
+    /// let repo = Repository::new(&config, "local");
     ///
     /// config.add_repository(repo);
     /// ```
@@ -98,7 +98,7 @@ impl NestConfig {
     /// use libnest::repository::Repository;
     ///
     /// let mut config = NestConfig::new();
-    /// let repo = Repository::new("local");
+    /// let repo = Repository::new(&config, "local");
     ///
     /// assert_eq!(config.repositories().len(), 0);
     /// config.add_repository(repo);

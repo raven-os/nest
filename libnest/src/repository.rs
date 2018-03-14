@@ -1,6 +1,6 @@
 //! Repositories and mirrors
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use config::NestConfig;
 
@@ -13,10 +13,14 @@ use config::NestConfig;
 /// ```
 /// extern crate libnest;
 ///
+/// use libnest::config::NestConfig;
 /// use libnest::repository::{Repository, Mirror};
 ///
-/// // First, create an empty repository with name "nightly":
-/// let mut repo = Repository::new("nightly");
+/// // We are going to need some configuration
+/// let config = NestConfig::new();
+///
+/// // First, create an empty repository with name "test":
+/// let mut repo = Repository::new(&config, "test");
 /// assert!(repo.mirrors().is_empty());
 ///
 /// // Then, let's add a mirror:
@@ -32,6 +36,7 @@ use config::NestConfig;
 pub struct Repository {
     name: String,
     mirrors: Vec<Mirror>,
+    cache: PathBuf,
 }
 
 impl Repository {
@@ -42,14 +47,19 @@ impl Repository {
     /// ```
     /// extern crate libnest;
     ///
+    /// use libnest::config::NestConfig;
     /// use libnest::repository::Repository;
     ///
-    /// let repo = Repository::new("nightly");
+    /// let config = NestConfig::new();
+    /// let repo = Repository::new(&config, "test");
     /// ```
-    pub fn new(name: &str) -> Repository {
+    pub fn new(config: &NestConfig, name: &str) -> Repository {
+        let mut cache = config.cache().clone();
+        cache.push(name);
         Repository {
             name: String::from(name),
             mirrors: Vec::new(),
+            cache,
         }
     }
 
@@ -60,9 +70,11 @@ impl Repository {
     /// ```
     /// extern crate libnest;
     ///
+    /// use libnest::config::NestConfig;
     /// use libnest::repository::Repository;
     ///
-    /// let repo = Repository::new("test");
+    /// let config = NestConfig::new();
+    /// let repo = Repository::new(&config, "test");
     /// assert_eq!(repo.name(), "test");
     /// ```
     #[inline]
@@ -77,9 +89,11 @@ impl Repository {
     /// ```
     /// extern crate libnest;
     ///
+    /// use libnest::config::NestConfig;
     /// use libnest::repository::Repository;
     ///
-    /// let repo = Repository::new("test");
+    /// let config = NestConfig::new();
+    /// let repo = Repository::new(&config, "test");
     ///
     /// assert_eq!(repo.mirrors().len(), 0);
     /// ```
@@ -87,7 +101,7 @@ impl Repository {
         &self.mirrors
     }
 
-    /// Returns the path holding the cache of the repository.
+    /// Returns a `Path` to the cache of the repository.
     ///
     /// # Examples
     ///
@@ -99,14 +113,12 @@ impl Repository {
     /// use libnest::config::NestConfig;
     ///
     /// let config = NestConfig::new();
-    /// let repo = Repository::new("test");
+    /// let repo = Repository::new(&config, "test");
     ///
-    /// assert_eq!(repo.cache(&config), Path::new("/var/lib/nest/cache/test"));
+    /// assert_eq!(repo.cache(), Path::new("/var/lib/nest/cache/test"));
     /// ```
-    pub fn cache(&self, config: &NestConfig) -> PathBuf {
-        let mut path = config.cache().clone();
-        path.push(&self.name);
-        path
+    pub fn cache(&self) -> &Path {
+        &self.cache
     }
 
     /// Adds a mirror to the end of the mirrors list, meaning it has the lowest priority.
@@ -117,8 +129,10 @@ impl Repository {
     /// extern crate libnest;
     ///
     /// use libnest::repository::{Repository, Mirror};
+    /// use libnest::config::NestConfig;
     ///
-    /// let mut repo = Repository::new("test");
+    /// let config = NestConfig::new();
+    /// let mut repo = Repository::new(&config, "test");
     ///
     /// repo.add_mirror(Mirror::new("http://example.com"));
     /// assert_eq!(repo.mirrors().len(), 1);
