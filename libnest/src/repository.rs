@@ -1,6 +1,7 @@
 //! Repositories and mirrors
 
 use std::path::{Path, PathBuf};
+use std::fmt::{self, Display, Formatter};
 
 use config::Config;
 
@@ -21,18 +22,22 @@ use config::Config;
 ///
 /// // First, create an empty repository with name "test":
 /// let mut repo = Repository::new(&config, "test");
-/// assert!(repo.mirrors().is_empty());
 ///
 /// // Then, let's add a mirror:
-/// repo.add_mirror(Mirror::new("http://example.com"));
-/// assert_eq!(repo.mirrors().len(), 1);
+/// {
+///     let mirrors = repo.mirrors_mut();
+///     assert!(mirrors.is_empty());
+///
+///     mirrors.push(Mirror::new("http://example.com"));
+///     assert_eq!(mirrors.len(), 1);
+/// }
 ///
 /// // We can now iterate through all of them:
 /// for mirror in repo.mirrors() {
 ///     println!("{}: {}", repo.name(), mirror.url());
 /// }
 /// ```
-#[derive(Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct Repository {
     name: String,
     mirrors: Vec<Mirror>,
@@ -53,8 +58,9 @@ impl Repository {
     /// let config = Config::new();
     /// let repo = Repository::new(&config, "test");
     /// ```
+    #[inline]
     pub fn new(config: &Config, name: &str) -> Repository {
-        let mut cache = config.cache().clone();
+        let mut cache = config.cache().to_path_buf();
         cache.push(name);
         let cache = Cache::new(cache);
         Repository {
@@ -96,10 +102,37 @@ impl Repository {
     /// let config = Config::new();
     /// let repo = Repository::new(&config, "test");
     ///
-    /// assert_eq!(repo.mirrors().len(), 0);
+    /// let mirrors = repo.mirrors();
+    ///
+    /// assert_eq!(mirrors.len(), 0);
     /// ```
+    #[inline]
     pub fn mirrors(&self) -> &Vec<Mirror> {
         &self.mirrors
+    }
+
+    /// Returns a mutable reference over a `Vec<Mirror>` representing all the mirrors of the repository.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// extern crate libnest;
+    ///
+    /// use libnest::config::Config;
+    /// use libnest::repository::{Repository, Mirror};
+    ///
+    /// let config = Config::new();
+    /// let mut repo = Repository::new(&config, "test");
+    ///
+    /// let mirrors = repo.mirrors_mut();
+    /// assert!(mirrors.is_empty());
+    ///
+    /// mirrors.push(Mirror::new("http://example.com"));
+    /// assert_eq!(mirrors.len(), 1);
+    /// ```
+    #[inline]
+    pub fn mirrors_mut(&mut self) -> &mut Vec<Mirror> {
+        &mut self.mirrors
     }
 
     /// Returns a `Cache` representing the locale cache for the repository.
@@ -120,28 +153,16 @@ impl Repository {
     ///
     /// assert_eq!(cache.path(), Path::new("/var/lib/nest/cache/test"));
     /// ```
+    #[inline]
     pub fn cache(&self) -> &Cache {
         &self.cache
     }
+}
 
-    /// Adds a mirror to the end of the mirrors list, meaning it has the lowest priority.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// extern crate libnest;
-    ///
-    /// use libnest::repository::{Repository, Mirror};
-    /// use libnest::config::Config;
-    ///
-    /// let config = Config::new();
-    /// let mut repo = Repository::new(&config, "test");
-    ///
-    /// repo.add_mirror(Mirror::new("http://example.com"));
-    /// assert_eq!(repo.mirrors().len(), 1);
-    /// ```
-    pub fn add_mirror(&mut self, mirror: Mirror) {
-        self.mirrors.push(mirror);
+impl Display for Repository {
+    #[inline]
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", self.name)
     }
 }
 
@@ -160,7 +181,7 @@ impl Repository {
 ///
 /// println!("Mirror's url: {}", mirror.url());
 /// ```
-#[derive(Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct Mirror {
     url: String,
 }
@@ -177,6 +198,7 @@ impl Mirror {
     ///
     /// let m = Mirror::new("http://stable.raven-os.org/");
     /// ```
+    #[inline]
     pub fn new(url: &str) -> Mirror {
         Mirror {
             url: url.to_string(),
@@ -196,8 +218,16 @@ impl Mirror {
     ///
     /// println!("Stable URL: {}", m.url());
     /// ```
+    #[inline]
     pub fn url(&self) -> &str {
         &self.url
+    }
+}
+
+impl Display for Mirror {
+    #[inline]
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "{}", self.url)
     }
 }
 
@@ -207,13 +237,14 @@ impl Mirror {
 /// and their name, versions, description, dependencies etc.
 ///
 /// This structure is used to browse this cache and retrieve any kind of informations.
-#[derive(Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Cache {
     path: PathBuf,
 }
 
 impl Cache {
     /// Creates (or loads) a new cache located at the given path
+    #[inline]
     pub(crate) fn new(path: PathBuf) -> Cache {
         Cache { path }
     }
@@ -236,6 +267,7 @@ impl Cache {
     ///
     /// assert_eq!(cache.path(), Path::new("/var/lib/nest/cache/test"));
     /// ```
+    #[inline]
     pub fn path(&self) -> &Path {
         &self.path
     }

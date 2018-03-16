@@ -2,5 +2,6 @@
 name = "libnest"
 version = "0.1.0"
 authors = ["Benjamin Grange <benjamin.grange@epitech.eu>"]
+description = "Nest's backend library to write a package manager for Raven."
 
 [dependencies]
