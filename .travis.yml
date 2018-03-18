@@ -5,7 +5,9 @@ cache: cargo
 
 before_script:
     - rustup component add rustfmt-preview
-    - cargo install clippy --force
+    - cargo install cargo-update || echo "Cargo-update already installed"
+    - cargo install clippy || echo "Clippy already installed"
+    - cargo-install-update install-update clippy
 
 script:
     - cargo fmt --all -- --write-mode=diff
