@@ -12,7 +12,7 @@ pub fn pull(config: &Config) {
             let mut pb = ProgressBar::new(String::from("pull"));
             pb.set_target(repo.name());
 
-            let r = repo.pull(&config, mirror, |cur: f64, max: f64| {
+            let r = repo.pull(config, mirror, |cur: f64, max: f64| {
                 pb.set_max(max as usize);
                 pb.update(cur as usize);
                 true

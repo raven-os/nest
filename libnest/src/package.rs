@@ -4,8 +4,7 @@
 ///
 /// All these informations are get when pulling the repository this package belongs to, and therefore may
 /// be out of date.
-#[derive(Serialize, Deserialize)]
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct Package {
     name: String,
     category: String,
