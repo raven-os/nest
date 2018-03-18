@@ -2,7 +2,16 @@
 name = "libnest"
 version = "0.1.0"
 authors = ["Benjamin Grange <benjamin.grange@epitech.eu>"]
-description = "Nest's backend library to write a package manager for Raven."
+description = "Backend library to write a package manager for the Raven Operating System."
+homepage = "https://raven-os.org"
+repository = "https://github.com/raven-os/nest"
+readme = "../README.md"
+keywords = ["package-manager", "package", "manager", "raven", "nest"]
+categories = ["command-line-utilities", "development-tools", "filesystem", "os"]
+
+[badges]
+travis-ci = { repository = "raven-os/nest" }
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 curl = "0.4.11"
