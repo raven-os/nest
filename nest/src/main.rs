@@ -85,7 +85,7 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("search")
-                .about("Search the local database for packages")
+                .about("Searches the local database for packages")
                 .arg(
                     Arg::with_name("KEYWORD")
                         .help("A keyword that a package name or description must contain")
@@ -104,7 +104,7 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("list")
-                .about("List informations about installed packages")
+                .about("Lists informations about installed packages")
         )
         .get_matches();
 
