@@ -1,6 +1,10 @@
 //! Nest configuration parsing and handle.
 
 use std::path::{Path, PathBuf};
+use std::convert::TryFrom;
+
+use curl;
+use curl::easy::Easy;
 
 use repository::Repository;
 
@@ -68,27 +72,6 @@ impl Config {
         &self.cache
     }
 
-    /// Adds the given repository at the end of the list of repositories, meaning it has the lowest
-    /// priority when looking for a package.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// extern crate libnest;
-    ///
-    /// use libnest::config::Config;
-    /// use libnest::repository::Repository;
-    ///
-    /// let mut config = Config::new();
-    /// let repo = Repository::new(&config, "local");
-    ///
-    /// config.repositories_mut().push(repo);
-    /// ```
-    #[inline]
-    pub fn push_repository(&mut self, repo: Repository) {
-        self.repositories.push(repo);
-    }
-
     /// Yields a reference to the underlying `Vec<Repository>`
     ///
     /// # Examples
@@ -138,5 +121,14 @@ impl Default for Config {
     #[inline]
     fn default() -> Self {
         Config::new()
+    }
+}
+
+impl<'a> TryFrom<&'a Config> for Easy {
+    type Error = curl::Error;
+
+    /// Tries to create a curl handle with the given configuration.
+    fn try_from(_: &'a Config) -> Result<Easy, curl::Error> {
+        Ok(Easy::new())
     }
 }

@@ -1,9 +1,21 @@
 //! Repositories and mirrors
 
+use std::str;
+use std::error;
+use std::convert::TryFrom;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::fmt::{self, Display, Formatter};
+use std::fs::{self, File};
+
+use json;
+use curl::easy::Easy;
 
 use config::Config;
+use package::Package;
+
+/// A wrapper on the errors the `pull` operation can produce.
+pub type PullRepositoryError = Box<error::Error>;
 
 /// A repository.
 ///
@@ -135,7 +147,7 @@ impl Repository {
         &mut self.mirrors
     }
 
-    /// Returns a `Cache` representing the locale cache for the repository.
+    /// Returns a `Cache` representing the local cache for the repository.
     ///
     /// # Examples
     ///
@@ -156,6 +168,97 @@ impl Repository {
     #[inline]
     pub fn cache(&self) -> &Cache {
         &self.cache
+    }
+
+    /// Pulls the repository with the given mirror, analyzes the result and updates local cache.
+    ///
+    /// # Blocking function
+    ///
+    /// This is a blocking function, that's why the `cb` parameter is a closure that let's you
+    /// update any kind of progress bar during the download.
+    ///
+    /// The first parameter is the number of downloaded bytes, and the second one is the total
+    /// number of bytes. The closure must return a bool: `true` to continue, `false` to interrupt
+    /// the download.
+    ///
+    /// # Filesystem
+    ///
+    /// This operation assumes the current user has the rights to write in the local cache.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// extern crate libnest;
+    ///
+    /// use libnest::config::Config;
+    /// use libnest::repository::{Repository, Mirror};
+    ///
+    /// // Let's setup a basic configuration
+    /// let mut config = Config::new();
+    /// let mut repo = Repository::new(&config, "stable");
+    /// let mirror = Mirror::new("http://example.com");
+    ///
+    /// repo.mirrors_mut().push(mirror);
+    /// config.repositories_mut().push(repo);
+    ///
+    /// // Pull all repositories
+    /// for repo in config.repositories() {
+    ///     // Pull all mirrors
+    ///     for mirror in repo.mirrors() {
+    ///         let r = repo.pull(&config, &mirror, |cur: f64, max: f64| {
+    ///             println!("Progress: {}/{}", cur, max);
+    ///             true
+    ///         });
+    ///
+    ///         // Analyze result
+    ///         match r {
+    ///             Ok(_) => {
+    ///                 println!("{} pulled correctly", repo.name());
+    ///                 break; // Don't pull other mirrors in case of success
+    ///             }
+    ///             Err(e) => {
+    ///                 eprintln!("Couldn't pull {}: {}", repo.name(), e);
+    ///             }
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    pub fn pull<F>(
+        &self,
+        config: &Config,
+        mirror: &Mirror,
+        mut cb: F,
+    ) -> Result<(), PullRepositoryError>
+    where
+        F: FnMut(f64, f64) -> bool,
+    {
+        let mut data = Vec::new();
+        let mut handle = Easy::try_from(config)?;
+        let pull_url = mirror.url().to_string() + "/pull";
+
+        // Download data from mirror
+        handle.url(&pull_url)?;
+        handle.progress(true)?;
+        {
+            let mut transfer = handle.transfer();
+
+            transfer.write_function(|new_data| {
+                data.extend_from_slice(new_data);
+                Ok(new_data.len())
+            })?;
+            transfer.progress_function(|a: f64, b: f64, _: f64, _: f64| cb(b, a))?;
+            transfer.perform()?;
+        }
+
+        // Parse data to UTF8 and deserialize it
+        let utf8_data = str::from_utf8(&data)?;
+        let packages: Vec<Package> = json::from_str(utf8_data)?;
+
+        // Write output to disk
+        for package in packages {
+            self.cache.update_package(&package)?;
+        }
+        Ok(())
     }
 }
 
@@ -270,5 +373,28 @@ impl Cache {
     #[inline]
     pub fn path(&self) -> &Path {
         &self.path
+    }
+
+    /// Updates the cache with the given metadatas.
+    ///
+    /// # Filesystem
+    ///
+    /// This operation assumes the current user has the rights to write in the local cache.
+    pub fn update_package(&self, package: &Package) -> Result<PathBuf, io::Error> {
+        let mut path = self.path.clone();
+        let json = json::to_string(package)?;
+
+        // Create category folder
+        path.push(package.category());
+        fs::create_dir_all(&path)?;
+
+        // Create package file
+        path.push(package.name());
+        let mut file = File::create(&path)?;
+
+        // Write content
+        file.write_all(json.as_bytes())?;
+        file.write_all(&[b'\n'])?;
+        Ok(path)
     }
 }

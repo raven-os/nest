@@ -24,6 +24,13 @@
 #![cfg_attr(feature = "cargo-clippy", warn(used_underscore_binding))]
 #![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
 #![feature(conservative_impl_trait)]
+#![feature(try_from)]
+
+extern crate curl;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json as json;
 
 pub mod config;
 pub mod repository;
+pub mod package;
