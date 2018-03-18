@@ -5,7 +5,6 @@ authors = ["Benjamin Grange <benjamin.grange@epitech.eu>"]
 description = "Backend library to write a package manager for the Raven Operating System."
 homepage = "https://raven-os.org"
 repository = "https://github.com/raven-os/nest"
-readme = "../README.md"
 keywords = ["package-manager", "package", "manager", "raven", "nest"]
 categories = ["command-line-utilities", "development-tools", "filesystem", "os"]
 

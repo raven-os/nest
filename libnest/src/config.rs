@@ -1,4 +1,15 @@
 //! Nest configuration parsing and handle.
+//!
+//! There is two way to configure operations using the Nest package manager: globally
+//! (configuration file), or locally (command line arguments).
+//!
+//! Within the `libnest`, many functions take a `&Config` as argument. The main reason is to allow local options to be used only for one operation, even in an
+//! asynchronous context.
+//!
+//! This module provide a `Config` structure that holds all configuration options. This includes,
+//! for exemple, proxy settings, cache path, mirrors etc.
+//!
+//! It also provides a way to load a `Config` from a TOML file.
 
 use std::path::{Path, PathBuf};
 use std::convert::TryFrom;
@@ -17,8 +28,7 @@ use repository::Repository;
 /// # Examples
 ///
 /// ```
-/// extern crate libnest;
-///
+/// # extern crate libnest;
 /// use libnest::config::Config;
 ///
 /// let config = Config::new();
@@ -39,8 +49,7 @@ impl Config {
     ///
     /// Example:
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use libnest::config::Config;
     ///
     /// let config = Config::new();
@@ -53,13 +62,12 @@ impl Config {
         }
     }
 
-    /// Returns the path holding the the cache of each repository.
+    /// Returns the path holding the cache of each repository.
     ///
     /// # Examples
     ///
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use std::path::Path;
     /// use libnest::config::Config;
     ///
@@ -77,8 +85,7 @@ impl Config {
     /// # Examples
     ///
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use libnest::config::Config;
     /// use libnest::repository::Repository;
     ///
@@ -97,8 +104,7 @@ impl Config {
     /// # Examples
     ///
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use libnest::config::Config;
     /// use libnest::repository::Repository;
     ///

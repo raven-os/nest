@@ -1,4 +1,8 @@
 //! Repositories and mirrors
+//!
+//! This module contains handle to repositories and repository-related stuff, like mirrors.
+//!
+//! It lets you create new repositories, fill them with mirrors and interact with them.
 
 use std::str;
 use std::error;
@@ -24,8 +28,7 @@ pub type PullRepositoryError = Box<error::Error>;
 /// # Examples
 ///
 /// ```
-/// extern crate libnest;
-///
+/// # extern crate libnest;
 /// use libnest::config::Config;
 /// use libnest::repository::{Repository, Mirror};
 ///
@@ -62,8 +65,7 @@ impl Repository {
     /// # Examples
     ///
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use libnest::config::Config;
     /// use libnest::repository::Repository;
     ///
@@ -87,8 +89,7 @@ impl Repository {
     /// # Examples
     ///
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use libnest::config::Config;
     /// use libnest::repository::Repository;
     ///
@@ -106,8 +107,7 @@ impl Repository {
     /// # Examples
     ///
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use libnest::config::Config;
     /// use libnest::repository::Repository;
     ///
@@ -128,8 +128,7 @@ impl Repository {
     /// # Examples
     ///
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use libnest::config::Config;
     /// use libnest::repository::{Repository, Mirror};
     ///
@@ -152,8 +151,7 @@ impl Repository {
     /// # Examples
     ///
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use std::path::Path;
     ///
     /// use libnest::config::Config;
@@ -188,8 +186,7 @@ impl Repository {
     /// # Examples
     ///
     /// ```no_run
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use libnest::config::Config;
     /// use libnest::repository::{Repository, Mirror};
     ///
@@ -276,8 +273,7 @@ impl Display for Repository {
 /// # Examples
 ///
 /// ```
-/// extern crate libnest;
-///
+/// # extern crate libnest;
 /// use libnest::repository::Mirror;
 ///
 /// let mirror = Mirror::new("http://example.com");
@@ -295,8 +291,7 @@ impl Mirror {
     /// # Examples
     ///
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use libnest::repository::Mirror;
     ///
     /// let m = Mirror::new("http://stable.raven-os.org/");
@@ -313,8 +308,7 @@ impl Mirror {
     /// # Examples
     ///
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use libnest::repository::Mirror;
     ///
     /// let m = Mirror::new("http://stable.raven-os.org/");
@@ -357,8 +351,7 @@ impl Cache {
     /// # Examples
     ///
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use std::path::Path;
     ///
     /// use libnest::config::Config;
@@ -380,7 +373,7 @@ impl Cache {
     /// # Filesystem
     ///
     /// This operation assumes the current user has the rights to write in the local cache.
-    pub fn update_package(&self, package: &Package) -> Result<PathBuf, io::Error> {
+    pub(crate) fn update_package(&self, package: &Package) -> Result<PathBuf, io::Error> {
         let mut path = self.path.clone();
         let json = json::to_string(package)?;
 

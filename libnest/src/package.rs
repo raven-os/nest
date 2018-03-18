@@ -1,6 +1,14 @@
-//! Package
+//! Packages representation and their metadatas.
+//!
+//! Packages represented in this module are **local** packages, as represented in the local cache.
+//! They are not updated until the `pull` operation is done.
+//!
+//! They **only** represent their metadatas (and not their content) and may not be installed.
+//!
+//! This representation is suitable for pre-installation processes, like searching for a package
+//! or resolving the dependecy graph.
 
-/// Represents a package and it's meta-datas, like it's name, version, category etc.
+/// A package and it's meta-datas, like it's name, version, category etc.
 ///
 /// All these informations are get when pulling the repository this package belongs to, and therefore may
 /// be out of date.
