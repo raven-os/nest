@@ -118,7 +118,7 @@ impl Repository {
     /// let repo = Repository::new(&config, "test");
     /// let cache = repo.cache();
     ///
-    /// assert_eq!(cache.path(), Path::new("/var/lib/nest/cache/test"));
+    /// assert_eq!(cache.path(), config.cache().join("test"));
     /// ```
     pub fn cache(&self) -> &Cache {
         &self.cache
@@ -234,7 +234,7 @@ impl Cache {
     /// let repo = Repository::new(&config, "test");
     /// let cache = repo.cache();
     ///
-    /// assert_eq!(cache.path(), Path::new("/var/lib/nest/cache/test"));
+    /// assert_eq!(cache.path(), config.cache().join("test"));
     /// ```
     pub fn path(&self) -> &Path {
         &self.path

@@ -4,3 +4,4 @@ version = "0.1.0"
 authors = ["Benjamin Grange <benjamin.grange@epitech.eu>"]
 
 [dependencies]
+toml = "0.4"
