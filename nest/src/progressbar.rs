@@ -1,0 +1,168 @@
+use std::time::Instant;
+use std::io::{self, Write};
+
+use tty;
+
+static NANOS_PER_SEC: usize = 1_000_000_000;
+static BYTES_UNITS: [&'static str; 9] =
+    ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
+static TIME_UNITS: [&'static str; 3] = ["s", "m", "h"];
+
+pub enum ProgressResult {
+    Ok,
+    Err,
+}
+
+/// A progres bar and all it's metadatas.
+pub struct ProgressBar<'a> {
+    current: usize,
+    max: usize,
+    action: String,
+    target: Option<&'a str>,
+    is_finished: bool,
+    start_time: Instant,
+    status: ProgressResult,
+}
+
+impl<'a> ProgressBar<'a> {
+    /// Creates a new `ProgressBar` with default values.
+    ///
+    /// The given `action` parameter is the name of the action done. It will be printed with
+    /// colors, and cannot go over 8 chars.
+    /// Maximum value is 100.
+    pub fn new(action: String) -> ProgressBar<'a> {
+        ProgressBar {
+            current: 0,
+            max: 100,
+            action,
+            target: None,
+            is_finished: false,
+            start_time: Instant::now(),
+            status: ProgressResult::Ok,
+        }
+    }
+
+    /// Set the name of the target of the current action.
+    ///
+    /// This will be printed after the action, in white.
+    pub fn set_target(&mut self, target: &'a str) {
+        self.target = Some(target);
+    }
+
+    /// Set the maximum value for the progress bar.
+    ///
+    /// `0` is a valid value.
+    pub fn set_max(&mut self, max: usize) {
+        self.max = max;
+    }
+
+    /// Updates the current value with the one given.
+    ///
+    /// If the given value is over the maximum value, it will be troncated.
+    pub fn update(&mut self, mut val: usize) {
+        if val > self.max {
+            val = self.max;
+        }
+        self.current = val;
+        self.draw();
+    }
+
+    /// Draws the progress bar
+    pub fn draw(&self) {
+        let now = Instant::now();
+        let time_elapsed = now.duration_since(self.start_time);
+        let ftime_elapsed = time_elapsed.as_secs() as f64
+            + f64::from(time_elapsed.subsec_nanos()) / NANOS_PER_SEC as f64;
+        let speed = self.current as f64 / ftime_elapsed; // XXX: Time elapsed should be shorter than since the beginning
+        let time_left = if speed > 0.0 {
+            1.0 / speed * (self.max - self.current) as f64
+        } else {
+            0.0
+        };
+        let ratio = if self.max > 0 {
+            self.current as f32 / self.max as f32
+        } else {
+            0.0
+        };
+
+        let tty_width = tty::width();
+        let half_width = tty_width / 2;
+        let bar_width = half_width as f32 - 22.0; // half_width - "1000MiB/s 59m [>] 100%"
+        let left_width = half_width - 27; // half_width - " <action> " ... " 1000MiB/1000MiB "
+        let right_width = half_width + 17; // half_width + " 1000MiB/1000MiB "
+        let current_width = (ratio * bar_width).round();
+        let remaining_width = bar_width - current_width;
+
+        print!(
+            "\r{}{}",
+            match self.status {
+                ProgressResult::Ok => green!(" {:>8.8} ", self.action),
+                ProgressResult::Err => red!(" {:>8.8} ", self.action),
+            },
+            format!(
+                "{:<left_width$.left_width$}{:<right_width$.right_width$}",
+                self.target.unwrap_or(""),
+                if !self.is_finished
+                    && (time_elapsed.as_secs() > 0 || time_elapsed.subsec_nanos() > 250_000_000)
+                {
+                    // Print bar only after 0.25s
+                    format!(" {current:>7.7}/{max:<7.7} {speed:>7.7}/s {time_left:>3.3} [{phantom:=<current_width$.width$}>{phantom:-<remaining_width$.width$}] {percent:>3.3}%",
+                        current = humanize_bytes(self.current as f64),
+                        max = humanize_bytes(self.max as f64),
+                        speed = humanize_bytes(speed),
+                        time_left = humanize_time(time_left),
+                        phantom = "",
+                        width = bar_width as usize,
+                        current_width = current_width as usize,
+                        remaining_width = remaining_width as usize,
+                        percent = (ratio * 100.0).round() as u32,
+                    )
+                } else {
+                    String::from("")
+                },
+                left_width = left_width,
+                right_width = right_width,
+            ),
+        );
+        io::stdout().flush().expect("Couldn't flush stdout");
+    }
+
+    /// Redraws the `ProgressBar` with the given status.
+    pub fn finish<T, U>(&mut self, status: &Result<T, U>) {
+        self.is_finished = true;
+        match *status {
+            Ok(_) => self.status = ProgressResult::Ok,
+            Err(_) => self.status = ProgressResult::Err,
+        }
+        self.draw();
+        println!();
+    }
+}
+
+impl<'a> Default for ProgressBar<'a> {
+    fn default() -> ProgressBar<'a> {
+        ProgressBar::new(String::from("default"))
+    }
+}
+
+/// Returnes a human-readable string for a given value in bytes.
+fn humanize_bytes(mut bytes: f64) -> String {
+    for unit in &BYTES_UNITS {
+        if bytes <= 2048.0 {
+            return format!("{}{}", bytes.round() as usize, unit);
+        }
+        bytes /= 1024.0;
+    }
+    String::from("???")
+}
+
+/// Returnes a human-readable string for a given value in seconds.
+fn humanize_time(mut time: f64) -> String {
+    for unit in &TIME_UNITS {
+        if time <= 60.0 {
+            return format!("{}{}", time.round() as usize, unit);
+        }
+        time /= 60.0;
+    }
+    String::from("???")
+}

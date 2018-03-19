@@ -1,13 +1,28 @@
 //! Nest configuration parsing and handle.
+//!
+//! There is two way to configure operations using the Nest package manager: globally
+//! (configuration file), or locally (command line arguments).
+//!
+//! Within the `libnest`, many functions take a `&Config` as argument. The main reason is to allow local options to be used only for one operation, even in an
+//! asynchronous context.
+//!
+//! This module provide a `Config` structure that holds all configuration options. This includes,
+//! for exemple, proxy settings, cache path, mirrors etc.
+//!
+//! It also provides a way to load a `Config` from a TOML file.
 
 extern crate toml;
 
-use std::path::PathBuf;
 use std::slice::Iter;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::Read;
 use std;
+use std::path::{Path, PathBuf};
+use std::convert::TryFrom;
+
+use curl;
+use curl::easy::Easy;
 
 use repository::Repository;
 
@@ -20,13 +35,12 @@ use repository::Repository;
 /// # Examples
 ///
 /// ```
-/// extern crate libnest;
-///
+/// # extern crate libnest;
 /// use libnest::config::Config;
 ///
 /// let config = Config::new();
 /// ```
-#[derive(Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Config {
     cache: PathBuf,
     installation_dir: PathBuf,
@@ -46,12 +60,12 @@ impl Config {
     ///
     /// Example:
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use libnest::config::Config;
     ///
     /// let config = Config::new();
     /// ```
+    #[inline]
     pub fn new() -> Config {
         let config_file_path = "Config.toml";
 
@@ -90,7 +104,8 @@ impl Config {
     ///
     /// assert_eq!(config.cache(), Path::new("/var/lib/nest/cache"));
     /// ```
-    pub fn cache(&self) -> &PathBuf {
+    #[inline]
+    pub fn cache(&self) -> &Path {
         &self.cache
     }
 
@@ -107,49 +122,51 @@ impl Config {
     ///
     /// assert_eq!(config.installation_dir(), Path::new("/tmp"));
     /// ```
+    #[inline]
     pub fn installation_dir(&self) -> &PathBuf {
         &self.installation_dir
     }
 
-    /// Adds the given repository at the end of the list of repositories, meaning it has the lowest
-    /// priority when looking for a package.
+    /// Yields a reference to the underlying `Vec<Repository>`
     ///
     /// # Examples
     ///
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use libnest::config::Config;
     /// use libnest::repository::Repository;
     ///
     /// let mut config = Config::new();
     /// let repo = Repository::new(&config, "local");
     ///
-    /// config.add_repository(repo);
+    /// assert!(config.repositories().is_empty());
     /// ```
-    pub fn add_repository(&mut self, repo: Repository) {
-        self.repositories.push(repo);
+    #[inline]
+    pub fn repositories(&self) -> &Vec<Repository> {
+        &self.repositories
     }
 
-    /// Returns a reference on the vector containing all the mirrors.
+    /// Yields a mutable reference to the underlying `Vec<Repository>`
     ///
     /// # Examples
     ///
     /// ```
-    /// extern crate libnest;
-    ///
+    /// # extern crate libnest;
     /// use libnest::config::Config;
     /// use libnest::repository::Repository;
     ///
     /// let mut config = Config::new();
     /// let repo = Repository::new(&config, "local");
     ///
-    /// assert_eq!(config.repositories().len(), 0);
-    /// config.add_repository(repo);
-    /// assert_eq!(config.repositories().len(), 1);
+    /// let repos = config.repositories_mut();
+    ///
+    /// assert!(repos.is_empty());
+    /// repos.push(repo);
+    /// assert_eq!(repos.len(), 1);
     /// ```
-    pub fn repositories(&self) -> Iter<Repository> {
-        self.repositories.iter()
+    #[inline]
+    pub fn repositories_mut(&mut self) -> &mut Vec<Repository> {
+        &mut self.repositories
     }
 }
 
@@ -224,6 +241,7 @@ impl Config {
 }
 
 impl Default for Config {
+    #[inline]
     fn default() -> Self {
         println!("Using default configuration");
         Config {
@@ -231,5 +249,14 @@ impl Default for Config {
             installation_dir: PathBuf::from(DEFAULT_INSTALLATION_DIR),
             repositories: Vec::new(),
         }
+    }
+}
+
+impl<'a> TryFrom<&'a Config> for Easy {
+    type Error = curl::Error;
+
+    /// Tries to create a curl handle with the given configuration.
+    fn try_from(_: &'a Config) -> Result<Easy, curl::Error> {
+        Ok(Easy::new())
     }
 }

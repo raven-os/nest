@@ -18,13 +18,29 @@
 #![cfg_attr(feature = "cargo-clippy", warn(used_underscore_binding))]
 #![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
 
+extern crate ansi_term;
 extern crate clap;
+extern crate libc;
+extern crate libnest;
 
+#[macro_use]
+mod tty;
 mod command;
+mod progressbar;
 
+use libnest::config::Config;
+use libnest::repository::{Mirror, Repository};
 use clap::{App, AppSettings, Arg, SubCommand};
 
 fn main() {
+    //XXX: Debug values before we have a config file
+    let mut config = Config::new();
+    let mut repo = Repository::new(&config, "stable");
+    let mirror = Mirror::new("http://localhost:8000");
+
+    repo.mirrors_mut().push(mirror);
+    config.repositories_mut().push(repo);
+
     let matches = App::new("nest")
         .template("{usage}\n{about}\n\nFLAGS\n{flags}\n\nOPERATIONS\n{subcommands}")
         .usage("nest [FLAGS] OPERATION")
@@ -69,7 +85,7 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("search")
-                .about("Search the local database for packages")
+                .about("Searches the local database for packages")
                 .arg(
                     Arg::with_name("KEYWORD")
                         .help("A keyword that a package name or description must contain")
@@ -88,12 +104,12 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("list")
-                .about("List informations about installed packages")
+                .about("Lists informations about installed packages")
         )
         .get_matches();
 
     if matches.subcommand_matches("pull").is_some() {
-        command::pull::pull();
+        command::pull::pull(&config);
     } else if let Some(matches) = matches.subcommand_matches("install") {
         command::install::install(matches);
     } else if let Some(matches) = matches.subcommand_matches("uninstall") {
