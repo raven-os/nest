@@ -36,6 +36,7 @@ use repository::Repository;
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Config {
     cache: PathBuf,
+    download_path: PathBuf,
     repositories: Vec<Repository>,
 }
 
@@ -44,10 +45,12 @@ impl Config {
     ///
     /// The default configuration is:
     /// * Cache path: `/var/lib/nest/cache/`
+    /// * Download path: `/tmp/nest/download/`
     ///
     /// All other fields are empty.
     ///
-    /// Example:
+    /// # Examples
+    ///
     /// ```
     /// # extern crate libnest;
     /// use libnest::config::Config;
@@ -58,6 +61,7 @@ impl Config {
     pub fn new() -> Config {
         Config {
             cache: PathBuf::from("/var/lib/nest/cache/"),
+            download_path: PathBuf::from("/var/lib/nest/download/"),
             repositories: Vec::new(),
         }
     }
@@ -72,12 +76,27 @@ impl Config {
     /// use libnest::config::Config;
     ///
     /// let config = Config::new();
-    ///
-    /// assert_eq!(config.cache(), Path::new("/var/lib/nest/cache"));
+    /// assert_eq!(config.cache(), Path::new("/var/lib/nest/cache/"));
     /// ```
     #[inline]
     pub fn cache(&self) -> &Path {
         &self.cache
+    }
+
+    /// Returns the path where packages are downloaded.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate libnest;
+    /// use std::path::Path;
+    /// use libnest::config::Config;
+    ///
+    /// let config = Config::new();
+    /// assert_eq!(config.download_path(), Path::new("/var/lib/nest/download/"));
+    /// ```
+    pub fn download_path(&self) -> &Path {
+        &self.download_path
     }
 
     /// Yields a reference to the underlying `Vec<Repository>`
@@ -91,7 +110,6 @@ impl Config {
     ///
     /// let mut config = Config::new();
     /// let repo = Repository::new(&config, "local");
-    ///
     /// assert!(config.repositories().is_empty());
     /// ```
     #[inline]

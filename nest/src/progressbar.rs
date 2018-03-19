@@ -1,9 +1,9 @@
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use std::io::{self, Write};
 
 use tty;
 
-static NANOS_PER_SEC: usize = 1_000_000_000;
+static NANOS_PER_SEC: u32 = 1_000_000_000;
 static BYTES_UNITS: [&'static str; 9] =
     ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
 static TIME_UNITS: [&'static str; 3] = ["s", "m", "h"];
@@ -21,7 +21,9 @@ pub struct ProgressBar<'a> {
     target: Option<&'a str>,
     is_finished: bool,
     start_time: Instant,
+    last_time: Instant,
     status: ProgressResult,
+    refresh_rate: Duration,
 }
 
 impl<'a> ProgressBar<'a> {
@@ -38,7 +40,9 @@ impl<'a> ProgressBar<'a> {
             target: None,
             is_finished: false,
             start_time: Instant::now(),
+            last_time: Instant::now(),
             status: ProgressResult::Ok,
+            refresh_rate: Duration::new(0, NANOS_PER_SEC / 10),
         }
     }
 
@@ -64,30 +68,56 @@ impl<'a> ProgressBar<'a> {
             val = self.max;
         }
         self.current = val;
-        self.draw();
+        self.render();
     }
 
-    /// Draws the progress bar
-    pub fn draw(&self) {
-        let now = Instant::now();
-        let time_elapsed = now.duration_since(self.start_time);
+    // XXX: Should return a more accurate speed instead of average speed
+    pub fn speed(&self, time_elapsed: &Duration) -> f64 {
         let ftime_elapsed = time_elapsed.as_secs() as f64
-            + f64::from(time_elapsed.subsec_nanos()) / NANOS_PER_SEC as f64;
-        let speed = self.current as f64 / ftime_elapsed; // XXX: Time elapsed should be shorter than since the beginning
-        let time_left = if speed > 0.0 {
+            + f64::from(time_elapsed.subsec_nanos()) / f64::from(NANOS_PER_SEC);
+        self.current as f64 / ftime_elapsed
+    }
+
+    pub fn time_left(&self, speed: f64) -> f64 {
+        if speed > 0.0 {
             1.0 / speed * (self.max - self.current) as f64
         } else {
             0.0
-        };
-        let ratio = if self.max > 0 {
-            self.current as f32 / self.max as f32
+        }
+    }
+
+    pub fn ratio(&self) -> f64 {
+        if self.max > 0 {
+            self.current as f64 / self.max as f64
         } else {
             0.0
-        };
+        }
+    }
 
+    pub fn render(&mut self) {
+        let now = Instant::now();
+
+        // Refresh rate
+        if now.duration_since(self.last_time) >= self.refresh_rate {
+            self.draw();
+            self.last_time = Instant::now();
+        }
+    }
+
+    /// Draws the progress bar
+    fn draw(&self) {
+        let now = Instant::now();
+        let time_elapsed = now.duration_since(self.start_time);
+
+        // Speed calculation
+        let speed = self.speed(&time_elapsed);
+        let time_left = self.time_left(speed);
+        let ratio = self.ratio();
+
+        // Width calculation
         let tty_width = tty::width();
         let half_width = tty_width / 2;
-        let bar_width = half_width as f32 - 22.0; // half_width - "1000MiB/s 59m [>] 100%"
+        let bar_width = half_width as f64 - 22.0; // half_width - "1000MiB/s 59m [>] 100%"
         let left_width = half_width - 27; // half_width - " <action> " ... " 1000MiB/1000MiB "
         let right_width = half_width + 17; // half_width + " 1000MiB/1000MiB "
         let current_width = (ratio * bar_width).round();
@@ -103,7 +133,8 @@ impl<'a> ProgressBar<'a> {
                 "{:<left_width$.left_width$}{:<right_width$.right_width$}",
                 self.target.unwrap_or(""),
                 if !self.is_finished
-                    && (time_elapsed.as_secs() > 0 || time_elapsed.subsec_nanos() > 250_000_000)
+                    && (time_elapsed.as_secs() > 0
+                        || time_elapsed.subsec_nanos() > NANOS_PER_SEC / 4)
                 {
                     // Print bar only after 0.25s
                     format!(" {current:>7.7}/{max:<7.7} {speed:>7.7}/s {time_left:>3.3} [{phantom:=<current_width$.width$}>{phantom:-<remaining_width$.width$}] {percent:>3.3}%",
@@ -145,7 +176,7 @@ impl<'a> Default for ProgressBar<'a> {
     }
 }
 
-/// Returnes a human-readable string for a given value in bytes.
+/// Returns a human-readable string for a given value in bytes.
 fn humanize_bytes(mut bytes: f64) -> String {
     for unit in &BYTES_UNITS {
         if bytes <= 2048.0 {
@@ -156,7 +187,7 @@ fn humanize_bytes(mut bytes: f64) -> String {
     String::from("???")
 }
 
-/// Returnes a human-readable string for a given value in seconds.
+/// Returns a human-readable string for a given value in seconds.
 fn humanize_time(mut time: f64) -> String {
     for unit in &TIME_UNITS {
         if time <= 60.0 {

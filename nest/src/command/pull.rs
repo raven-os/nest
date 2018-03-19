@@ -22,7 +22,7 @@ pub fn pull(config: &Config) {
 
             match r {
                 Ok(_) => break,
-                Err(e) => eprintln!("Error when pulling \"{}\": {}.", repo.name(), e),
+                Err(e) => eprintln!("{}: can't pull \"{}\": {}.", red!("error:"), repo.name(), e),
             }
         }
     }

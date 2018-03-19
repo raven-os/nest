@@ -19,7 +19,6 @@
 #![cfg_attr(feature = "cargo-clippy", warn(mutex_integer))]
 #![cfg_attr(feature = "cargo-clippy", warn(pub_enum_variant_names))]
 #![cfg_attr(feature = "cargo-clippy", warn(range_plus_one))]
-#![cfg_attr(feature = "cargo-clippy", warn(stutter))]
 #![cfg_attr(feature = "cargo-clippy", warn(use_debug))]
 #![cfg_attr(feature = "cargo-clippy", warn(used_underscore_binding))]
 #![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
@@ -34,3 +33,4 @@ extern crate serde_json as json;
 pub mod config;
 pub mod repository;
 pub mod package;
+pub mod query;
