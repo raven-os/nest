@@ -49,12 +49,14 @@ pub struct Config {
 
 static DEFAULT_CACHE_DIR: &'static str = "/var/lib/nest/cache/";
 static DEFAULT_INSTALLATION_DIR: &'static str = "/tmp/";
+static DEFAULT_PROXY_PORT: i64 = 4554;
 
 impl Config {
     /// Creates a default configuration.
     ///
     /// The default configuration is:
     /// * Cache path: `/var/lib/nest/cache/`
+    /// * Installation path: `/tmp/`
     ///
     /// All other fields are empty.
     ///
@@ -77,6 +79,12 @@ impl Config {
                     Config::get_or_default_str(conf_map, "cache_dir", DEFAULT_CACHE_DIR);
                 let install_path =
                     Config::get_or_default_str(conf_map, "install_dir", DEFAULT_INSTALLATION_DIR);
+                let _proxy_port = Config::get_or_default_primitive(
+                    conf_map,
+                    "proxy_port",
+                    DEFAULT_PROXY_PORT,
+                    toml::value::Value::as_integer,
+                );
                 Config {
                     cache: PathBuf::from(cache_path),
                     installation_dir: PathBuf::from(install_path),
