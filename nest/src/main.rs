@@ -20,11 +20,15 @@
 
 extern crate ansi_term;
 extern crate clap;
+#[macro_use]
+extern crate lazy_static;
 extern crate libc;
 extern crate libnest;
+extern crate regex;
 
 #[macro_use]
 mod tty;
+mod query;
 mod command;
 mod progressbar;
 
@@ -111,7 +115,7 @@ fn main() {
     if matches.subcommand_matches("pull").is_some() {
         command::pull::pull(&config);
     } else if let Some(matches) = matches.subcommand_matches("install") {
-        command::install::install(matches);
+        command::install::install(&config, matches);
     } else if let Some(matches) = matches.subcommand_matches("uninstall") {
         command::uninstall::uninstall(matches);
     } else if let Some(matches) = matches.subcommand_matches("search") {

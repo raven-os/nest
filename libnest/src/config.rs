@@ -13,7 +13,6 @@
 
 extern crate toml;
 
-use std::slice::Iter;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::Read;
@@ -43,12 +42,12 @@ use repository::Repository;
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Config {
     cache: PathBuf,
-    installation_dir: PathBuf,
+    download_path: PathBuf,
     repositories: Vec<Repository>,
 }
 
 static DEFAULT_CACHE_DIR: &'static str = "/var/lib/nest/cache/";
-static DEFAULT_INSTALLATION_DIR: &'static str = "/tmp/";
+static DEFAULT_DOWNLOAD_DIR: &'static str = "/tmp/nest/download/";
 static DEFAULT_PROXY_PORT: i64 = 4554;
 
 impl Config {
@@ -56,11 +55,12 @@ impl Config {
     ///
     /// The default configuration is:
     /// * Cache path: `/var/lib/nest/cache/`
-    /// * Installation path: `/tmp/`
+    /// * Download path: `/tmp/nest/download/`
     ///
     /// All other fields are empty.
     ///
-    /// Example:
+    /// # Examples
+    ///
     /// ```
     /// # extern crate libnest;
     /// use libnest::config::Config;
@@ -77,8 +77,8 @@ impl Config {
             if let Some(conf_map) = conf.as_table() {
                 let cache_path =
                     Config::get_or_default_str(conf_map, "cache_dir", DEFAULT_CACHE_DIR);
-                let install_path =
-                    Config::get_or_default_str(conf_map, "install_dir", DEFAULT_INSTALLATION_DIR);
+                let download_path =
+                    Config::get_or_default_str(conf_map, "download_dir", DEFAULT_DOWNLOAD_DIR);
                 let _proxy_port = Config::get_or_default_primitive(
                     conf_map,
                     "proxy_port",
@@ -87,7 +87,7 @@ impl Config {
                 );
                 Config {
                     cache: PathBuf::from(cache_path),
-                    installation_dir: PathBuf::from(install_path),
+                    download_path: PathBuf::from(download_path),
                     repositories: Vec::new(),
                 }
             } else {
@@ -106,33 +106,30 @@ impl Config {
     /// # extern crate libnest;
     ///
     /// use std::path::Path;
-    /// # use libnest::config::Config;
+    /// use libnest::config::Config;
     ///
     /// let config = Config::default();
-    ///
     /// assert_eq!(config.cache(), Path::new("/var/lib/nest/cache"));
     /// ```
     #[inline]
     pub fn cache(&self) -> &Path {
         &self.cache
     }
-
-    /// Returns the path of the installation directory.
+    /// Returns the path where packages are downloaded.
     ///
     /// # Examples
+    ///
     /// ```
     /// # extern crate libnest;
-    ///
     /// use std::path::Path;
-    /// # use libnest::config::Config;
+    /// use libnest::config::Config;
     ///
     /// let config = Config::default();
-    ///
-    /// assert_eq!(config.installation_dir(), Path::new("/tmp"));
+    /// assert_eq!(config.download_path(), Path::new("/tmp/nest/download/"));
     /// ```
     #[inline]
-    pub fn installation_dir(&self) -> &PathBuf {
-        &self.installation_dir
+    pub fn download_path(&self) -> &Path {
+        &self.download_path
     }
 
     /// Yields a reference to the underlying `Vec<Repository>`
@@ -146,7 +143,6 @@ impl Config {
     ///
     /// let mut config = Config::new();
     /// let repo = Repository::new(&config, "local");
-    ///
     /// assert!(config.repositories().is_empty());
     /// ```
     #[inline]
@@ -254,7 +250,7 @@ impl Default for Config {
         println!("Using default configuration");
         Config {
             cache: PathBuf::from(DEFAULT_CACHE_DIR),
-            installation_dir: PathBuf::from(DEFAULT_INSTALLATION_DIR),
+            download_path: PathBuf::from(DEFAULT_DOWNLOAD_DIR),
             repositories: Vec::new(),
         }
     }
