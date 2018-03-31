@@ -9,8 +9,8 @@ use std::fmt::{self, Display, Formatter};
 
 pub use self::cache::CacheQuery;
 
-use repository::Repository;
 use package::Package;
+use repository::Repository;
 
 /// The result of a query.
 ///

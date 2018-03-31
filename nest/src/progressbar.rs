@@ -1,5 +1,5 @@
-use std::time::{Duration, Instant};
 use std::io::{self, Write};
+use std::time::{Duration, Instant};
 
 use tty;
 

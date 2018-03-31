@@ -11,8 +11,8 @@
 //!
 //! It also provides a way to load a `Config` from a TOML file.
 
-use std::path::{Path, PathBuf};
 use std::convert::TryFrom;
+use std::path::{Path, PathBuf};
 
 use curl;
 use curl::easy::Easy;

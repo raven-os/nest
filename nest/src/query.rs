@@ -2,11 +2,13 @@
 
 use regex::Regex;
 
-use libnest::query::CacheQuery;
 use libnest::config::Config;
+use libnest::query::CacheQuery;
 
 lazy_static! {
-    static ref REGEX_PACKAGE_QUERY: Regex = Regex::new(r"^((?P<repository>[a-z]+)::)?((?P<category>[a-z\-]+)/)?(?P<package>([a-z_]+))$").unwrap();
+    static ref REGEX_PACKAGE_QUERY: Regex = Regex::new(
+        r"^((?P<repository>[a-z]+)::)?((?P<category>[a-z\-]+)/)?(?P<package>([a-z_]+))$"
+    ).unwrap();
 }
 
 pub fn cache<'a>(config: &'a Config, arg: &str) -> Option<CacheQuery<'a>> {
