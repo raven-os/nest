@@ -28,13 +28,13 @@ extern crate regex;
 
 #[macro_use]
 mod tty;
-mod query;
 mod command;
 mod progressbar;
+mod query;
 
+use clap::{App, AppSettings, Arg, SubCommand};
 use libnest::config::Config;
 use libnest::repository::{Mirror, Repository};
-use clap::{App, AppSettings, Arg, SubCommand};
 
 fn main() {
     //XXX: Debug values before we have a config file

@@ -4,16 +4,16 @@
 //!
 //! It lets you create new repositories, fill them with mirrors and interact with them.
 
-use std::str;
-use std::error;
 use std::convert::TryFrom;
-use std::io::{self, Write};
-use std::path::{Path, PathBuf};
+use std::error;
 use std::fmt::{self, Display, Formatter};
 use std::fs::{self, File};
+use std::io::{self, Write};
+use std::path::{Path, PathBuf};
+use std::str;
 
-use json;
 use curl::easy::Easy;
+use json;
 
 use config::Config;
 use package::Package;

@@ -1,8 +1,8 @@
 use std::io;
 
 use config::Config;
-use repository::{CategoryCache, Repository};
 use query::QueriedPackage;
+use repository::{CategoryCache, Repository};
 
 /// A query to search through the local cache of available packages.
 ///
