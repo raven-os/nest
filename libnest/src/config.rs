@@ -17,8 +17,8 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::Read;
 use std;
-use std::path::{Path, PathBuf};
 use std::convert::TryFrom;
+use std::path::{Path, PathBuf};
 
 use curl;
 use curl::easy::Easy;

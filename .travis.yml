@@ -1,26 +1,27 @@
 language: rust
-rust: nightly
-sudo: false
 cache: cargo
+matrix:
+    include:
+      - rust: nightly-2018-03-26
+        env:
+          - CLIPPY_VERSION=0.0.190
+        before_script:
+          - rustup component add rustfmt-preview
+          - cargo install clippy --version "$CLIPPY_VERSION" || echo "Clippy already installed"
 
-before_script:
-    - rustup component add rustfmt-preview
-    - cargo install cargo-update || echo "Cargo-update already installed"
-    - cargo install clippy || echo "Clippy already installed"
-    - cargo-install-update install-update clippy
+        script:
+          - cargo fmt --all -- --write-mode=diff
+          - cargo clippy --all -- -D clippy
+          - cargo build --all
+          - cargo test --all
 
-script:
-    - cargo fmt --all -- --write-mode=diff
-    - cargo clippy --all -- -D clippy
-    - cargo build --all
-    - cargo test --all
+        # Discord notifications
+        after_success:
+          - wget https://gist.githubusercontent.com/Arignir/d9a8cb72c9a7c95b7981df56a188d5de/raw/3703660d851e81444c2ce26b3d41d98081e2f2c4/discord.sh
+          - chmod +x discord.sh
+          - ./discord.sh success "$DISCORD_WEBHOOK_URL"
+        after_failure:
+          - wget https://gist.githubusercontent.com/Arignir/d9a8cb72c9a7c95b7981df56a188d5de/raw/3703660d851e81444c2ce26b3d41d98081e2f2c4/discord.sh
+          - chmod +x discord.sh
+          - ./discord.sh failure "$DISCORD_WEBHOOK_URL"
 
-# Discord notifications
-after_success:
-    - wget https://gist.githubusercontent.com/Arignir/d9a8cb72c9a7c95b7981df56a188d5de/raw/3703660d851e81444c2ce26b3d41d98081e2f2c4/discord.sh
-    - chmod +x discord.sh
-    - ./discord.sh success "$DISCORD_WEBHOOK_URL"
-after_failure:
-    - wget https://gist.githubusercontent.com/Arignir/d9a8cb72c9a7c95b7981df56a188d5de/raw/3703660d851e81444c2ce26b3d41d98081e2f2c4/discord.sh
-    - chmod +x discord.sh
-    - ./discord.sh failure "$DISCORD_WEBHOOK_URL"
