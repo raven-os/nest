@@ -161,14 +161,17 @@ impl Config {
         &mut self.repositories
     }
 
+    #[inline]
     pub(crate) fn set_cache(&mut self, cache: PathBuf) {
         self.cache = cache;
     }
 
+    #[inline]
     pub(crate) fn set_download_path(&mut self, download: PathBuf) {
         self.download_path = download;
     }
 
+    #[inline]
     pub(crate) fn set_repositories(&mut self, repos: Vec<Repository>) {
         self.repositories = repos;
     }

@@ -62,6 +62,7 @@ impl ConfigParser {
     }
 
     /// Replaces the default values in the Config instance with the ones found in the TOML file
+    #[inline]
     pub(crate) fn load_to_config(&self, conf: &mut Config) {
         self.parse_paths_mut(conf);
         if let Some(repos) = self.parse_repositories(conf) {
@@ -69,6 +70,7 @@ impl ConfigParser {
         }
     }
 
+    #[inline]
     fn parse_paths_mut(&self, conf: &mut Config) {
         if let Some(paths) = self.get_table("paths") {
             ConfigParser::set_path(conf, Config::set_cache, paths, "cache_dir");
@@ -76,6 +78,7 @@ impl ConfigParser {
         }
     }
 
+    #[inline]
     fn set_path<F>(conf: &mut Config, mut func: F, table: &toml::value::Table, key: &str)
     where
         F: FnMut(&mut Config, PathBuf),
@@ -85,6 +88,7 @@ impl ConfigParser {
         }
     }
 
+    #[inline]
     fn get_str<'a>(table: &'a toml::value::Table, key: &str) -> Option<&'a str> {
         table.get(key)?.as_str()
     }
@@ -116,7 +120,8 @@ impl ConfigParser {
         Some(repo_vec)
     }
 
-    pub(crate) fn get_table(&self, key: &str) -> Option<&toml::value::Table> {
+    #[inline]
+    fn get_table(&self, key: &str) -> Option<&toml::value::Table> {
         self.toml
             .as_table()
             .unwrap()
