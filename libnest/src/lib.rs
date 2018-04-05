@@ -24,6 +24,7 @@
 #![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
 #![feature(conservative_impl_trait)]
 #![feature(try_from)]
+#![feature(catch_expr)]
 
 extern crate curl;
 #[macro_use]
@@ -34,3 +35,4 @@ pub mod config;
 pub mod package;
 pub mod query;
 pub mod repository;
+mod config_parser;

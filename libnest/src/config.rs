@@ -11,12 +11,6 @@
 //!
 //! It also provides a way to load a `Config` from a TOML file.
 
-extern crate toml;
-
-use std::fs::File;
-use std::io::BufReader;
-use std::io::prelude::Read;
-use std;
 use std::convert::TryFrom;
 use std::path::{Path, PathBuf};
 
@@ -24,6 +18,10 @@ use curl;
 use curl::easy::Easy;
 
 use repository::Repository;
+use config_parser::ConfigParser;
+
+static DEFAULT_CACHE_DIR: &'static str = "/var/lib/nest/cache/";
+static DEFAULT_DOWNLOAD_DIR: &'static str = "/tmp/nest/download/";
 
 /// A handle to represent a configuration for Nest.
 ///
@@ -46,10 +44,6 @@ pub struct Config {
     repositories: Vec<Repository>,
 }
 
-static DEFAULT_CACHE_DIR: &'static str = "/var/lib/nest/cache/";
-static DEFAULT_DOWNLOAD_DIR: &'static str = "/tmp/nest/download/";
-static DEFAULT_PROXY_PORT: i64 = 4554;
-
 impl Config {
     /// Creates a default configuration.
     ///
@@ -69,32 +63,26 @@ impl Config {
     /// ```
     #[inline]
     pub fn new() -> Config {
-        let config_file_path = "Config.toml";
+        Config::default()
+    }
 
-        if let Ok(conf) = Config::parse_conf(config_file_path) {
-            println!("Using {} as config file", config_file_path);
-
-            if let Some(conf_map) = conf.as_table() {
-                let cache_path =
-                    Config::get_or_default_str(conf_map, "cache_dir", DEFAULT_CACHE_DIR);
-                let download_path =
-                    Config::get_or_default_str(conf_map, "download_dir", DEFAULT_DOWNLOAD_DIR);
-                let _proxy_port = Config::get_or_default_primitive(
-                    conf_map,
-                    "proxy_port",
-                    DEFAULT_PROXY_PORT,
-                    toml::value::Value::as_integer,
-                );
-                Config {
-                    cache: PathBuf::from(cache_path),
-                    download_path: PathBuf::from(download_path),
-                    repositories: Vec::new(),
-                }
-            } else {
-                return Config::default();
+    /// Loads a configuration from a TOML file
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate libnest;
+    /// use libnest::config::Config;
+    ///
+    /// let mut config = Config::new();
+    /// config.load_conf("Config.toml");
+    /// ```
+    pub fn load_conf(&mut self, path: &str) {
+        match ConfigParser::new(path) {
+            Ok(conf_parser) => {
+                conf_parser.load_to_config(self);
             }
-        } else {
-            Config::default()
+            Err(e) => eprintln!("Error when parsing configuration file '{}': {}", path, e),
         }
     }
 
@@ -108,7 +96,7 @@ impl Config {
     /// use std::path::Path;
     /// use libnest::config::Config;
     ///
-    /// let config = Config::default();
+    /// let config = Config::new();
     /// assert_eq!(config.cache(), Path::new("/var/lib/nest/cache"));
     /// ```
     #[inline]
@@ -124,7 +112,7 @@ impl Config {
     /// use std::path::Path;
     /// use libnest::config::Config;
     ///
-    /// let config = Config::default();
+    /// let config = Config::new();
     /// assert_eq!(config.download_path(), Path::new("/tmp/nest/download/"));
     /// ```
     #[inline]
@@ -172,82 +160,23 @@ impl Config {
     pub fn repositories_mut(&mut self) -> &mut Vec<Repository> {
         &mut self.repositories
     }
-}
 
-#[derive(Debug)]
-enum ParseConfError {
-    Io(std::io::Error),
-    Deserialize(toml::de::Error),
-}
-
-impl Config {
-    fn get_or_default_str<'a>(
-        conf_map: &'a toml::value::Table,
-        key: &'static str,
-        default: &'a str,
-    ) -> &'a str {
-        if let Some(value) = conf_map.get(key) {
-            if let Some(value_real_type) = value.as_str() {
-                value_real_type
-            } else {
-                eprintln!(
-                    "Config: wrong type for '{}', defaulting to '{}'",
-                    key, default
-                );
-                default
-            }
-        } else {
-            default
-        }
+    pub(crate) fn set_cache(&mut self, cache: PathBuf) {
+        self.cache = cache;
     }
 
-    fn get_or_default_primitive<T, U>(
-        conf_map: &toml::value::Table,
-        key: &str,
-        default: U,
-        func: T,
-    ) -> U
-    where
-        T: Fn(&toml::value::Value) -> Option<U>,
-        U: std::fmt::Display,
-    {
-        if let Some(value) = conf_map.get(key) {
-            if let Some(value_real_type) = func(value) {
-                value_real_type
-            } else {
-                eprintln!(
-                    "Config: wrong type for '{}', defaulting to '{}'",
-                    key, default
-                );
-                default
-            }
-        } else {
-            default
-        }
+    pub(crate) fn set_download_path(&mut self, download: PathBuf) {
+        self.download_path = download;
     }
 
-    fn parse_conf(conf_path: &str) -> Result<toml::Value, ParseConfError> {
-        match File::open(conf_path) {
-            Ok(file) => {
-                let mut file_reader = BufReader::new(file);
-                let mut content = String::new();
-                if let Err(e) = file_reader.read_to_string(&mut content) {
-                    return Err(ParseConfError::Io(e));
-                }
-                match content.parse::<toml::Value>() {
-                    Ok(v) => Ok(v),
-                    Err(e) => Err(ParseConfError::Deserialize(e)),
-                }
-            }
-            Err(e) => Err(ParseConfError::Io(e)),
-        }
+    pub(crate) fn set_repositories(&mut self, repos: Vec<Repository>) {
+        self.repositories = repos;
     }
 }
 
 impl Default for Config {
     #[inline]
     fn default() -> Self {
-        println!("Using default configuration");
         Config {
             cache: PathBuf::from(DEFAULT_CACHE_DIR),
             download_path: PathBuf::from(DEFAULT_DOWNLOAD_DIR),

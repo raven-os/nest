@@ -1,3 +1,15 @@
-# cache_dir =  "/var/lib/nest/cache"
-# install_dir = "/tmp"
-# proxy_port = 5
+[paths]
+cache_dir = "caca"
+# download_dir = "/tmp/nest/download/"
+
+# repositories
+[repositories.stable]
+mirrors = [
+    "http://localhost:8000"
+]
+
+[repositories.unstable]
+mirrors = [
+    "olala",
+    "isd",
+]

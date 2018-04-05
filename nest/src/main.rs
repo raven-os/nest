@@ -32,18 +32,12 @@ mod command;
 mod progressbar;
 mod query;
 
-use clap::{App, AppSettings, Arg, SubCommand};
 use libnest::config::Config;
-use libnest::repository::{Mirror, Repository};
+use clap::{App, AppSettings, Arg, SubCommand};
 
 fn main() {
-    //XXX: Debug values before we have a config file
     let mut config = Config::new();
-    let mut repo = Repository::new(&config, "stable");
-    let mirror = Mirror::new("http://localhost:8000");
-
-    repo.mirrors_mut().push(mirror);
-    config.repositories_mut().push(repo);
+    config.load_conf("Config.toml");
 
     let matches = App::new("nest")
         .template("{usage}\n{about}\n\nFLAGS\n{flags}\n\nOPERATIONS\n{subcommands}")
