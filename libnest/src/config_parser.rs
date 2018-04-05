@@ -1,3 +1,11 @@
+//! Nest configuration file parsing implementation.
+//!
+//! All the code fetching the settings from the config file is here, in
+//! ConfigParser::load_to_config.
+//! If settings are added, this is where code must be added to fetch these new settings.
+//!
+//!
+
 extern crate toml;
 
 use std::fs::File;
@@ -10,7 +18,6 @@ use std::fmt;
 use config::Config;
 use repository::{Mirror, Repository};
 
-#[derive(Debug)]
 pub(crate) enum ParseConfError {
     Io(io::Error),
     Deserialize(toml::de::Error),
@@ -27,12 +34,19 @@ impl fmt::Display for ParseConfError {
     }
 }
 
+/// A struct holding the TOML main value
 #[derive(Debug)]
 pub(crate) struct ConfigParser {
     toml: toml::value::Value,
 }
 
 impl ConfigParser {
+    /// Creates a ConfigParser instance from a TOML file
+    ///
+    /// self.toml is considered safe to cast to a table after this
+    /// ```
+    /// self.toml.as_table().unwrap();
+    /// ```
     pub(crate) fn new(path: &str) -> Result<ConfigParser, ParseConfError> {
         match ConfigParser::read_conf(path) {
             Ok(conf) => {
@@ -47,6 +61,7 @@ impl ConfigParser {
         }
     }
 
+    /// Replaces the default values in the Config instance with the ones found in the TOML file
     pub(crate) fn load_to_config(&self, conf: &mut Config) {
         self.parse_paths_mut(conf);
         if let Some(repos) = self.parse_repositories(conf) {
@@ -74,6 +89,7 @@ impl ConfigParser {
         table.get(key)?.as_str()
     }
 
+    /// Returns a new repository read from the TOML file
     fn parse_repo(
         &self,
         repo_name: &str,
@@ -88,6 +104,7 @@ impl ConfigParser {
         Some(repo)
     }
 
+    /// Returns a new list of repositories read from the TOML file
     fn parse_repositories(&self, conf: &Config) -> Option<Vec<Repository>> {
         let repositories = self.get_table("repositories")?;
         let mut repo_vec = Vec::with_capacity(repositories.len());
