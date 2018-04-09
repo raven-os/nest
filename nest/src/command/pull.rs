@@ -1,3 +1,5 @@
+//! Functions to execute the `pull` operation.
+
 use libnest::config::Config;
 
 use progressbar::ProgressBar;

@@ -1,6 +1,9 @@
+//! Functions to interact with the an ANSI terminal.
+
 use libc::{ioctl, STDOUT_FILENO, TIOCGWINSZ};
 use std::os::raw::*;
 
+/// Returned a formatted strings that will appear in the given color (bold) in an ANSI terminal.
 macro_rules! color {
     ($color:expr, $( $arg:expr ), *) => {
         {
@@ -16,21 +19,25 @@ macro_rules! color {
     };
 }
 
+/// Returned a formatted strings that will appear in green (bold) in an ANSI terminal.
 macro_rules! green {
     ( $var:expr ) => (color!(Green, "{}", $var));
     ( $( $arg:expr ), * ) => (color!(Green, $( $arg ),* ));
 }
 
+/// Returned a formatted strings that will appear in purple (bold) in an ANSI terminal.
 macro_rules! purple {
     ( $var:expr ) => (color!(Purple, "{}", $var));
     ( $( $arg:expr ), * ) => (color!(Purple, $( $arg ),* ));
 }
 
+/// Returned a formatted strings that will appear in cyan (bold) in an ANSI terminal.
 macro_rules! cyan {
     ( $var:expr ) => (color!(Cyan, "{}", $var));
     ( $( $arg:expr ), * ) => (color!(Cyan, $( $arg ),* ));
 }
 
+/// Returned a formatted strings that will appear in red (bold) in an ANSI terminal.
 macro_rules! red {
     ( $var:expr ) => (color!(Red, "{}", $var));
     ( $( $arg:expr ), * ) => (color!(Red, $( $arg ),* ));
