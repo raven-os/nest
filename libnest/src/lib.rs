@@ -22,7 +22,6 @@
 #![cfg_attr(feature = "cargo-clippy", warn(use_debug))]
 #![cfg_attr(feature = "cargo-clippy", warn(used_underscore_binding))]
 #![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
-#![feature(conservative_impl_trait)]
 #![feature(try_from)]
 #![feature(catch_expr)]
 
