@@ -26,6 +26,11 @@ macro_rules! purple {
     ( $( $arg:expr ), * ) => (color!(Purple, $( $arg ),* ));
 }
 
+macro_rules! cyan {
+    ( $var:expr ) => (color!(Cyan, "{}", $var));
+    ( $( $arg:expr ), * ) => (color!(Cyan, $( $arg ),* ));
+}
+
 macro_rules! red {
     ( $var:expr ) => (color!(Red, "{}", $var));
     ( $( $arg:expr ), * ) => (color!(Red, $( $arg ),* ));

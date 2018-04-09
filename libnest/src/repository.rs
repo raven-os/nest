@@ -237,6 +237,7 @@ impl Repository {
 
         // Download data from mirror
         handle.url(&pull_url)?;
+        handle.fail_on_error(true)?;
         handle.progress(true)?;
         {
             let mut transfer = handle.transfer();
@@ -349,6 +350,7 @@ impl Repository {
     {
         // Create download directory
         let mut path = config.download_path().to_path_buf();
+        path.push(self.name());
         path.push(package.category());
         fs::create_dir_all(path.clone())?;
 
@@ -359,11 +361,11 @@ impl Repository {
         // Init download
         let mut file = File::create(path)?;
         let mut handle = Easy::try_from(config)?;
-        let pull_url =
-            mirror.url().to_string() + "/download/" + package.category() + "/" + package.name();
+        let pull_url = format!("{}/download/{}/{}", mirror.url(), package.category(), package.name());
 
         // Download data from mirror
         handle.url(&pull_url)?;
+        handle.fail_on_error(true)?;
         handle.progress(true)?;
         {
             let mut transfer = handle.transfer();
