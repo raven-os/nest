@@ -10,17 +10,26 @@
 /// # Examples
 ///
 /// ```
+/// # extern crate libnest;
+/// use libnest::system::System;
+///
 /// let system = System::get();
 /// ```
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct System {
-
-}
+pub struct System {}
 
 impl System {
+    /// Returns an instance of the current system.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate libnest;
+    /// use libnest::system::System;
+    ///
+    /// let system = System::get();
+    /// ```
     pub fn get() -> System {
-        System {
-
-        }
+        System {}
     }
 }

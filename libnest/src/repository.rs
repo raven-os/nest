@@ -361,7 +361,12 @@ impl Repository {
         // Init download
         let mut file = File::create(path)?;
         let mut handle = Easy::try_from(config)?;
-        let pull_url = format!("{}/download/{}/{}", mirror.url(), package.category(), package.name());
+        let pull_url = format!(
+            "{}/download/{}/{}",
+            mirror.url(),
+            package.category(),
+            package.name()
+        );
 
         // Download data from mirror
         handle.url(&pull_url)?;
