@@ -1,3 +1,5 @@
+//! Functions to execute the `install` operation.
+
 use std::process;
 
 use clap::ArgMatches;

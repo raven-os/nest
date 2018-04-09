@@ -1,4 +1,4 @@
-//! Provides function to resolve package name
+//! Functions to resolve package's name
 
 use regex::Regex;
 

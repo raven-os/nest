@@ -1,3 +1,5 @@
+//! Types and functions to add a progress bar while a background action takes place.
+
 use std::io::{self, Write};
 use std::time::{Duration, Instant};
 

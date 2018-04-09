@@ -1,3 +1,18 @@
+//! Nest is Raven's package manager.
+//!
+//! This implementation is the CLI (command-line interface) version of Nest. A GUI version may be
+//! added one day.
+//!
+//! Nest's implementation is split in two parts: `nest` (where you are), and
+//! [`libnest`](../libnest/index.html).
+//!
+//! [`libnest`](../libnest/index.html) is a back-end library common to all front-end of Nest (CLI or GUI) that does most of the
+//! stuff. It handles repositories, mirrors, etc. It downloads, installs and removes packages.
+//! It's the big one.
+//!
+//! `nest`, in contrast, is only a front-end to [`libnest`](../libnest/index.html). It's a command-line tool to interact
+//! with [`libnest`](../libnest/index.html). and maintain the system.
+
 // Rustc
 #![warn(missing_debug_implementations)]
 #![warn(trivial_casts)]
@@ -27,10 +42,10 @@ extern crate libnest;
 extern crate regex;
 
 #[macro_use]
-mod tty;
-mod command;
-mod progressbar;
-mod query;
+pub mod tty;
+pub mod command;
+pub mod progressbar;
+pub mod query;
 
 use libnest::config::Config;
 use clap::{App, AppSettings, Arg, SubCommand};
