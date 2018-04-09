@@ -1,7 +1,7 @@
 //! Nest configuration file parsing implementation.
 //!
 //! All the code fetching the settings from the config file is here, in
-//! ConfigParser::load_to_config.
+//! `ConfigParser::load_to_config`.
 //! If settings are added, this is where code must be added to fetch these new settings.
 //!
 //!
@@ -44,9 +44,7 @@ impl ConfigParser {
     /// Creates a ConfigParser instance from a TOML file
     ///
     /// self.toml is considered safe to cast to a table after this
-    /// ```
-    /// self.toml.as_table().unwrap();
-    /// ```
+    /// `self.toml.as_table().unwrap();`
     pub(crate) fn new(path: &str) -> Result<ConfigParser, ParseConfError> {
         match ConfigParser::read_conf(path) {
             Ok(conf) => {
