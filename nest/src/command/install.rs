@@ -31,7 +31,7 @@ pub fn install(config: &Config, matches: &ArgMatches) {
                             len => {
                                 eprintln!("{} found {} packages with name \"{}\". Please be more explicit.", red!("error:"), len, purple!(target));
                                 for (i, package) in packages.iter().enumerate() {
-                                    if i == 10 && len - 10 > 0 {
+                                    if i == 10 && len > 10 {
                                         println!("and {} more...", len - 10);
                                         break;
                                     }
@@ -70,7 +70,7 @@ pub fn install(config: &Config, matches: &ArgMatches) {
     for (i, target) in targets.iter().enumerate() {
         let repo = target.repository();
         for mirror in repo.mirrors() {
-            let target_name = format!("{} ({}/{})", target.content().name(), i + 1, len);
+            let target_name = format!("({}/{}) {}", i + 1, len, target.content().name());
             let mut pb = ProgressBar::new(String::from("download"));
             pb.set_target(&target_name);
 
@@ -93,4 +93,8 @@ pub fn install(config: &Config, matches: &ArgMatches) {
             }
         }
     }
+
+    // Install packages
+
+    // TODO
 }

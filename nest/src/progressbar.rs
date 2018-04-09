@@ -9,6 +9,7 @@ static BYTES_UNITS: [&'static str; 9] =
 static TIME_UNITS: [&'static str; 3] = ["s", "m", "h"];
 
 pub enum ProgressResult {
+    Running,
     Ok,
     Err,
 }
@@ -41,7 +42,7 @@ impl<'a> ProgressBar<'a> {
             is_finished: false,
             start_time: Instant::now(),
             last_time: Instant::now(),
-            status: ProgressResult::Ok,
+            status: ProgressResult::Running,
             refresh_rate: Duration::new(0, NANOS_PER_SEC / 10),
         }
     }
@@ -126,6 +127,7 @@ impl<'a> ProgressBar<'a> {
         print!(
             "\r{}{}",
             match self.status {
+                ProgressResult::Running => cyan!(" {:>8.8} ", self.action),
                 ProgressResult::Ok => green!(" {:>8.8} ", self.action),
                 ProgressResult::Err => red!(" {:>8.8} ", self.action),
             },
