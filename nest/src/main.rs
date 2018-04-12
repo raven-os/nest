@@ -54,7 +54,7 @@ use clap::{App, AppSettings, Arg, SubCommand};
 
 fn main() {
     let mut config = Config::new();
-    config.load_conf(Path::new("Config.toml"));
+    config.load(Path::new("Config.toml"));
 
     let matches = App::new("nest")
         .template("{usage}\n{about}\n\nFLAGS\n{flags}\n\nOPERATIONS\n{subcommands}")

@@ -18,7 +18,7 @@ use curl;
 use curl::easy::Easy;
 
 use repository::Repository;
-use config_parser::ConfigParser;
+use config_parser::{ConfigParser,ParseConfError};
 
 static DEFAULT_CACHE_DIR: &'static str = "/var/lib/nest/cache/";
 static DEFAULT_DOWNLOAD_DIR: &'static str = "/var/lib/nest/download/";
@@ -76,14 +76,15 @@ impl Config {
     /// use std::path::Path;
     ///
     /// let mut config = Config::new();
-    /// config.load_conf(Path::new("Config.toml"));
+    /// config.load(Path::new("Config.toml"));
     /// ```
-    pub fn load_conf(&mut self, path: &Path) {
+    pub fn load(&mut self, path: &Path) -> Option<ParseConfError> {
         match ConfigParser::new(path) {
             Ok(conf_parser) => {
                 conf_parser.load_to_config(self);
-            }
-            Err(e) => eprintln!("Error when parsing configuration file '{:?}': {}", path, e),
+                None
+            },
+            Err(e) => Some(e),
         }
     }
 

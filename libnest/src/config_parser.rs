@@ -19,7 +19,8 @@ use std::path::Path;
 use config::Config;
 use repository::{Mirror, Repository};
 
-pub(crate) enum ParseConfError {
+#[derive(Debug)]
+pub enum ParseConfError {
     Io(io::Error),
     Deserialize(toml::de::Error),
     Str(String),
