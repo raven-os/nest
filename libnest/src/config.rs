@@ -17,8 +17,8 @@ use std::path::{Path, PathBuf};
 use curl;
 use curl::easy::Easy;
 
+use config_parser::{ConfigParser, ParseConfError};
 use repository::Repository;
-use config_parser::{ConfigParser,ParseConfError};
 
 static DEFAULT_CACHE_DIR: &'static str = "/var/lib/nest/cache/";
 static DEFAULT_DOWNLOAD_DIR: &'static str = "/var/lib/nest/download/";
@@ -83,7 +83,7 @@ impl Config {
             Ok(conf_parser) => {
                 conf_parser.load_to_config(self);
                 None
-            },
+            }
             Err(e) => Some(e),
         }
     }

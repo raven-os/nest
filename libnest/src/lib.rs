@@ -31,8 +31,8 @@ extern crate serde_derive;
 extern crate serde_json as json;
 
 pub mod config;
+mod config_parser;
 pub mod package;
 pub mod query;
 pub mod repository;
-mod config_parser;
 pub mod system;

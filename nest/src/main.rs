@@ -49,8 +49,8 @@ pub mod query;
 
 use std::path::Path;
 
-use libnest::config::Config;
 use clap::{App, AppSettings, Arg, SubCommand};
+use libnest::config::Config;
 
 fn main() {
     let mut config = Config::new();

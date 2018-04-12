@@ -8,13 +8,13 @@
 
 extern crate toml;
 
+use std::fmt;
 use std::fs::File;
+use std::io;
 use std::io::BufReader;
 use std::io::prelude::Read;
-use std::io;
-use std::path::PathBuf;
-use std::fmt;
 use std::path::Path;
+use std::path::PathBuf;
 
 use config::Config;
 use repository::{Mirror, Repository};
