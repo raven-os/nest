@@ -21,7 +21,7 @@ use repository::Repository;
 use config_parser::ConfigParser;
 
 static DEFAULT_CACHE_DIR: &'static str = "/var/lib/nest/cache/";
-static DEFAULT_DOWNLOAD_DIR: &'static str = "/tmp/nest/download/";
+static DEFAULT_DOWNLOAD_DIR: &'static str = "/var/lib/nest/download/";
 
 /// A handle to represent a configuration for Nest.
 ///
@@ -49,7 +49,7 @@ impl Config {
     ///
     /// The default configuration is:
     /// * Cache path: `/var/lib/nest/cache/`
-    /// * Download path: `/tmp/nest/download/`
+    /// * Download path: `/var/lib/nest/download/`
     ///
     /// All other fields are empty.
     ///
@@ -113,7 +113,7 @@ impl Config {
     /// use libnest::config::Config;
     ///
     /// let config = Config::new();
-    /// assert_eq!(config.download_path(), Path::new("/tmp/nest/download/"));
+    /// assert_eq!(config.download_path(), Path::new("/var/lib/nest/download/"));
     /// ```
     #[inline]
     pub fn download_path(&self) -> &Path {
