@@ -73,16 +73,17 @@ impl Config {
     /// ```
     /// # extern crate libnest;
     /// use libnest::config::Config;
+    /// use std::path::Path;
     ///
     /// let mut config = Config::new();
-    /// config.load_conf("Config.toml");
+    /// config.load_conf(Path::new("Config.toml"));
     /// ```
-    pub fn load_conf(&mut self, path: &str) {
+    pub fn load_conf(&mut self, path: &Path) {
         match ConfigParser::new(path) {
             Ok(conf_parser) => {
                 conf_parser.load_to_config(self);
             }
-            Err(e) => eprintln!("Error when parsing configuration file '{}': {}", path, e),
+            Err(e) => eprintln!("Error when parsing configuration file '{:?}': {}", path, e),
         }
     }
 

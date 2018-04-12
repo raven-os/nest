@@ -14,6 +14,7 @@ use std::io::prelude::Read;
 use std::io;
 use std::path::PathBuf;
 use std::fmt;
+use std::path::Path;
 
 use config::Config;
 use repository::{Mirror, Repository};
@@ -45,10 +46,9 @@ impl ConfigParser {
     ///
     /// self.toml is considered safe to cast to a table after this
     /// `self.toml.as_table().unwrap();`
-    pub(crate) fn new(path: &str) -> Result<ConfigParser, ParseConfError> {
+    pub(crate) fn new(path: &Path) -> Result<ConfigParser, ParseConfError> {
         match ConfigParser::read_conf(path) {
             Ok(conf) => {
-                println!("Using {} as config file", path);
                 if conf.is_table() {
                     Ok(ConfigParser { toml: conf })
                 } else {
@@ -127,7 +127,7 @@ impl ConfigParser {
             .and_then(|value| value.as_table())
     }
 
-    fn read_conf(conf_path: &str) -> Result<toml::Value, ParseConfError> {
+    fn read_conf(conf_path: &Path) -> Result<toml::Value, ParseConfError> {
         match File::open(conf_path) {
             Ok(file) => {
                 let mut file_reader = BufReader::new(file);

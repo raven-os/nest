@@ -47,12 +47,14 @@ pub mod command;
 pub mod progressbar;
 pub mod query;
 
+use std::path::Path;
+
 use libnest::config::Config;
 use clap::{App, AppSettings, Arg, SubCommand};
 
 fn main() {
     let mut config = Config::new();
-    config.load_conf("Config.toml");
+    config.load_conf(Path::new("Config.toml"));
 
     let matches = App::new("nest")
         .template("{usage}\n{about}\n\nFLAGS\n{flags}\n\nOPERATIONS\n{subcommands}")
