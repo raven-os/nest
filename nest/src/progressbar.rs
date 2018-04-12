@@ -10,13 +10,16 @@ static BYTES_UNITS: [&'static str; 9] =
     ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
 static TIME_UNITS: [&'static str; 3] = ["s", "m", "h"];
 
-pub enum ProgressResult {
+/// Current state of a progress bar.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum ProgressState {
     Running,
     Ok,
     Err,
 }
 
 /// A progres bar and all it's metadatas.
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct ProgressBar<'a> {
     current: usize,
     max: usize,
@@ -25,7 +28,7 @@ pub struct ProgressBar<'a> {
     is_finished: bool,
     start_time: Instant,
     last_time: Instant,
-    status: ProgressResult,
+    status: ProgressState,
     refresh_rate: Duration,
 }
 
@@ -44,7 +47,7 @@ impl<'a> ProgressBar<'a> {
             is_finished: false,
             start_time: Instant::now(),
             last_time: Instant::now(),
-            status: ProgressResult::Running,
+            status: ProgressState::Running,
             refresh_rate: Duration::new(0, NANOS_PER_SEC / 10),
         }
     }
@@ -129,9 +132,9 @@ impl<'a> ProgressBar<'a> {
         print!(
             "\r{}{}",
             match self.status {
-                ProgressResult::Running => cyan!(" {:>8.8} ", self.action),
-                ProgressResult::Ok => green!(" {:>8.8} ", self.action),
-                ProgressResult::Err => red!(" {:>8.8} ", self.action),
+                ProgressState::Running => cyan!(" {:>8.8} ", self.action),
+                ProgressState::Ok => green!(" {:>8.8} ", self.action),
+                ProgressState::Err => red!(" {:>8.8} ", self.action),
             },
             format!(
                 "{:<left_width$.left_width$}{:<right_width$.right_width$}",
@@ -166,8 +169,8 @@ impl<'a> ProgressBar<'a> {
     pub fn finish<T, U>(&mut self, status: &Result<T, U>) {
         self.is_finished = true;
         match *status {
-            Ok(_) => self.status = ProgressResult::Ok,
-            Err(_) => self.status = ProgressResult::Err,
+            Ok(_) => self.status = ProgressState::Ok,
+            Err(_) => self.status = ProgressState::Err,
         }
         self.draw();
         println!();
