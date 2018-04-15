@@ -1,10 +1,15 @@
-use std::io;
+//! Queries to search between available packages.
+//!
+//! This module provides a structure to look for manifests that are stored in the local cache.
+
+use std::error;
 
 use config::Config;
-use query::QueriedPackage;
-use repository::{CategoryCache, Repository};
+use package::Package;
+use repository::Repository;
+use repository::CategoryCache;
 
-/// A query to search through the local cache of available packages.
+/// A query to search through the local cache of available manifests.
 ///
 /// Remember that local cache is updated only when pulling the corresponding
 /// repository.
@@ -13,14 +18,18 @@ use repository::{CategoryCache, Repository};
 ///
 /// ```no_run
 /// # extern crate libnest;
+/// extern crate url;
+///
+/// use url::Url;
 /// use libnest::config::Config;
 /// use libnest::repository::{Repository, Mirror};
 /// use libnest::query::CacheQuery;
 ///
+/// # fn func() -> Result<(), url::ParseError> {
 /// // Let's setup a basic configuration
 /// let mut config = Config::new();
-/// let mut repo = Repository::new(&config, "stable");
-/// let mirror = Mirror::new("http://example.com");
+/// let mut repo = Repository::new("stable");
+/// let mirror = Mirror::new(Url::parse("http://stable.raven-os.org")?);
 ///
 /// repo.mirrors_mut().push(mirror);
 /// config.repositories_mut().push(repo);
@@ -33,9 +42,11 @@ use repository::{CategoryCache, Repository};
 ///
 /// // Analyze result
 /// match query.perform() {
-///     Ok(packages) => println!("{} result(s) found", packages.len()),
+///     Ok(manifests) => println!("{} result(s) found", manifests.len()),
 ///     Err(e) => eprintln!("error: {}", e),
 /// }
+/// # Ok(())
+/// # }
 /// ```
 #[derive(Debug)]
 pub struct CacheQuery<'a> {
@@ -46,7 +57,7 @@ pub struct CacheQuery<'a> {
 }
 
 impl<'a> CacheQuery<'a> {
-    /// Creates a new query, with empty parameters.
+    /// Creates a new, empty, query.
     ///
     /// # Examples
     ///
@@ -58,6 +69,7 @@ impl<'a> CacheQuery<'a> {
     /// let config = Config::new();
     /// let mut query = CacheQuery::new(&config);
     /// ```
+    #[inline]
     pub fn new(config: &'a Config) -> CacheQuery<'a> {
         CacheQuery {
             config,
@@ -82,6 +94,7 @@ impl<'a> CacheQuery<'a> {
     /// // Will look for all packages named "gcc"
     /// query.with_name("gcc");
     /// ```
+    #[inline]
     pub fn with_name(&mut self, name: &str) {
         self.name = Some(name.to_string());
     }
@@ -101,6 +114,7 @@ impl<'a> CacheQuery<'a> {
     /// // Will look for all packages in the category "sys-devel"
     /// query.with_category("sys-devel");
     /// ```
+    #[inline]
     pub fn with_category(&mut self, category: &str) {
         self.category = Some(category.to_string());
     }
@@ -120,14 +134,15 @@ impl<'a> CacheQuery<'a> {
     /// // Will look for all packages in the repository "stable".
     /// query.with_repository("stable");
     /// ```
+    #[inline]
     pub fn with_repository(&mut self, repository: &str) {
         self.repository = Some(repository.to_string());
     }
 
     /// Performs the search with the given critera.
     ///
-    /// The search may success, giving a (possibly empty) vector of
-    /// [`QueriedPackage`](struct.QueriedPackage.html), or fail, mostly for IO reasons.
+    /// The search may succeed, giving a (possibly empty) vector of
+    /// [`Package`](struct.Package.html)s, or fail, mostly for IO reasons.
     ///
     /// # Filesystem
     ///
@@ -137,8 +152,8 @@ impl<'a> CacheQuery<'a> {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # use std::io;
-    /// # fn test() -> Result<(), io::Error> {
+    /// # use std::error;
+    /// # fn test() -> Result<(), Box<error::Error>> {
     /// use libnest::config::Config;
     /// use libnest::query::CacheQuery;
     ///
@@ -155,9 +170,9 @@ impl<'a> CacheQuery<'a> {
     /// # }
     /// ```
     // XXX: Improve search performances when repository/category is known.
-    // Or maybe search for a better way of caching stuff?
-    pub fn perform(&self) -> Result<Vec<QueriedPackage<'a>>, io::Error> {
-        let mut vec: Vec<QueriedPackage> = Vec::new();
+    // Or maybe with a better way of caching stuff?
+    pub fn perform(&self) -> Result<Vec<Package<'a>>, Box<error::Error>> {
+        let mut vec: Vec<Package> = Vec::new();
 
         let repositories: Vec<&Repository> = self.config
             .repositories()
@@ -171,7 +186,7 @@ impl<'a> CacheQuery<'a> {
             })
             .collect();
         for repo in repositories {
-            let categories: Vec<CategoryCache> = repo.cache()
+            let categories: Vec<CategoryCache> = repo.cache(self.config)
                 .categories()?
                 .filter(|&(ref name, _)| {
                     if let Some(ref cat_name) = self.category {
@@ -184,15 +199,15 @@ impl<'a> CacheQuery<'a> {
                 .collect();
             for category in categories {
                 vec.append(&mut category
-                    .packages()?
-                    .filter(|package| {
+                    .manifests()?
+                    .filter(|cache| {
                         if let Some(ref package_name) = self.name {
-                            package.content().name() == package_name
+                            cache.manifest().metadatas().name() == package_name
                         } else {
                             true
                         }
                     })
-                    .map(|package| QueriedPackage::from(repo, package.content().clone()))
+                    .map(|cache| Package::from(repo, cache.manifest().clone()))
                     .collect());
             }
         }

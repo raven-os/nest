@@ -40,6 +40,7 @@ extern crate lazy_static;
 extern crate libc;
 extern crate libnest;
 extern crate regex;
+extern crate url;
 
 #[macro_use]
 pub mod tty;
@@ -50,12 +51,13 @@ pub mod query;
 use clap::{App, AppSettings, Arg, SubCommand};
 use libnest::config::Config;
 use libnest::repository::{Mirror, Repository};
+use url::Url;
 
 fn main() {
     //XXX: Debug values before we have a config file
     let mut config = Config::new();
-    let mut repo = Repository::new(&config, "stable");
-    let mirror = Mirror::new("http://localhost:8000");
+    let mut repo = Repository::new("stable");
+    let mirror = Mirror::new(Url::parse("http://localhost:8000").unwrap());
 
     repo.mirrors_mut().push(mirror);
     config.repositories_mut().push(repo);
@@ -123,7 +125,7 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("list")
-                .about("Lists informations about installed packages")
+                .about("Lists installed packages")
         )
         .get_matches();
 

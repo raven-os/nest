@@ -19,6 +19,11 @@ use curl::easy::Easy;
 
 use repository::Repository;
 
+lazy_static! {
+    static ref NEST_PATH_CACHE: &'static Path = Path::new("/var/lib/nest/cache/");
+    static ref NEST_PATH_DOWNLOAD: &'static Path = Path::new("/var/lib/nest/download/");
+}
+
 /// A handle to represent a configuration for Nest.
 ///
 /// This handle is given as parameter to each libnest's function so they can use a custom configuration even in an asychronous context.
@@ -45,7 +50,7 @@ impl Config {
     ///
     /// The default configuration is:
     /// * Cache path: `/var/lib/nest/cache/`
-    /// * Download path: `/tmp/nest/download/`
+    /// * Download path: `/var/lib/nest/download/`
     ///
     /// All other fields are empty.
     ///
@@ -60,8 +65,8 @@ impl Config {
     #[inline]
     pub fn new() -> Config {
         Config {
-            cache: PathBuf::from("/var/lib/nest/cache/"),
-            download_path: PathBuf::from("/var/lib/nest/download/"),
+            cache: PathBuf::from(*NEST_PATH_CACHE),
+            download_path: PathBuf::from(*NEST_PATH_DOWNLOAD),
             repositories: Vec::new(),
         }
     }
@@ -83,7 +88,7 @@ impl Config {
         &self.cache
     }
 
-    /// Returns the path where packages are downloaded.
+    /// Returns the path where packages's datas are downloaded.
     ///
     /// # Examples
     ///
@@ -109,7 +114,7 @@ impl Config {
     /// use libnest::repository::Repository;
     ///
     /// let mut config = Config::new();
-    /// let repo = Repository::new(&config, "local");
+    /// let repo = Repository::new("local");
     /// assert!(config.repositories().is_empty());
     /// ```
     #[inline]
@@ -127,7 +132,7 @@ impl Config {
     /// use libnest::repository::Repository;
     ///
     /// let mut config = Config::new();
-    /// let repo = Repository::new(&config, "local");
+    /// let repo = Repository::new("local");
     ///
     /// let repos = config.repositories_mut();
     ///
