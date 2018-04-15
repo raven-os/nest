@@ -6,8 +6,8 @@ use std::error;
 
 use config::Config;
 use package::Package;
-use repository::Repository;
 use repository::CategoryCache;
+use repository::Repository;
 
 /// A query to search through the local cache of available manifests.
 ///

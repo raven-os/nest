@@ -7,22 +7,22 @@
 mod cache;
 mod mirror;
 
-use std::fmt::{self, Display, Formatter};
-use std::str;
-use std::fs::{self, File};
-use std::error;
-use std::path::Path;
 use std::convert::TryFrom;
+use std::error;
+use std::fmt::{self, Display, Formatter};
+use std::fs::{self, File};
 use std::io::Write;
+use std::path::Path;
+use std::str;
 
-use json;
 use curl::easy::Easy;
+use json;
 
 use config::Config;
 use package::Manifest;
 
+pub use self::cache::{CategoryCache, ManifestCache, RepositoryCache};
 pub use self::mirror::Mirror;
-pub use self::cache::{RepositoryCache, CategoryCache, ManifestCache};
 
 /// A repository.
 ///
@@ -238,9 +238,14 @@ impl Repository {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn pull<F>(&self, config: &Config, mirror: &Mirror, mut cb: F) -> Result<(), Box<error::Error>>
-        where
-            F: FnMut(f64, f64) -> bool,
+    pub fn pull<F>(
+        &self,
+        config: &Config,
+        mirror: &Mirror,
+        mut cb: F,
+    ) -> Result<(), Box<error::Error>>
+    where
+        F: FnMut(f64, f64) -> bool,
     {
         let mut data = Vec::new();
         let mut handle = Easy::try_from(config)?;
@@ -259,7 +264,6 @@ impl Repository {
             transfer.progress_function(|a: f64, b: f64, _: f64, _: f64| cb(b, a))?;
             transfer.perform()?;
         }
-
 
         // Parse data to UTF8 and deserialize it
         let utf8_data = str::from_utf8(&data)?;

@@ -48,9 +48,7 @@ impl Mirror {
     /// ```
     #[inline]
     pub fn new(url: Url) -> Mirror {
-        Mirror {
-            url
-        }
+        Mirror { url }
     }
 
     /// Returns a reference to the mirror's [`Url`](https://docs.rs/url/1.7.0/url/struct.Url.html).

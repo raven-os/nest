@@ -11,8 +11,7 @@ use progressbar::ProgressBar;
 pub fn pull(config: &Config) {
     let len = config.repositories().len();
     for (i, repo) in config.repositories().iter().enumerate() {
-        for mirror in repo.mirrors()
-        {
+        for mirror in repo.mirrors() {
             let mut pb = ProgressBar::new(String::from("pull"));
             pb.set_target(format!("({}/{}) {}", i + 1, len, repo.name()));
 
@@ -26,7 +25,12 @@ pub fn pull(config: &Config) {
 
             match r {
                 Ok(_) => break,
-                Err(e) => eprintln!("{}: couldn't pull \"{}\": {}.", red!("error"), repo.name(), e),
+                Err(e) => eprintln!(
+                    "{}: couldn't pull \"{}\": {}.",
+                    red!("error"),
+                    repo.name(),
+                    e
+                ),
             }
         }
     }

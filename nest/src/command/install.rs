@@ -73,13 +73,24 @@ pub fn install(config: &Config, matches: &ArgMatches) {
 
             if let Some(_) = target_path.parent().map(|x| fs::create_dir_all(x).ok()) {
                 let mut pb = ProgressBar::new(String::from("download"));
-                pb.set_target(format!("({}/{}) {}", i + 1, len, target.manifest().metadatas().name()));
+                pb.set_target(format!(
+                    "({}/{}) {}",
+                    i + 1,
+                    len,
+                    target.manifest().metadatas().name()
+                ));
 
-                let r = repo.download(config, mirror, target.manifest(), &target_path, |cur: f64, max: f64| {
-                    pb.set_max(max as usize);
-                    pb.update(cur as usize);
-                    true
-                });
+                let r = repo.download(
+                    config,
+                    mirror,
+                    target.manifest(),
+                    &target_path,
+                    |cur: f64, max: f64| {
+                        pb.set_max(max as usize);
+                        pb.update(cur as usize);
+                        true
+                    },
+                );
 
                 pb.finish(&r);
 

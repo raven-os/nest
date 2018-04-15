@@ -1,8 +1,8 @@
 //! Types to represent the cache of a repository on local disk
+use std::error;
 use std::fs::{self, File};
 use std::io::{self, Read, Write};
 use std::path::{Path, PathBuf};
-use std::error;
 
 use package::Manifest;
 

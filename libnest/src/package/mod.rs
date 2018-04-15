@@ -18,11 +18,11 @@ mod manifest;
 pub use self::manifest::Manifest;
 pub use self::manifest::Metadatas;
 
-use std::fmt::{self, Formatter, Display};
+use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
 
-use repository::Repository;
 use config::Config;
+use repository::Repository;
 
 /// Represents package as a whole: it's manifest, it's datas and it's build file.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
