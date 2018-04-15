@@ -71,7 +71,7 @@ pub fn install(config: &Config, matches: &ArgMatches) {
         for mirror in repo.mirrors() {
             let target_path = target.data_path(config);
 
-            if let Some(_) = target_path.parent().map(|x| fs::create_dir_all(x).ok()) {
+            if target_path.parent().map(|x| fs::create_dir_all(x).ok()).is_some() {
                 let mut pb = ProgressBar::new(String::from("download"));
                 pb.set_target(format!(
                     "({}/{}) {}",
