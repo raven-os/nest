@@ -28,8 +28,13 @@ extern crate curl;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json as json;
+extern crate toml;
+extern crate url;
+#[macro_use]
+extern crate lazy_static;
 
 pub mod config;
 pub mod package;
 pub mod query;
 pub mod repository;
+pub mod system;

@@ -1,7 +1,11 @@
+//! Functions to execute the `install` operation.
+
+use std::fs;
 use std::process;
 
 use clap::ArgMatches;
 use libnest::config::Config;
+use libnest::system::System;
 use progressbar::ProgressBar;
 
 use query;
@@ -11,85 +15,108 @@ use query;
 /// This will go through all targets, checks that the package exists, resolves the dependency graph,
 /// ensures the installation will not break anything or delete any file and installs the package.
 pub fn install(config: &Config, matches: &ArgMatches) {
+    let sys = System::current();
     let mut targets = Vec::new();
 
-    // Search cache for existing packages, ensuring the target exists.
+    // Search in the cache for manifests, ensuring the target exists.
     for target in matches.values_of("PACKAGE").unwrap() {
         match query::cache(config, target) {
             Some(query) => {
                 match query.perform() {
-                    Ok(mut packages) => {
-                        match packages.len() {
+                    Ok(mut manifests) => {
+                        match manifests.len() {
                             0 => {
-                                eprintln!("{} couldn't find a package with name \"{}\". Try \"nest search\" to look for an existing package.",
-                                red!("error:"),
-                                purple!(target),
-                            );
+                                eprintln!("{}: couldn't find a package with name \"{}\". Try \"{}\" to look for an existing package.",
+                                    red!("error"),
+                                    purple!(target),
+                                    purple!("nest search")
+                                );
                                 process::exit(1);
                             }
-                            1 => targets.append(&mut packages),
+                            1 => targets.append(&mut manifests),
                             len => {
-                                eprintln!("{} found {} packages with name \"{}\". Please be more explicit.", red!("error:"), len, purple!(target));
-                                for (i, package) in packages.iter().enumerate() {
-                                    if i == 10 && len - 10 > 0 {
-                                        println!("and {} more...", len - 10);
+                                eprintln!("{}: found {} packages with name \"{}\". Please be more explicit.", red!("error"), len, purple!(target));
+                                for (i, package) in manifests.iter().enumerate() {
+                                    eprintln!("\t- {}", package);
+                                    if i == 9 && len > 10 {
+                                        eprintln!("and {} more...", len - 10);
                                         break;
                                     }
-                                    println!("\t- {}", package);
                                 }
                                 process::exit(1);
                             }
                         }
-                        for package in packages {
-                            println!(
-                                "\t{}::{}/{}",
-                                package.repository().name(),
-                                package.content().category(),
-                                package.content().name()
-                            );
-                        }
                     }
                     Err(e) => {
-                        eprintln!("{} couldn't go through cache: {}.", red!("error:"), e);
+                        eprintln!("{}: couldn't go through cache: {}.", red!("error"), e);
                         process::exit(1);
                     }
                 }
             }
             None => {
                 eprintln!(
-                    "{} target \"{}\" isn't a valid target name.",
-                    red!("error:"),
-                    purple!(target)
+                    "{}: target \"{}\" isn't a valid target name.",
+                    red!("error"),
+                    purple!(target),
                 );
+                process::exit(1);
             }
         }
     }
 
-    // Download packages
+    // Download and install packages
     let len = targets.len();
     for (i, target) in targets.iter().enumerate() {
         let repo = target.repository();
         for mirror in repo.mirrors() {
-            let target_name = format!("{} ({}/{})", target.content().name(), i + 1, len);
-            let mut pb = ProgressBar::new(String::from("download"));
-            pb.set_target(&target_name);
+            let target_path = target.data_path(config);
 
-            let r = repo.download(config, mirror, target.content(), |cur: f64, max: f64| {
-                pb.set_max(max as usize);
-                pb.update(cur as usize);
-                true
-            });
+            if target_path
+                .parent()
+                .map(|x| fs::create_dir_all(x).ok())
+                .is_some()
+            {
+                let mut pb = ProgressBar::new(String::from("download"));
+                pb.set_target(format!(
+                    "({}/{}) {}",
+                    i + 1,
+                    len,
+                    target.manifest().metadatas().name()
+                ));
 
-            pb.finish(&r);
+                let r = repo.download(
+                    config,
+                    mirror,
+                    target.manifest(),
+                    &target_path,
+                    |cur: f64, max: f64| {
+                        pb.set_max(max as usize);
+                        pb.update(cur as usize);
+                        true
+                    },
+                );
 
-            match r {
-                Ok(_) => break,
-                Err(e) => eprintln!(
-                    "{}: failed to download \"{}\": {}.",
-                    red!("error:"),
-                    target,
-                    e
-                ),
+                pb.finish(&r);
+
+                match r {
+                    Ok(_) => {
+                        sys.install(&target_path);
+                        break;
+                    }
+                    Err(e) => eprintln!(
+                        "{}: failed to download \"{}\": {}.",
+                        red!("error"),
+                        purple!(target),
+                        e
+                    ),
+                }
+            } else {
+                eprintln!(
+                    "{}: couldn't create \"{}\".",
+                    red!("error"),
+                    purple!(target_path.display()),
+                );
+                process::exit(1);
             }
         }
     }

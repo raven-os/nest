@@ -1,3 +1,5 @@
+//! Types and functions to add a progress bar while a background action takes place.
+
 use std::io::{self, Write};
 use std::time::{Duration, Instant};
 
@@ -8,40 +10,44 @@ static BYTES_UNITS: [&'static str; 9] =
     ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
 static TIME_UNITS: [&'static str; 3] = ["s", "m", "h"];
 
-pub enum ProgressResult {
+/// Current state of a progress bar.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum ProgressState {
+    Running,
     Ok,
     Err,
 }
 
 /// A progres bar and all it's metadatas.
-pub struct ProgressBar<'a> {
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct ProgressBar {
     current: usize,
     max: usize,
     action: String,
-    target: Option<&'a str>,
+    target: String,
     is_finished: bool,
     start_time: Instant,
     last_time: Instant,
-    status: ProgressResult,
+    status: ProgressState,
     refresh_rate: Duration,
 }
 
-impl<'a> ProgressBar<'a> {
+impl ProgressBar {
     /// Creates a new `ProgressBar` with default values.
     ///
     /// The given `action` parameter is the name of the action done. It will be printed with
     /// colors, and cannot go over 8 chars.
     /// Maximum value is 100.
-    pub fn new(action: String) -> ProgressBar<'a> {
+    pub fn new(action: String) -> ProgressBar {
         ProgressBar {
             current: 0,
             max: 100,
             action,
-            target: None,
+            target: String::new(),
             is_finished: false,
             start_time: Instant::now(),
             last_time: Instant::now(),
-            status: ProgressResult::Ok,
+            status: ProgressState::Running,
             refresh_rate: Duration::new(0, NANOS_PER_SEC / 10),
         }
     }
@@ -49,8 +55,8 @@ impl<'a> ProgressBar<'a> {
     /// Set the name of the target of the current action.
     ///
     /// This will be printed after the action, in white.
-    pub fn set_target(&mut self, target: &'a str) {
-        self.target = Some(target);
+    pub fn set_target(&mut self, target: String) {
+        self.target = target;
     }
 
     /// Set the maximum value for the progress bar.
@@ -126,12 +132,13 @@ impl<'a> ProgressBar<'a> {
         print!(
             "\r{}{}",
             match self.status {
-                ProgressResult::Ok => green!(" {:>8.8} ", self.action),
-                ProgressResult::Err => red!(" {:>8.8} ", self.action),
+                ProgressState::Running => cyan!(" {:>8.8} ", self.action),
+                ProgressState::Ok => green!(" {:>8.8} ", self.action),
+                ProgressState::Err => red!(" {:>8.8} ", self.action),
             },
             format!(
                 "{:<left_width$.left_width$}{:<right_width$.right_width$}",
-                self.target.unwrap_or(""),
+                &self.target,
                 if !self.is_finished
                     && (time_elapsed.as_secs() > 0
                         || time_elapsed.subsec_nanos() > NANOS_PER_SEC / 4)
@@ -162,16 +169,16 @@ impl<'a> ProgressBar<'a> {
     pub fn finish<T, U>(&mut self, status: &Result<T, U>) {
         self.is_finished = true;
         match *status {
-            Ok(_) => self.status = ProgressResult::Ok,
-            Err(_) => self.status = ProgressResult::Err,
+            Ok(_) => self.status = ProgressState::Ok,
+            Err(_) => self.status = ProgressState::Err,
         }
         self.draw();
         println!();
     }
 }
 
-impl<'a> Default for ProgressBar<'a> {
-    fn default() -> ProgressBar<'a> {
+impl Default for ProgressBar {
+    fn default() -> ProgressBar {
         ProgressBar::new(String::from("default"))
     }
 }

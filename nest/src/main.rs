@@ -1,3 +1,18 @@
+//! Nest is Raven's package manager.
+//!
+//! This implementation is the CLI (command-line interface) version of Nest. A GUI version may be
+//! added one day.
+//!
+//! Nest's implementation is split in two parts: `nest` (where you are), and
+//! [`libnest`](../libnest/index.html).
+//!
+//! [`libnest`](../libnest/index.html) is a back-end library common to all front-end of Nest (CLI or GUI) that does most of the
+//! stuff. It handles repositories, mirrors, etc. It downloads, installs and removes packages.
+//! It's the big one.
+//!
+//! `nest`, in contrast, is only a front-end to [`libnest`](../libnest/index.html). It's a command-line tool to interact
+//! with [`libnest`](../libnest/index.html). and maintain the system.
+
 // Rustc
 #![warn(missing_debug_implementations)]
 #![warn(trivial_casts)]
@@ -25,22 +40,24 @@ extern crate lazy_static;
 extern crate libc;
 extern crate libnest;
 extern crate regex;
+extern crate url;
 
 #[macro_use]
-mod tty;
-mod command;
-mod progressbar;
-mod query;
+pub mod tty;
+pub mod command;
+pub mod progressbar;
+pub mod query;
 
 use clap::{App, AppSettings, Arg, SubCommand};
 use libnest::config::Config;
 use libnest::repository::{Mirror, Repository};
+use url::Url;
 
 fn main() {
     //XXX: Debug values before we have a config file
     let mut config = Config::new();
-    let mut repo = Repository::new(&config, "stable");
-    let mirror = Mirror::new("http://localhost:8000");
+    let mut repo = Repository::new("stable");
+    let mirror = Mirror::new(Url::parse("http://localhost:8000").unwrap());
 
     repo.mirrors_mut().push(mirror);
     config.repositories_mut().push(repo);
@@ -108,7 +125,7 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("list")
-                .about("Lists informations about installed packages")
+                .about("Lists installed packages")
         )
         .get_matches();
 
