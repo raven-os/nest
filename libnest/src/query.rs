@@ -2,7 +2,7 @@
 //!
 //! This module provides a structure to look for manifests that are stored in the local cache.
 
-use std::error;
+use failure::Error;
 
 use config::Config;
 use package::Package;
@@ -171,7 +171,7 @@ impl<'a> CacheQuery<'a> {
     /// ```
     // XXX: Improve search performances when repository/category is known.
     // Or maybe with a better way of caching stuff?
-    pub fn perform(&self) -> Result<Vec<Package<'a>>, Box<error::Error>> {
+    pub fn perform(&self) -> Result<Vec<Package<'a>>, Error> {
         let mut vec: Vec<Package> = Vec::new();
 
         let repositories: Vec<&Repository> = self.config

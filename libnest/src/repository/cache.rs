@@ -1,12 +1,13 @@
 //! Types to represent the cache of a repository on local disk
-use std::error;
 use std::fs::{self, File};
-use std::io::{self, Read, Write};
+use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
-use package::Manifest;
-
+use failure::{Error, ResultExt};
 use toml;
+
+use error::CacheErrorKind;
+use package::Manifest;
 
 /// The cache of a repository on the filesystem.
 ///
@@ -58,15 +59,21 @@ impl RepositoryCache {
     ///
     /// This operation assumes the current user has the rights to read the local cache.
     #[inline]
-    pub fn categories(&self) -> Result<impl Iterator<Item = (String, CategoryCache)>, io::Error> {
+    pub fn categories(&self) -> Result<impl Iterator<Item = (String, CategoryCache)>, Error> {
         let mut vec = Vec::new();
 
-        for category_path in fs::read_dir(&self.path)? {
-            let dir = category_path?;
-            if let Ok(name) = dir.file_name().into_string() {
-                vec.push((name, CategoryCache::new(dir.path())));
+        let r: Result<_, Error> = do catch {
+            if self.path.exists() {
+                for category_path in fs::read_dir(&self.path)? {
+                    let dir = category_path?;
+                    if let Ok(name) = dir.file_name().into_string() {
+                        vec.push((name, CategoryCache::new(dir.path())));
+                    }
+                }
             }
-        }
+            ()
+        };
+        r.context(CacheErrorKind::IO(self.path.display().to_string()))?;
         Ok(vec.into_iter())
     }
 
@@ -76,12 +83,12 @@ impl RepositoryCache {
     ///
     /// This operation assumes the current user has the rights to write the local cache.
     #[inline]
-    pub(crate) fn update(&self, manifest: &Manifest) -> Result<ManifestCache, Box<error::Error>> {
+    pub(crate) fn update(&self, manifest: &Manifest) -> Result<ManifestCache, Error> {
         let mut path = self.path.clone();
 
         // Create category folder
         path.push(manifest.metadatas().category());
-        fs::create_dir_all(path.clone())?;
+        fs::create_dir_all(path.clone()).context(CacheErrorKind::IO(path.display().to_string()))?;
 
         // Update manifest
         CategoryCache::new(path).update(manifest)
@@ -116,7 +123,7 @@ impl CategoryCache {
     ///
     /// This operation assumes the current user has the rights to read the local cache.
     #[inline]
-    pub fn manifest(&self, name: &str) -> Option<Result<ManifestCache, Box<error::Error>>> {
+    pub fn manifest(&self, name: &str) -> Option<Result<ManifestCache, Error>> {
         let mut path = self.path.clone();
 
         path.push(name);
@@ -134,11 +141,14 @@ impl CategoryCache {
     ///
     /// This operation assumes the current user has the rights to read the local cache.
     #[inline]
-    pub fn manifests(&self) -> Result<impl Iterator<Item = ManifestCache>, Box<error::Error>> {
+    pub fn manifests(&self) -> Result<impl Iterator<Item = ManifestCache>, Error> {
         let mut vec = Vec::new();
+        let context = CacheErrorKind::IO(self.path.display().to_string());
 
-        for manifest_path in fs::read_dir(&self.path)? {
-            vec.push(ManifestCache::load(manifest_path?.path())?);
+        for manifest_path in fs::read_dir(&self.path).context(context.clone())? {
+            vec.push(ManifestCache::load(
+                manifest_path.context(context.clone())?.path(),
+            )?);
         }
         Ok(vec.into_iter())
     }
@@ -148,14 +158,20 @@ impl CategoryCache {
     /// # Filesystem
     ///
     /// This operation assumes the current user has the rights to write the local cache.
-    pub(crate) fn update(&self, manifest: &Manifest) -> Result<ManifestCache, Box<error::Error>> {
+    pub(crate) fn update(&self, manifest: &Manifest) -> Result<ManifestCache, Error> {
         let mut path = self.path.clone();
         path.push(manifest.metadatas().name());
+        let io_context = CacheErrorKind::IO(path.display().to_string());
+        let serde_context = CacheErrorKind::Serialize(path.display().to_string());
 
         // Write content
-        let mut file = File::create(&path)?;
-        file.write_all(toml::to_string_pretty(manifest)?.as_bytes())?;
-        file.write_all(&[b'\n'])?;
+        let mut file = File::create(&path).context(io_context.clone())?;
+        file.write_all(
+            toml::to_string_pretty(manifest)
+                .context(serde_context.clone())?
+                .as_bytes(),
+        ).context(io_context.clone())?;
+        file.write_all(&[b'\n']).context(io_context)?;
         ManifestCache::load(path)
     }
 }
@@ -171,14 +187,16 @@ pub struct ManifestCache {
 
 impl ManifestCache {
     #[inline]
-    pub(crate) fn load(path: PathBuf) -> Result<ManifestCache, Box<error::Error>> {
-        let mut file = File::open(path.clone())?;
+    pub(crate) fn load(path: PathBuf) -> Result<ManifestCache, Error> {
+        let display = path.display().to_string();
+        let mut file = File::open(path.clone()).context(display.clone())?;
         let mut content = String::new();
 
-        file.read_to_string(&mut content)?;
+        file.read_to_string(&mut content)
+            .context(CacheErrorKind::IO(display.clone()))?;
         Ok(ManifestCache {
             path,
-            manifest: toml::from_str(&content)?,
+            manifest: toml::from_str(&content).context(CacheErrorKind::Deserialize(display))?,
         })
     }
 

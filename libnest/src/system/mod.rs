@@ -10,10 +10,14 @@
 //! packages on a remote installation), it might not be the case.
 
 pub mod arch;
+pub mod installer;
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+use package::Manifest;
 
 use self::arch::Arch;
+use self::installer::Installer;
 
 /// The targeted system.
 ///
@@ -29,8 +33,10 @@ use self::arch::Arch;
 /// let system = System::current();
 /// println!("Running on {}", system.arch());
 /// ```
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct System;
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
+pub struct System {
+    install_path: PathBuf,
+}
 
 impl System {
     /// Returns an instance of the current system.
@@ -45,7 +51,9 @@ impl System {
     /// ```
     #[inline]
     pub fn current() -> System {
-        System {}
+        System {
+            install_path: PathBuf::from("/"),
+        }
     }
 
     /// Returns the architecture of the targeted system.
@@ -79,8 +87,41 @@ impl System {
         }
     }
 
-    /// Installs the package located at the given path.
-    pub fn install(&self, path: &Path) {
-        println!("Installing package located at {}", path.display());
+    /// Returns a reference to the installation path for the targeted system, usually the root folder.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate libnest;
+    /// use std::path::Path;
+    /// use libnest::system::System;
+    ///
+    /// let system = System::current();
+    /// assert_eq!(system.install_path(), Path::new("/"));
+    /// ```
+    pub fn install_path(&self) -> &Path {
+        &self.install_path
+    }
+
+    /// Returns a mutable reference to the installation path for the targeted system, usually the root folder.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate libnest;
+    /// use std::path::{PathBuf, Path};
+    /// use libnest::system::System;
+    ///
+    /// let mut system = System::current();
+    /// *system.install_path_mut() = PathBuf::from("/mnt/");
+    /// assert_eq!(system.install_path(), Path::new("/mnt/"));
+    /// ```
+    pub fn install_path_mut(&mut self) -> &mut PathBuf {
+        &mut self.install_path
+    }
+
+    /// Installs the package located at the given path, following the given manifest.
+    pub fn installer<'a, 'b>(&self, path: &'a Path, manifest: &'b Manifest) -> Installer<'a, 'b> {
+        Installer::from(path, manifest)
     }
 }

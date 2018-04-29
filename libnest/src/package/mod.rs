@@ -62,7 +62,7 @@ impl<'a> Package<'a> {
         path.push(self.repository.name());
         path.push(self.manifest.metadatas().category());
         path.push(self.manifest.metadatas().name());
-        path.set_extension("tar");
+        path.set_extension("tar.gz");
         path
     }
 }

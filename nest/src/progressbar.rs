@@ -3,6 +3,7 @@
 use std::io::{self, Write};
 use std::time::{Duration, Instant};
 
+use failure::Error;
 use tty;
 
 static NANOS_PER_SEC: u32 = 1_000_000_000;
@@ -25,7 +26,6 @@ pub struct ProgressBar {
     max: usize,
     action: String,
     target: String,
-    is_finished: bool,
     start_time: Instant,
     last_time: Instant,
     status: ProgressState,
@@ -39,27 +39,32 @@ impl ProgressBar {
     /// colors, and cannot go over 8 chars.
     /// Maximum value is 100.
     pub fn new(action: String) -> ProgressBar {
+        let refresh_rate = Duration::new(0, NANOS_PER_SEC / 10);
         ProgressBar {
             current: 0,
             max: 100,
             action,
             target: String::new(),
-            is_finished: false,
             start_time: Instant::now(),
-            last_time: Instant::now(),
+            last_time: Instant::now() - refresh_rate, // Make sure the progress bar will be drawed on first update
             status: ProgressState::Running,
-            refresh_rate: Duration::new(0, NANOS_PER_SEC / 10),
+            refresh_rate,
         }
     }
 
-    /// Set the name of the target of the current action.
+    /// Sets the action that should be color-printed at the beginning of the progress bar
+    pub fn set_action(&mut self, action: String) {
+        self.action = action;
+    }
+
+    /// Sets the name of the target of the current action.
     ///
     /// This will be printed after the action, in white.
     pub fn set_target(&mut self, target: String) {
         self.target = target;
     }
 
-    /// Set the maximum value for the progress bar.
+    /// Sets the maximum value for the progress bar.
     ///
     /// `0` is a valid value.
     pub fn set_max(&mut self, max: usize) {
@@ -136,14 +141,14 @@ impl ProgressBar {
                 ProgressState::Ok => green!(" {:>8.8} ", self.action),
                 ProgressState::Err => red!(" {:>8.8} ", self.action),
             },
-            format!(
-                "{:<left_width$.left_width$}{:<right_width$.right_width$}",
-                &self.target,
-                if !self.is_finished
-                    && (time_elapsed.as_secs() > 0
-                        || time_elapsed.subsec_nanos() > NANOS_PER_SEC / 4)
-                {
-                    // Print bar only after 0.25s
+            // Draw progress bar if the operation is running since at least 0.25s
+            if self.status == ProgressState::Running
+                && (time_elapsed.as_secs() > 0 || time_elapsed.subsec_nanos() > NANOS_PER_SEC / 4)
+                && self.max > 0
+            {
+                format!(
+                    "{:<left_width$.left_width$}{:<right_width$.right_width$}",
+                    &self.target,
                     format!(" {current:>7.7}/{max:<7.7} {speed:>7.7}/s {time_left:>3.3} [{phantom:=<current_width$.width$}>{phantom:-<remaining_width$.width$}] {percent:>3.3}%",
                         current = humanize_bytes(self.current as f64),
                         max = humanize_bytes(self.max as f64),
@@ -154,23 +159,29 @@ impl ProgressBar {
                         current_width = current_width as usize,
                         remaining_width = remaining_width as usize,
                         percent = (ratio * 100.0).round() as u32,
-                    )
-                } else {
-                    String::from("")
-                },
-                left_width = left_width,
-                right_width = right_width,
-            ),
+                    ),
+                    left_width = left_width,
+                    right_width = right_width,
+                )
+            } else {
+                format!(
+                    "{:<width$.width$}",
+                    self.target.clone(),
+                    width = left_width + right_width,
+                )
+            }
         );
         io::stdout().flush().expect("Couldn't flush stdout");
     }
 
     /// Redraws the `ProgressBar` with the given status.
-    pub fn finish<T, U>(&mut self, status: &Result<T, U>) {
-        self.is_finished = true;
+    pub fn finish<T>(&mut self, status: &Result<T, Error>) {
         match *status {
             Ok(_) => self.status = ProgressState::Ok,
-            Err(_) => self.status = ProgressState::Err,
+            Err(ref e) => {
+                self.target = format!("{} - {}.", self.target, format_error_causes!(e));
+                self.status = ProgressState::Err;
+            }
         }
         self.draw();
         println!();
