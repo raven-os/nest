@@ -31,7 +31,7 @@ pub enum RepositoryErrorKind {
     AllMirrorDown,
 }
 
-/// Errors that amy occure when manipulating repositories.
+/// Errors that may occure when manipulating repositories.
 #[derive(Debug)]
 pub struct RepositoryError {
     inner: Context<RepositoryErrorKind>,
@@ -93,8 +93,8 @@ pub enum QueryErrorKind {
 impl QueryErrorKind {
     /// Returns an advice (for the end-user) to help him understand a failed query
     ///
-    /// The returned advices may be on multiple lines, and start with a capital
-    /// letter and ends with a dot followed by a '\n'.
+    /// The returned advices may be on multiple lines, start with an uppercase
+    /// letter and end with a dot followed by a '\n'.
     /// Therefore, they can't be part of an already existing sentence.
     pub fn advices(&self) -> String {
         use std::fmt::Write;
@@ -116,7 +116,7 @@ impl QueryErrorKind {
     }
 }
 
-/// Errors that amy occure when querying manifests
+/// Errors that may occure when querying manifests
 #[derive(Debug)]
 pub struct QueryError {
     inner: Context<QueryErrorKind>,

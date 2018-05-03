@@ -220,13 +220,13 @@ impl Repository {
     /// for repo in config.repositories() {
     ///     // Pull all mirrors
     ///     for mirror in repo.mirrors() {
-    ///         let r = repo.pull(&config, &mirror, |cur: f64, max: f64| {
+    ///         let res = repo.pull(&config, &mirror, |cur: f64, max: f64| {
     ///             println!("Progress: {}/{}", cur, max);
     ///             true
     ///         });
     ///
     ///         // Analyze result
-    ///         match r {
+    ///         match res {
     ///             Ok(_) => {
     ///                 println!("{} pulled correctly", repo.name());
     ///                 break; // Don't pull other mirrors in case of success
@@ -342,13 +342,13 @@ impl Repository {
     ///
     ///     // Try all mirrors
     ///     for mirror in repo.mirrors() {
-    ///         let r = repo.download(&config, &mirror, target.manifest(), &target.data_path(&config), |cur: f64, max: f64| {
+    ///         let res = repo.download(&config, &mirror, target.manifest(), &target.data_path(&config), |cur: f64, max: f64| {
     ///             println!("Progress: {}/{}", cur, max);
     ///             true
     ///         });
     ///
     ///         // Analyze result
-    ///         match r {
+    ///         match res {
     ///             Ok(_) => {
     ///                 println!("{} pulled correctly", repo.name());
     ///                 break; // Don't try other mirrors in case of success
@@ -379,8 +379,8 @@ impl Repository {
         let mut file = File::create(dest).context(dest.display().to_string())?;
         let dl_url = mirror.url().join(&format!(
             "/download/{}/{}",
-            manifest.metadatas().category(),
-            manifest.metadatas().name(),
+            manifest.metadata().category(),
+            manifest.metadata().name(),
         ))?;
 
         // Download data from mirror
@@ -398,6 +398,7 @@ impl Repository {
                 transfer.progress_function(|a: f64, b: f64, _: f64, _: f64| cb(b, a))?;
                 transfer.perform()?;
             }
+            ()
         };
         r.map_err(|e| {
             use std::error::Error;

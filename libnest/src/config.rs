@@ -88,7 +88,7 @@ impl Config {
         &self.cache
     }
 
-    /// Returns the path where packages's datas are downloaded.
+    /// Returns the path where packages's data are downloaded.
     ///
     /// # Examples
     ///
@@ -104,7 +104,7 @@ impl Config {
         &self.download_path
     }
 
-    /// Returns a mutable reference to the path where packages's datas are downloaded.
+    /// Returns a mutable reference to the path where packages's data are downloaded.
     ///
     /// # Examples
     ///

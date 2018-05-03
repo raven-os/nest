@@ -30,10 +30,10 @@ pub fn install_package(
     pb.set_target(format!(
         "({}) {}",
         progress,
-        target.manifest().metadatas().name()
+        target.manifest().metadata().name()
     ));
 
-    let r = sys.installer(&target.data_path(config), &target.manifest())
+    let res = sys.installer(&target.data_path(config), &target.manifest())
         .perform(|state, progression| {
             // Update the action only when it's significant
             if old_state != state {
@@ -48,15 +48,15 @@ pub fn install_package(
                 pb.update(0);
             }
         });
-    pb.finish(&r);
-    r
+    pb.finish(&res);
+    res
 }
 
 /// Installs all the given packages
 ///
-/// This will go through all targets, checks that they exist, resolves the dependency graph,
-/// download the packages, ensures the installation will not break anything or delete any file
-/// and installs the package.
+/// This will go through all targets, check that they exist, resolve the dependency graph,
+/// download the packages, ensure the installation will not break anything nor delete any file
+/// and then install the package.
 pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
     // Retrieve targets
     let targets = query::packages(config, &matches.values_of_lossy("PACKAGE").unwrap())?;
@@ -69,7 +69,7 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
     }
 
     // Iterate through all targets
-    for target in targets.iter() {
+    for target in &targets {
         // Create destination folder
         if let Some(path) = target.data_path(config).parent() {
             fs::create_dir_all(path).context(path.display().to_string())?;

@@ -87,7 +87,7 @@ impl RepositoryCache {
         let mut path = self.path.clone();
 
         // Create category folder
-        path.push(manifest.metadatas().category());
+        path.push(manifest.metadata().category());
         fs::create_dir_all(path.clone()).context(CacheErrorKind::IO(path.display().to_string()))?;
 
         // Update manifest
@@ -160,7 +160,7 @@ impl CategoryCache {
     /// This operation assumes the current user has the rights to write the local cache.
     pub(crate) fn update(&self, manifest: &Manifest) -> Result<ManifestCache, Error> {
         let mut path = self.path.clone();
-        path.push(manifest.metadatas().name());
+        path.push(manifest.metadata().name());
         let io_context = CacheErrorKind::IO(path.display().to_string());
         let serde_context = CacheErrorKind::Serialize(path.display().to_string());
 

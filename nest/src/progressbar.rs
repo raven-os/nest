@@ -6,6 +6,9 @@ use std::time::{Duration, Instant};
 use failure::Error;
 use tty;
 
+lazy_static! {
+    static ref REFRESH_RATE: Duration = Duration::new(0, NANOS_PER_SEC / 10);
+}
 static NANOS_PER_SEC: u32 = 1_000_000_000;
 static BYTES_UNITS: [&'static str; 9] =
     ["B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"];
@@ -19,7 +22,7 @@ pub enum ProgressState {
     Err,
 }
 
-/// A progres bar and all it's metadatas.
+/// A progres bar and all it's internal data.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct ProgressBar {
     current: usize,
@@ -27,9 +30,8 @@ pub struct ProgressBar {
     action: String,
     target: String,
     start_time: Instant,
-    last_time: Instant,
+    next_time: Instant,
     status: ProgressState,
-    refresh_rate: Duration,
 }
 
 impl ProgressBar {
@@ -39,16 +41,15 @@ impl ProgressBar {
     /// colors, and cannot go over 8 chars.
     /// Maximum value is 100.
     pub fn new(action: String) -> ProgressBar {
-        let refresh_rate = Duration::new(0, NANOS_PER_SEC / 10);
+        let now = Instant::now();
         ProgressBar {
             current: 0,
             max: 100,
             action,
             target: String::new(),
-            start_time: Instant::now(),
-            last_time: Instant::now() - refresh_rate, // Make sure the progress bar will be drawed on first update
+            start_time: now,
+            next_time: now, // Make sure the progress bar will be drawed on first update
             status: ProgressState::Running,
-            refresh_rate,
         }
     }
 
@@ -109,9 +110,9 @@ impl ProgressBar {
         let now = Instant::now();
 
         // Refresh rate
-        if now.duration_since(self.last_time) >= self.refresh_rate {
+        if now > self.next_time {
             self.draw();
-            self.last_time = Instant::now();
+            self.next_time = now + *REFRESH_RATE;
         }
     }
 

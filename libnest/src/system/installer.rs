@@ -18,6 +18,7 @@ use tar::Archive;
 
 use error::InstallErrorKind;
 use package::Manifest;
+use system::System;
 
 #[allow(missing_docs)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -42,16 +43,22 @@ impl Display for InstallState {
 
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 /// An installer to install packages on a targeted system.
-pub struct Installer<'a, 'b> {
+pub struct Installer<'a, 'b, 'c> {
     state: InstallState,
-    data: &'a Path,
-    manifest: &'b Manifest,
+    system: &'a System,
+    data: &'b Path,
+    manifest: &'c Manifest,
 }
 
-impl<'a, 'b> Installer<'a, 'b> {
-    pub(crate) fn from(data: &'a Path, manifest: &'b Manifest) -> Installer<'a, 'b> {
+impl<'a, 'b, 'c> Installer<'a, 'b, 'c> {
+    pub(crate) fn from(
+        system: &'a System,
+        data: &'b Path,
+        manifest: &'c Manifest,
+    ) -> Installer<'a, 'b, 'c> {
         Installer {
             state: InstallState::Waiting,
+            system,
             data,
             manifest,
         }
@@ -62,19 +69,17 @@ impl<'a, 'b> Installer<'a, 'b> {
     where
         F: FnMut(InstallState, Option<(usize, usize)>),
     {
-        // DEBUG DATA
-        use std::path::PathBuf;
-        let dest_path = PathBuf::from("./dest");
+        let dest_path = self.system.install_path();
 
         // Open the file one time at the beginning
         let mut file = File::open(self.data)?;
         let mut entries = 0;
 
-        // First step: check that the files we want to install will not overwrite any existing one
+        // First step: check that the files we want to install will not overwrite any existing ones
         {
             cb(InstallState::Check, None);
-            let mut datas = Archive::new(GzDecoder::new(&file));
-            for entry in datas.entries()? {
+            let mut data = Archive::new(GzDecoder::new(&file));
+            for entry in data.entries()? {
                 let entry = entry?;
                 let path = dest_path.join(&entry.path()?);
                 if !path.is_dir() && path.exists() {
@@ -89,8 +94,8 @@ impl<'a, 'b> Installer<'a, 'b> {
         // Second step: extract the data to the destination folder (usually '/').
         {
             file.seek(SeekFrom::Start(0))?;
-            let mut datas = Archive::new(GzDecoder::new(&file));
-            for (i, entry) in datas.entries()?.enumerate() {
+            let mut data = Archive::new(GzDecoder::new(&file));
+            for (i, entry) in data.entries()?.enumerate() {
                 cb(InstallState::Install, Some((i, entries)));
                 let mut entry = entry?;
                 entry.unpack_in(&dest_path)?;

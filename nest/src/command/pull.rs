@@ -19,16 +19,16 @@ pub fn pull(config: &Config) -> Result<(), Error> {
             let mut pb = ProgressBar::new(String::from("pull"));
             pb.set_target(format!("({}) {}", progress, repo.name()));
 
-            let r = repo.pull(config, mirror, |cur: f64, max: f64| {
+            let res = repo.pull(config, mirror, |cur: f64, max: f64| {
                 pb.set_max(max as usize);
                 pb.update(cur as usize);
                 true
             });
 
-            pb.finish(&r);
+            pb.finish(&res);
 
             // Print error and continue
-            r.is_ok()
+            res.is_ok()
         });
 
         // Throw error if all mirrors are down

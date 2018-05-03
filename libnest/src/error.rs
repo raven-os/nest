@@ -67,7 +67,7 @@ impl From<Context<CacheErrorKind>> for CacheError {
 /// Kind of errors that may occure when pulling a repository
 #[derive(Clone, PartialEq, Debug, Fail)]
 pub enum PullErrorKind {
-    /// The error is network-based and occured while downloading the datas
+    /// The error is network-based and occured while downloading the data
     #[fail(display = "{}", _0)]
     Download(String),
     /// The error occured while interpreting the received data
@@ -120,7 +120,7 @@ impl From<Context<PullErrorKind>> for PullError {
 /// Kind of errors that may occure when downloading a package from a repository
 #[derive(Clone, PartialEq, Debug, Fail)]
 pub enum DownloadErrorKind {
-    /// The error is network-based and occured while downloading the datas
+    /// The error is network-based and occured while downloading the data
     #[fail(display = "{}", _0)]
     Download(String),
 }

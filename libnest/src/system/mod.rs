@@ -121,7 +121,11 @@ impl System {
     }
 
     /// Installs the package located at the given path, following the given manifest.
-    pub fn installer<'a, 'b>(&self, path: &'a Path, manifest: &'b Manifest) -> Installer<'a, 'b> {
-        Installer::from(path, manifest)
+    pub fn installer<'a, 'b, 'c>(
+        &'a self,
+        path: &'b Path,
+        manifest: &'c Manifest,
+    ) -> Installer<'a, 'b, 'c> {
+        Installer::from(self, path, manifest)
     }
 }

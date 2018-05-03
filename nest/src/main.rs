@@ -66,17 +66,13 @@ fn main() {
     let mut repo = Repository::new("stable");
 
     repo.mirrors_mut()
-        .push(Mirror::new(Url::parse("http://raven-os.org").unwrap()));
-    repo.mirrors_mut()
-        .push(Mirror::new(Url::parse("http://localhost:8002").unwrap()));
-    repo.mirrors_mut()
         .push(Mirror::new(Url::parse("http://localhost:8000").unwrap()));
     config.repositories_mut().push(repo);
 
     let matches = App::new(crate_name!())
         .template("{usage}\n{about}\n\nFLAGS\n{flags}\n\nOPERATIONS\n{subcommands}")
-        .usage("nest [FLAGS] OPERATION")
-        .about("Raven's package manager")
+        .usage("nest [FLAGS] OPERATION [OPERATION'S FLAGS]")
+        .about("Raven-OS's package manager")
         .version(crate_version!())
         .arg(
             Arg::with_name("v")
@@ -103,7 +99,7 @@ fn main() {
                     Arg::with_name("download-dir")
                         .help("Sets the output directory, overwriting the one in the configuration file")
                         .takes_value(true)
-                        .long("download-dir") 
+                        .long("download-dir")
                 ),
         )
         .subcommand(
@@ -159,15 +155,15 @@ fn main() {
         )
         .get_matches();
 
-    let r = match matches.subcommand() {
+    let res = match matches.subcommand() {
         ("pull", _) => command::pull::pull(&config),
         ("download", Some(matches)) => command::download::download(&config, matches),
         ("install", Some(matches)) => command::install::install(&config, matches),
         _ => unimplemented!(),
     };
 
-    // All errors arrive here. t's our job to print them on screen and then exit(1).
-    if let Err(err) = r {
+    // All errors arrive here. It's our job to print them on screen and then exit(1).
+    if let Err(err) = res {
         use error::QueryErrorKind;
         use std::process::exit;
 

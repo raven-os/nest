@@ -202,7 +202,7 @@ impl<'a> CacheQuery<'a> {
                     .manifests()?
                     .filter(|cache| {
                         if let Some(ref package_name) = self.name {
-                            cache.manifest().metadatas().name() == package_name
+                            cache.manifest().metadata().name() == package_name
                         } else {
                             true
                         }

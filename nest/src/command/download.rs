@@ -15,7 +15,7 @@ use query;
 /// Downoads the given package
 ///
 /// This function will draw a progress bar on the user's output *and* print download errors (if any).
-/// It will return `Ok` if the download succeed with any of the mirror, or `Err` otherwise.
+/// It will return `Ok` if the download succeeded with any of the mirror, or `Err` otherwise.
 pub fn download_package(
     config: &Config,
     progress: &Progress,
@@ -29,10 +29,10 @@ pub fn download_package(
         pb.set_target(format!(
             "({}) {}",
             progress,
-            target.manifest().metadatas().name()
+            target.manifest().metadata().name()
         ));
 
-        let r = repo.download(
+        let res = repo.download(
             config,
             mirror,
             target.manifest(),
@@ -44,8 +44,8 @@ pub fn download_package(
             },
         );
 
-        pb.finish(&r);
-        r.is_ok()
+        pb.finish(&res);
+        res.is_ok()
     });
     // Throw error if all mirrors are down
     if !any {
@@ -59,7 +59,7 @@ pub fn download_package(
 
 /// Downloads all the given packages
 ///
-/// This will go through all targets, checks that they exist, and download them.
+/// This will go through all targets, check that they exist, and download them.
 pub fn download(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
     let mut config = (*config).clone(); // Clone config for internal modifications
 
@@ -73,7 +73,7 @@ pub fn download(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
     let mut progress = Progress::new(targets.len());
 
     // Iterate through all targets
-    for target in targets.iter() {
+    for target in &targets {
         // Create destination folder
         if let Some(path) = target.data_path(&config).parent() {
             fs::create_dir_all(path).context(path.display().to_string())?;
