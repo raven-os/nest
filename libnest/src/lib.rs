@@ -23,6 +23,7 @@
 #![cfg_attr(feature = "cargo-clippy", warn(used_underscore_binding))]
 #![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
 #![feature(try_from)]
+#![feature(catch_expr)]
 
 extern crate curl;
 #[macro_use]
@@ -32,8 +33,14 @@ extern crate toml;
 extern crate url;
 #[macro_use]
 extern crate lazy_static;
+extern crate failure;
+extern crate flate2;
+extern crate tar;
+#[macro_use]
+extern crate failure_derive;
 
 pub mod config;
+pub mod error;
 pub mod package;
 pub mod query;
 pub mod repository;

@@ -11,3 +11,5 @@ regex = "0.2.10"
 lazy_static = "1.0.0"
 libnest = { path = "../libnest" }
 url = "1.7.0"
+failure = "0.1.1"
+failure_derive = "0.1.1"

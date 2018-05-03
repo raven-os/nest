@@ -8,18 +8,20 @@ mod cache;
 mod mirror;
 
 use std::convert::TryFrom;
-use std::error;
 use std::fmt::{self, Display, Formatter};
 use std::fs::{self, File};
 use std::io::Write;
 use std::path::Path;
 use std::str;
 
-use curl::easy::Easy;
+use curl::{self, easy::Easy};
 use json;
 
 use config::Config;
+use error::*;
 use package::Manifest;
+
+use failure::{Error, ResultExt};
 
 pub use self::cache::{CategoryCache, ManifestCache, RepositoryCache};
 pub use self::mirror::Mirror;
@@ -218,13 +220,13 @@ impl Repository {
     /// for repo in config.repositories() {
     ///     // Pull all mirrors
     ///     for mirror in repo.mirrors() {
-    ///         let r = repo.pull(&config, &mirror, |cur: f64, max: f64| {
+    ///         let res = repo.pull(&config, &mirror, |cur: f64, max: f64| {
     ///             println!("Progress: {}/{}", cur, max);
     ///             true
     ///         });
     ///
     ///         // Analyze result
-    ///         match r {
+    ///         match res {
     ///             Ok(_) => {
     ///                 println!("{} pulled correctly", repo.name());
     ///                 break; // Don't pull other mirrors in case of success
@@ -238,43 +240,51 @@ impl Repository {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn pull<F>(
-        &self,
-        config: &Config,
-        mirror: &Mirror,
-        mut cb: F,
-    ) -> Result<(), Box<error::Error>>
+    pub fn pull<F>(&self, config: &Config, mirror: &Mirror, mut cb: F) -> Result<(), Error>
     where
         F: FnMut(f64, f64) -> bool,
     {
         let mut data = Vec::new();
-        let mut handle = Easy::try_from(config)?;
+
+        // Download data from mirror and catch all CURL errors
         let pull_url = mirror.url().join("pull")?;
 
-        // Download data from mirror
-        handle.url(pull_url.as_str())?;
-        handle.progress(true)?;
-        {
-            let mut transfer = handle.transfer();
+        let r: Result<_, curl::Error> = do catch {
+            let mut handle = Easy::try_from(config)?;
+            handle.url(pull_url.as_str())?;
+            handle.progress(true)?;
+            {
+                let mut transfer = handle.transfer();
 
-            transfer.write_function(|new_data| {
-                data.extend_from_slice(new_data);
-                Ok(new_data.len())
-            })?;
-            transfer.progress_function(|a: f64, b: f64, _: f64, _: f64| cb(b, a))?;
-            transfer.perform()?;
-        }
+                transfer.write_function(|new_data| {
+                    data.extend_from_slice(new_data);
+                    Ok(new_data.len())
+                })?;
+                transfer.progress_function(|a: f64, b: f64, _: f64, _: f64| cb(b, a))?;
+                transfer.perform()?;
+            }
+            ()
+        };
+        r.map_err(|e| {
+            use std::error::Error;
+            PullErrorKind::Download(e.description().to_string())
+        }).context(pull_url.to_string())?;
 
-        // Parse data to UTF8 and deserialize it
-        let utf8_data = str::from_utf8(&data)?;
-        let manifests: Vec<Manifest> = json::from_str(utf8_data)?;
+        // Parse data to UTF8 and deserialize it.
+        let r: Result<Vec<Manifest>, Error> = do catch {
+            let utf8_data = str::from_utf8(&data)?;
+            json::from_str(utf8_data)?
+        };
+        let manifests = r.or_else(|_| Err(PullErrorKind::InvalidData(pull_url.clone())))?;
 
         // Remove existing cache
         let cache = self.cache(config);
+        let display_cache = cache.path().display().to_string();
         if cache.path().exists() {
-            fs::remove_dir_all(cache.path())?;
+            fs::remove_dir_all(cache.path())
+                .context(PullErrorKind::CantRemoveCache(display_cache.clone()))?;
         }
-        fs::create_dir_all(cache.path())?;
+        fs::create_dir_all(cache.path()).context(PullErrorKind::CantCreateCache(display_cache))?;
 
         // Write output to disk
         for manifest in manifests {
@@ -332,13 +342,13 @@ impl Repository {
     ///
     ///     // Try all mirrors
     ///     for mirror in repo.mirrors() {
-    ///         let r = repo.download(&config, &mirror, target.manifest(), &target.data_path(&config), |cur: f64, max: f64| {
+    ///         let res = repo.download(&config, &mirror, target.manifest(), &target.data_path(&config), |cur: f64, max: f64| {
     ///             println!("Progress: {}/{}", cur, max);
     ///             true
     ///         });
     ///
     ///         // Analyze result
-    ///         match r {
+    ///         match res {
     ///             Ok(_) => {
     ///                 println!("{} pulled correctly", repo.name());
     ///                 break; // Don't try other mirrors in case of success
@@ -361,34 +371,40 @@ impl Repository {
         manifest: &Manifest,
         dest: &Path,
         mut cb: F,
-    ) -> Result<(), Box<error::Error>>
+    ) -> Result<(), Error>
     where
         F: FnMut(f64, f64) -> bool,
     {
         // Init download
-        let mut file = File::create(dest)?;
-        let mut handle = Easy::try_from(config)?;
-        let pull_url = format!(
-            "{}/download/{}/{}",
-            mirror.url(),
-            manifest.metadatas().category(),
-            manifest.metadatas().name()
-        );
+        let mut file = File::create(dest).context(dest.display().to_string())?;
+        let dl_url = mirror.url().join(&format!(
+            "/download/{}/{}",
+            manifest.metadata().category(),
+            manifest.metadata().name(),
+        ))?;
 
         // Download data from mirror
-        handle.url(&pull_url)?;
-        handle.fail_on_error(true)?;
-        handle.progress(true)?;
-        {
-            let mut transfer = handle.transfer();
+        let r: Result<_, curl::Error> = do catch {
+            let mut handle = Easy::try_from(config)?;
+            handle.url(dl_url.as_str())?;
+            handle.progress(true)?;
+            {
+                let mut transfer = handle.transfer();
 
-            transfer.write_function(|new_data| match file.write_all(new_data) {
-                Ok(_) => Ok(new_data.len()),
-                Err(_) => Ok(0),
-            })?;
-            transfer.progress_function(|a: f64, b: f64, _: f64, _: f64| cb(b, a))?;
-            transfer.perform()?;
-        }
+                transfer.write_function(|new_data| match file.write_all(new_data) {
+                    Ok(_) => Ok(new_data.len()),
+                    Err(_) => Ok(0),
+                })?;
+                transfer.progress_function(|a: f64, b: f64, _: f64, _: f64| cb(b, a))?;
+                transfer.perform()?;
+            }
+            ()
+        };
+        r.map_err(|e| {
+            use std::error::Error;
+            DownloadErrorKind::Download(e.description().to_string())
+        }).context(dl_url.to_string())?;
+
         Ok(())
     }
 }

@@ -28,23 +28,30 @@
 #![cfg_attr(feature = "cargo-clippy", warn(mutex_integer))]
 #![cfg_attr(feature = "cargo-clippy", warn(pub_enum_variant_names))]
 #![cfg_attr(feature = "cargo-clippy", warn(range_plus_one))]
-#![cfg_attr(feature = "cargo-clippy", warn(stutter))]
 #![cfg_attr(feature = "cargo-clippy", warn(use_debug))]
 #![cfg_attr(feature = "cargo-clippy", warn(used_underscore_binding))]
 #![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
+#![feature(catch_expr)]
 
 extern crate ansi_term;
+#[macro_use]
 extern crate clap;
 #[macro_use]
 extern crate lazy_static;
+extern crate failure;
 extern crate libc;
 extern crate libnest;
 extern crate regex;
 extern crate url;
+#[macro_use]
+extern crate failure_derive;
 
 #[macro_use]
 pub mod tty;
+#[macro_use]
+pub mod error;
 pub mod command;
+pub mod progress;
 pub mod progressbar;
 pub mod query;
 
@@ -54,24 +61,19 @@ use libnest::repository::{Mirror, Repository};
 use url::Url;
 
 fn main() {
-    //XXX: Debug values before we have a config file
+    //XXX: Debug values until we have a config file
     let mut config = Config::new();
     let mut repo = Repository::new("stable");
-    let mirror = Mirror::new(Url::parse("http://localhost:8000").unwrap());
 
-    repo.mirrors_mut().push(mirror);
+    repo.mirrors_mut()
+        .push(Mirror::new(Url::parse("http://localhost:8000").unwrap()));
     config.repositories_mut().push(repo);
 
-    let matches = App::new("nest")
+    let matches = App::new(crate_name!())
         .template("{usage}\n{about}\n\nFLAGS\n{flags}\n\nOPERATIONS\n{subcommands}")
-        .usage("nest [FLAGS] OPERATION")
-        .about("Raven's package manager")
-        .version(format!(
-            "{}.{}.{}",
-            env!("CARGO_PKG_VERSION_MAJOR"),
-            env!("CARGO_PKG_VERSION_MINOR"),
-            env!("CARGO_PKG_VERSION_PATCH"),
-        ).as_ref())
+        .usage("nest [FLAGS] OPERATION [OPERATION'S FLAGS]")
+        .about("Raven-OS's package manager")
+        .version(crate_version!())
         .arg(
             Arg::with_name("v")
                 .short("v")
@@ -80,17 +82,40 @@ fn main() {
         )
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .setting(AppSettings::VersionlessSubcommands)
+        .setting(AppSettings::ColoredHelp)
         .subcommand(
             SubCommand::with_name("pull").about("Pulls repositories and updates local cache"),
         )
         .subcommand(
+            SubCommand::with_name("download")
+                .about("Downloads the given packages without installing them")
+                .arg(
+                    Arg::with_name("PACKAGE")
+                        .help("Packages to download")
+                        .multiple(true)
+                        .required(true),
+                )
+                .arg(
+                    Arg::with_name("download-dir")
+                        .help("Sets the output directory, overwriting the one in the configuration file")
+                        .takes_value(true)
+                        .long("download-dir")
+                ),
+        )
+        .subcommand(
             SubCommand::with_name("install")
-                .about("Installs the given packages")
+                .about("Downloads and installs the given packages")
                 .arg(
                     Arg::with_name("PACKAGE")
                         .help("Packages to install")
                         .multiple(true)
                         .required(true),
+                )
+                .arg(
+                    Arg::with_name("install-dir")
+                        .help("Sets the installation directory, the default being '/'")
+                        .takes_value(true)
+                        .long("install-dir")
                 ),
         )
         .subcommand(
@@ -121,6 +146,7 @@ fn main() {
                     Arg::with_name("PACKAGE")
                         .help("Packages to upgrade. If no packages are given, upgrades all installed packages")
                         .multiple(true)
+                        .required(true),
                 ),
         )
         .subcommand(
@@ -129,19 +155,27 @@ fn main() {
         )
         .get_matches();
 
-    if matches.subcommand_matches("pull").is_some() {
-        command::pull::pull(&config);
-    } else if let Some(matches) = matches.subcommand_matches("install") {
-        command::install::install(&config, matches);
-    } else if let Some(matches) = matches.subcommand_matches("uninstall") {
-        command::uninstall::uninstall(matches);
-    } else if let Some(matches) = matches.subcommand_matches("search") {
-        command::search::search(matches);
-    } else if let Some(matches) = matches.subcommand_matches("search") {
-        command::search::search(matches);
-    } else if let Some(matches) = matches.subcommand_matches("upgrade") {
-        command::upgrade::upgrade(matches);
-    } else if let Some(matches) = matches.subcommand_matches("list") {
-        command::list::list(matches);
+    let res = match matches.subcommand() {
+        ("pull", _) => command::pull::pull(&config),
+        ("download", Some(matches)) => command::download::download(&config, matches),
+        ("install", Some(matches)) => command::install::install(&config, matches),
+        _ => unimplemented!(),
+    };
+
+    // All errors arrive here. It's our job to print them on screen and then exit(1).
+    if let Err(err) = res {
+        use error::QueryErrorKind;
+        use std::process::exit;
+
+        eprintln!("{}", format_error!(err));
+
+        // We'd like to print advices for these errors, if any is available.
+        // These advices should be preceded by a blank line.
+
+        // Try to downcast errors to query_error
+        if let Ok(query_error) = err.downcast::<QueryErrorKind>() {
+            eprint!("\n{}", query_error.advices());
+        }
+        exit(1);
     }
 }

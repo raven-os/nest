@@ -1,17 +1,17 @@
-//! A Manifest: a record of all metadatas, dependencies etc. of a package.
+//! A Manifest: a record of all metadata, dependencies etc. of a package.
 
 /// A subpart of the manifest.
 ///
 /// They represent a package's name, category, description etc.
 ///
-/// All primitives informations that may be relevant when search packages.
+/// All primitives informations that may be relevant when looking for packages.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Hash, Debug, Default)]
-pub struct Metadatas {
+pub struct Metadata {
     name: String,
     category: String,
 }
 
-impl Metadatas {
+impl Metadata {
     /// Returns the name of the package
     #[inline]
     pub fn name(&self) -> &str {
@@ -25,19 +25,19 @@ impl Metadatas {
     }
 }
 
-/// A package's metadatas, dependencies etc.
+/// A package's metadata, dependencies etc.
 ///
 /// All these informations are got when the repository which this package belongs to is pulled. Therefore, they
 /// may be out of date.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct Manifest {
-    metadatas: Metadatas,
+    metadata: Metadata,
 }
 
 impl Manifest {
-    /// Returns the package's metadatas, like it's name, version, category etc.
+    /// Returns the package's metadata, like it's name, version, category etc.
     #[inline]
-    pub fn metadatas(&self) -> &Metadatas {
-        &self.metadatas
+    pub fn metadata(&self) -> &Metadata {
+        &self.metadata
     }
 }

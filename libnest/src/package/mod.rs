@@ -15,8 +15,7 @@
 //! The other ones are downloaded when installing the package, to avoid filling the user's disk.
 
 mod manifest;
-pub use self::manifest::Manifest;
-pub use self::manifest::Metadatas;
+pub use self::manifest::{Manifest, Metadata};
 
 use std::fmt::{self, Display, Formatter};
 use std::path::PathBuf;
@@ -24,7 +23,7 @@ use std::path::PathBuf;
 use config::Config;
 use repository::Repository;
 
-/// Represents package as a whole: it's manifest, it's datas and it's build file.
+/// Represents package as a whole: it's manifest, it's data and it's build file.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Package<'a> {
     repository: &'a Repository,
@@ -60,9 +59,9 @@ impl<'a> Package<'a> {
     pub fn data_path(&self, config: &Config) -> PathBuf {
         let mut path = config.download_path().to_path_buf();
         path.push(self.repository.name());
-        path.push(self.manifest.metadatas().category());
-        path.push(self.manifest.metadatas().name());
-        path.set_extension("tar");
+        path.push(self.manifest.metadata().category());
+        path.push(self.manifest.metadata().name());
+        path.set_extension("tar.gz");
         path
     }
 }
@@ -74,8 +73,8 @@ impl<'a> Display for Package<'a> {
             f,
             "{}::{}/{}",
             self.repository().name(),
-            self.manifest.metadatas().category(),
-            self.manifest.metadatas().name(),
+            self.manifest.metadata().category(),
+            self.manifest.metadata().name(),
         )
     }
 }

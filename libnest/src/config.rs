@@ -88,7 +88,7 @@ impl Config {
         &self.cache
     }
 
-    /// Returns the path where packages's datas are downloaded.
+    /// Returns the path where packages's data are downloaded.
     ///
     /// # Examples
     ///
@@ -102,6 +102,23 @@ impl Config {
     /// ```
     pub fn download_path(&self) -> &Path {
         &self.download_path
+    }
+
+    /// Returns a mutable reference to the path where packages's data are downloaded.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate libnest;
+    /// use std::path::{Path, PathBuf};
+    /// use libnest::config::Config;
+    ///
+    /// let mut config = Config::new();
+    /// *config.download_path_mut() = PathBuf::from("/tmp/download/");
+    /// assert_eq!(config.download_path(), Path::new("/tmp/download/"));
+    /// ```
+    pub fn download_path_mut(&mut self) -> &mut PathBuf {
+        &mut self.download_path
     }
 
     /// Yields a reference to the underlying `Vec<Repository>`
@@ -158,6 +175,9 @@ impl<'a> TryFrom<&'a Config> for Easy {
 
     /// Tries to create a curl handle with the given configuration.
     fn try_from(_: &'a Config) -> Result<Easy, curl::Error> {
-        Ok(Easy::new())
+        let mut curl = Easy::new();
+        curl.follow_location(true)?;
+        curl.fail_on_error(true)?;
+        Ok(curl)
     }
 }

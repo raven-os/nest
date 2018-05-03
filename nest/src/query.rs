@@ -1,9 +1,12 @@
 //! Functions to resolve package's name
 
+use failure::Error;
+use libnest::config::Config;
+use libnest::package::Package;
+use libnest::query::CacheQuery;
 use regex::Regex;
 
-use libnest::config::Config;
-use libnest::query::CacheQuery;
+use error::QueryErrorKind;
 
 lazy_static! {
     static ref REGEX_PACKAGE_QUERY: Regex = Regex::new(
@@ -27,4 +30,36 @@ pub fn cache<'a>(config: &'a Config, arg: &str) -> Option<CacheQuery<'a>> {
     } else {
         None
     }
+}
+
+/// Looks for a unique package with the given name
+pub fn packages<'a>(config: &'a Config, names: &[String]) -> Result<Vec<Package<'a>>, Error> {
+    let mut targets = Vec::new();
+
+    for target in names {
+        if let Some(query) = cache(config, &target) {
+            let mut packages = query.perform()?;
+            match packages.len() {
+                0 => Err(QueryErrorKind::NoResult(target.to_string())),
+                1 => {
+                    targets.append(&mut packages);
+                    Ok(())
+                }
+                _ => {
+                    let vec = packages
+                        .iter()
+                        .map(|p| p.to_string())
+                        .collect::<Vec<String>>();
+                    Err(QueryErrorKind::TooManyResults(
+                        target.to_string(),
+                        vec.len(),
+                        vec,
+                    ))
+                }
+            }
+        } else {
+            Err(QueryErrorKind::InvalidPackageName(target.to_string()))
+        }?;
+    }
+    Ok(targets)
 }
