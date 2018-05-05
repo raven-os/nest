@@ -63,7 +63,7 @@ pub use self::mirror::Mirror;
 /// #   test().unwrap();
 /// # }
 /// ```
-#[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Default, Serialize, Deserialize)]
 pub struct Repository {
     name: String,
     mirrors: Vec<Mirror>,
@@ -172,7 +172,7 @@ impl Repository {
     /// let repo = Repository::new("stable");
     /// let cache = repo.cache(&config);
     ///
-    /// assert_eq!(cache.path(), Path::new("/var/lib/nest/cache/stable"));
+    /// assert_eq!(cache.path(), Path::new("/var/nest/cache/stable"));
     /// ```
     #[inline]
     pub fn cache(&self, config: &Config) -> RepositoryCache {

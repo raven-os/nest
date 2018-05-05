@@ -5,6 +5,7 @@
 use std::fmt::{self, Display, Formatter};
 
 use failure::{Backtrace, Context, Fail};
+use toml;
 use url::Url;
 
 /// Kind of errors that may occure when using the manifests cache.
@@ -202,5 +203,52 @@ impl From<InstallErrorKind> for InstallError {
 impl From<Context<InstallErrorKind>> for InstallError {
     fn from(inner: Context<InstallErrorKind>) -> InstallError {
         InstallError { inner }
+    }
+}
+
+/// The kind of a [`ConfigLoadError`]
+///
+/// [`ConfigLoadError`](struct.ConfigLoadError.html)
+// XXX The display implementation for this enum members aren't used. Instead, QueryError implements a long, nice and complete error message.
+#[derive(Debug, Fail)]
+pub enum ConfigLoadErrorKind {
+    /// The error is caused by an invalid config file that couldn't be deserialized
+    #[fail(display = "couldn't deserialize {}", _0)]
+    Deserialize(String, #[cause] toml::de::Error),
+}
+
+/// Errors that may occure when querying manifests
+#[derive(Debug)]
+pub struct ConfigLoadError {
+    inner: Context<ConfigLoadErrorKind>,
+}
+
+impl Fail for ConfigLoadError {
+    fn cause(&self) -> Option<&Fail> {
+        self.inner.cause()
+    }
+
+    fn backtrace(&self) -> Option<&Backtrace> {
+        self.inner.backtrace()
+    }
+}
+
+impl Display for ConfigLoadError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        Display::fmt(&self.inner, f)
+    }
+}
+
+impl From<ConfigLoadErrorKind> for ConfigLoadError {
+    fn from(kind: ConfigLoadErrorKind) -> ConfigLoadError {
+        ConfigLoadError {
+            inner: Context::new(kind),
+        }
+    }
+}
+
+impl From<Context<ConfigLoadErrorKind>> for ConfigLoadError {
+    fn from(inner: Context<ConfigLoadErrorKind>) -> ConfigLoadError {
+        ConfigLoadError { inner }
     }
 }
