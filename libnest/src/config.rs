@@ -12,16 +12,31 @@
 //! It also provides a way to load a `Config` from a TOML file.
 
 use std::convert::TryFrom;
+use std::fs::File;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use curl;
 use curl::easy::Easy;
+use failure::{Error, ResultExt};
+use toml;
 
+use error::ConfigLoadErrorKind;
 use repository::Repository;
 
 lazy_static! {
-    static ref NEST_PATH_CACHE: &'static Path = Path::new("/var/lib/nest/cache/");
-    static ref NEST_PATH_DOWNLOAD: &'static Path = Path::new("/var/lib/nest/download/");
+    static ref NEST_PATH_CONFIG: &'static Path = Path::new("/etc/nest/config.toml");
+    static ref NEST_PATH_CACHE: &'static Path = Path::new("/var/nest/cache/");
+    static ref NEST_PATH_DOWNLOAD: &'static Path = Path::new("/var/nest/download/");
+}
+
+/// A structure holding all important paths for libnest. It's a sub member of [`Config`].
+///
+/// [`Config`](struct.Config.html)
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+struct ConfigPaths {
+    cache: PathBuf,
+    download: PathBuf,
 }
 
 /// A handle to represent a configuration for Nest.
@@ -38,10 +53,9 @@ lazy_static! {
 ///
 /// let config = Config::new();
 /// ```
-#[derive(Clone, Eq, PartialEq, Hash, Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub struct Config {
-    cache: PathBuf,
-    download_path: PathBuf,
+    paths: ConfigPaths,
     repositories: Vec<Repository>,
 }
 
@@ -65,13 +79,67 @@ impl Config {
     #[inline]
     pub fn new() -> Config {
         Config {
-            cache: PathBuf::from(*NEST_PATH_CACHE),
-            download_path: PathBuf::from(*NEST_PATH_DOWNLOAD),
+            paths: ConfigPaths {
+                cache: PathBuf::from(*NEST_PATH_CACHE),
+                download: PathBuf::from(*NEST_PATH_DOWNLOAD),
+            },
             repositories: Vec::new(),
         }
     }
 
-    /// Returns the path holding the cache of each repository.
+    /// Loads the default config file
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # extern crate libnest;
+    /// # use std::error::Error;
+    /// # fn test() -> Result<(), Box<Error>> {
+    /// use libnest::config::Config;
+    ///
+    /// let config = Config::load()?;
+    /// # Ok(()) }
+    /// # fn main() { test(); }
+    /// ```
+    #[inline]
+    pub fn load() -> Result<Config, Error> {
+        Config::load_from(*NEST_PATH_CONFIG)
+    }
+
+    /// Loads the given config file
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # extern crate libnest;
+    /// # use std::error::Error;
+    /// # fn test() -> Result<(), Box<Error>> {
+    /// use libnest::config::Config;
+    ///
+    /// let config = Config::load_from("./config.toml")?;
+    /// # Ok(()) }
+    /// # fn main() { test(); }
+    /// ```
+    #[inline]
+    pub fn load_from<P: AsRef<Path>>(path: P) -> Result<Config, Error> {
+        let path = path.as_ref();
+        let mut file = File::open(path).context(path.display().to_string())?;
+
+        // Allocate a string long enough to hold the entire file
+        let mut s = file.metadata()
+            .map(|m| String::with_capacity(m.len() as usize))
+            .unwrap_or_default();
+
+        file.read_to_string(&mut s)?;
+        toml::from_str(&s).map_err(|err| {
+            Error::from(ConfigLoadErrorKind::Deserialize(
+                path.display().to_string(),
+                err,
+            ))
+        })
+    }
+
+    /// Returns a reference to the path where packages' metadata are cached.
     ///
     /// # Examples
     ///
@@ -81,30 +149,14 @@ impl Config {
     /// use libnest::config::Config;
     ///
     /// let config = Config::new();
-    /// assert_eq!(config.cache(), Path::new("/var/lib/nest/cache/"));
+    /// assert_eq!(config.cache(), Path::new("/var/nest/cache/"));
     /// ```
     #[inline]
     pub fn cache(&self) -> &Path {
-        &self.cache
+        &self.paths.cache
     }
 
-    /// Returns the path where packages's data are downloaded.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # extern crate libnest;
-    /// use std::path::Path;
-    /// use libnest::config::Config;
-    ///
-    /// let config = Config::new();
-    /// assert_eq!(config.download_path(), Path::new("/var/lib/nest/download/"));
-    /// ```
-    pub fn download_path(&self) -> &Path {
-        &self.download_path
-    }
-
-    /// Returns a mutable reference to the path where packages's data are downloaded.
+    /// Returns a mutable reference to the path where packages' metadata are cached.
     ///
     /// # Examples
     ///
@@ -114,11 +166,45 @@ impl Config {
     /// use libnest::config::Config;
     ///
     /// let mut config = Config::new();
-    /// *config.download_path_mut() = PathBuf::from("/tmp/download/");
-    /// assert_eq!(config.download_path(), Path::new("/tmp/download/"));
+    /// *config.cache_mut() = PathBuf::from("/tmp/cache/");
+    /// assert_eq!(config.cache(), Path::new("/tmp/cache"));
     /// ```
-    pub fn download_path_mut(&mut self) -> &mut PathBuf {
-        &mut self.download_path
+    #[inline]
+    pub fn cache_mut(&mut self) -> &mut PathBuf {
+        &mut self.paths.cache
+    }
+
+    /// Returns a reference to the path where packages' data are downloaded.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate libnest;
+    /// use std::path::Path;
+    /// use libnest::config::Config;
+    ///
+    /// let config = Config::new();
+    /// assert_eq!(config.download(), Path::new("/var/nest/download/"));
+    /// ```
+    pub fn download(&self) -> &Path {
+        &self.paths.download
+    }
+
+    /// Returns a mutable reference to the path where packages' data are downloaded.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate libnest;
+    /// use std::path::{Path, PathBuf};
+    /// use libnest::config::Config;
+    ///
+    /// let mut config = Config::new();
+    /// *config.download_mut() = PathBuf::from("/tmp/download/");
+    /// assert_eq!(config.download(), Path::new("/tmp/download/"));
+    /// ```
+    pub fn download_mut(&mut self) -> &mut PathBuf {
+        &mut self.paths.download
     }
 
     /// Yields a reference to the underlying `Vec<Repository>`

@@ -65,7 +65,7 @@ pub fn download(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
 
     if let Some(path) = matches.value_of("download-dir") {
         use std::path::PathBuf;
-        *config.download_path_mut() = PathBuf::from(path);
+        *config.download_mut() = PathBuf::from(path);
     }
 
     // Retrieve targets

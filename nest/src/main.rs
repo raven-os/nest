@@ -42,7 +42,6 @@ extern crate failure;
 extern crate libc;
 extern crate libnest;
 extern crate regex;
-extern crate url;
 #[macro_use]
 extern crate failure_derive;
 
@@ -56,19 +55,10 @@ pub mod progressbar;
 pub mod query;
 
 use clap::{App, AppSettings, Arg, SubCommand};
+use failure::Error;
 use libnest::config::Config;
-use libnest::repository::{Mirror, Repository};
-use url::Url;
 
 fn main() {
-    //XXX: Debug values until we have a config file
-    let mut config = Config::new();
-    let mut repo = Repository::new("stable");
-
-    repo.mirrors_mut()
-        .push(Mirror::new(Url::parse("http://localhost:8000").unwrap()));
-    config.repositories_mut().push(repo);
-
     let matches = App::new(crate_name!())
         .template("{usage}\n{about}\n\nFLAGS\n{flags}\n\nOPERATIONS\n{subcommands}")
         .usage("nest [FLAGS] OPERATION [OPERATION'S FLAGS]")
@@ -155,11 +145,17 @@ fn main() {
         )
         .get_matches();
 
-    let res = match matches.subcommand() {
-        ("pull", _) => command::pull::pull(&config),
-        ("download", Some(matches)) => command::download::download(&config, matches),
-        ("install", Some(matches)) => command::install::install(&config, matches),
-        _ => unimplemented!(),
+    let res: Result<(), Error> = do catch {
+        // Load config file
+        let config = Config::load()?;
+
+        match matches.subcommand() {
+            ("pull", _) => command::pull::pull(&config),
+            ("download", Some(matches)) => command::download::download(&config, matches),
+            ("install", Some(matches)) => command::install::install(&config, matches),
+            _ => unimplemented!(),
+        }?;
+        ()
     };
 
     // All errors arrive here. It's our job to print them on screen and then exit(1).

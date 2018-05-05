@@ -1,0 +1,11 @@
+#
+# Nest Configuration File -- Example
+#
+
+[paths]
+cache = "/var/nest/cache"
+download = "/var/nest/download"
+
+[[repositories]]
+name = "stable"
+mirrors = [ "http://stable.raven-os.org" ]

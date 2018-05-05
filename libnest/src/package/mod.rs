@@ -57,7 +57,7 @@ impl<'a> Package<'a> {
     /// Returns the path where data should be located
     #[inline]
     pub fn data_path(&self, config: &Config) -> PathBuf {
-        let mut path = config.download_path().to_path_buf();
+        let mut path = config.download().to_path_buf();
         path.push(self.repository.name());
         path.push(self.manifest.metadata().category());
         path.push(self.manifest.metadata().name());
