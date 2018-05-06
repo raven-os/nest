@@ -8,4 +8,4 @@ download = "/var/nest/download"
 
 [[repositories]]
 name = "stable"
-mirrors = [ "http://stable.raven-os.org" ]
+mirrors = [ "https://stable.raven-os.org" ]
