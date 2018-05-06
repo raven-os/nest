@@ -22,7 +22,7 @@ pub enum ProgressState {
     Err,
 }
 
-/// A progres bar and all it's internal data.
+/// A progress bar and all its internal data.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct ProgressBar {
     current: usize,
@@ -37,7 +37,7 @@ pub struct ProgressBar {
 impl ProgressBar {
     /// Creates a new `ProgressBar` with default values.
     ///
-    /// The given `action` parameter is the name of the action done. It will be printed with
+    /// The given `action` parameter is the name of the executed action. It will be printed with
     /// colors, and cannot go over 8 chars.
     /// Maximum value is 100.
     pub fn new(action: String) -> ProgressBar {
@@ -48,12 +48,12 @@ impl ProgressBar {
             action,
             target: String::new(),
             start_time: now,
-            next_time: now, // Make sure the progress bar will be drawed on first update
+            next_time: now, // Make sure the progress bar will be drawn on first update
             status: ProgressState::Running,
         }
     }
 
-    /// Sets the action that should be color-printed at the beginning of the progress bar
+    /// Sets the action that should be color-printed at the beginning of the progress bar.
     pub fn set_action(&mut self, action: String) {
         self.action = action;
     }
@@ -116,7 +116,7 @@ impl ProgressBar {
         }
     }
 
-    /// Draws the progress bar
+    /// Draws the progress bar.
     fn draw(&self) {
         let now = Instant::now();
         let time_elapsed = now.duration_since(self.start_time);
@@ -142,7 +142,7 @@ impl ProgressBar {
                 ProgressState::Ok => green!(" {:>8.8} ", self.action),
                 ProgressState::Err => red!(" {:>8.8} ", self.action),
             },
-            // Draw progress bar if the operation is running since at least 0.25s
+            // Draws progress bar if the operation is running since at least 0.25s
             if self.status == ProgressState::Running
                 && (time_elapsed.as_secs() > 0 || time_elapsed.subsec_nanos() > NANOS_PER_SEC / 4)
                 && self.max > 0

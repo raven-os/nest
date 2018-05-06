@@ -1,13 +1,13 @@
 //! Nest configuration parsing and handle.
 //!
-//! There is two way to configure operations using the Nest package manager: globally
+//! There are two ways to configure operations using the Nest package manager: globally
 //! (configuration file), or locally (command line arguments).
 //!
 //! Within the `libnest`, many functions take a `&Config` as argument. The main reason is to allow local options to be used only for one operation, even in an
 //! asynchronous context.
 //!
-//! This module provide a `Config` structure that holds all configuration options. This includes,
-//! for exemple, proxy settings, cache path, mirrors etc.
+//! This module provides a `Config` structure that holds all configuration options. This includes,
+//! for exemple, proxy settings, cache path, mirrors, etc.
 //!
 //! It also provides a way to load a `Config` from a TOML file.
 
@@ -28,7 +28,7 @@ lazy_static! {
 ///
 /// This handle is given as parameter to each libnest's function so they can use a custom configuration even in an asychronous context.
 ///
-/// Configuration includes proxy settings, cache path, repositories and their mirrors etc.
+/// Configuration includes proxy settings, cache path, repositories and their mirrors, etc.
 ///
 /// # Examples
 ///
@@ -121,7 +121,7 @@ impl Config {
         &mut self.download_path
     }
 
-    /// Yields a reference to the underlying `Vec<Repository>`
+    /// Yields a reference to the underlying `Vec<Repository>`.
     ///
     /// # Examples
     ///
@@ -139,7 +139,7 @@ impl Config {
         &self.repositories
     }
 
-    /// Yields a mutable reference to the underlying `Vec<Repository>`
+    /// Yields a mutable reference to the underlying `Vec<Repository>`.
     ///
     /// # Examples
     ///

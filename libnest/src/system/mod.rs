@@ -1,9 +1,9 @@
 //! The system, that is the targeted machine.
 //!
-//! This module provides interfaces to talk to the targed system: the one we want to operate
+//! This module provides interfaces to talk to the targeted system: the one we want to operate
 //! on. Usually, the operations fall in one of the three below:
-//!  * Installing/Upgrading softwares
-//!  * Removing softwares
+//!  * Installing/Upgrading softwares.
+//!  * Removing softwares.
 //!  * Looking for informations, like the installed softwares or the architecture.
 //!
 //! Usually, the targeted system is the one running nest, but in some special cases (like installing

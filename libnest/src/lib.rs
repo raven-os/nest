@@ -1,4 +1,4 @@
-//! Nest backend library
+//! Nest backend library.
 //!
 //! This crate performs backend operations for Raven's Package Manager, like installation, removal, and search of a package.
 
@@ -24,6 +24,7 @@
 #![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
 #![feature(try_from)]
 #![feature(catch_expr)]
+#![feature(extern_prelude)]
 
 extern crate curl;
 #[macro_use]

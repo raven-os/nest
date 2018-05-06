@@ -1,4 +1,4 @@
-//! Functions to resolve package's name
+//! Functions to resolve package's name.
 
 use failure::Error;
 use libnest::config::Config;
@@ -32,7 +32,7 @@ pub fn cache<'a>(config: &'a Config, arg: &str) -> Option<CacheQuery<'a>> {
     }
 }
 
-/// Looks for a unique package with the given name
+/// Looks for a unique package with the given name.
 pub fn packages<'a>(config: &'a Config, names: &[String]) -> Result<Vec<Package<'a>>, Error> {
     let mut targets = Vec::new();
 

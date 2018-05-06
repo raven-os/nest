@@ -1,6 +1,6 @@
 //! Nest is Raven's package manager.
 //!
-//! This implementation is the CLI (command-line interface) version of Nest. A GUI version may be
+//! This implementation is the CLI (Command-Line Interface) version of Nest. A GUI version may be
 //! added one day.
 //!
 //! Nest's implementation is split in two parts: `nest` (where you are), and
@@ -32,6 +32,7 @@
 #![cfg_attr(feature = "cargo-clippy", warn(used_underscore_binding))]
 #![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
 #![feature(catch_expr)]
+#![feature(extern_prelude)]
 
 extern crate ansi_term;
 #[macro_use]
@@ -169,7 +170,7 @@ fn main() {
 
         eprintln!("{}", format_error!(err));
 
-        // We'd like to print advices for these errors, if any is available.
+        // We'd like to print advices for these errors, if any are available.
         // These advices should be preceded by a blank line.
 
         // Try to downcast errors to query_error

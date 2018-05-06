@@ -1,4 +1,4 @@
-//! Functions to execute the `download` operation
+//! Functions to execute the `download` operation.
 
 use std::fs;
 
@@ -12,7 +12,7 @@ use progress::Progress;
 use progressbar::ProgressBar;
 use query;
 
-/// Downoads the given package
+/// Downloads the given package.
 ///
 /// This function will draw a progress bar on the user's output *and* print download errors (if any).
 /// It will return `Ok` if the download succeeded with any of the mirror, or `Err` otherwise.
@@ -57,7 +57,7 @@ pub fn download_package(
     Ok(())
 }
 
-/// Downloads all the given packages
+/// Downloads all the given packages.
 ///
 /// This will go through all targets, check that they exist, and download them.
 pub fn download(config: &Config, matches: &ArgMatches) -> Result<(), Error> {

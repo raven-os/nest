@@ -1,6 +1,6 @@
 //! Types to install a package on the targeted system.
 //!
-//! This module provides the struct [`Installer`]  to perform an installation of a package on the targetted system.
+//! This module provides the struct [`Installer`]  to perform an installation of a package on the targeted system.
 //! The installation is divided into steps (See [`InstallState`]):
 //!     * Waiting
 //!     * Extract
@@ -64,18 +64,18 @@ impl<'a, 'b, 'c> Installer<'a, 'b, 'c> {
         }
     }
 
-    /// Performs the installation
+    /// Performs the installation.
     pub fn perform<F>(&mut self, mut cb: F) -> Result<(), Error>
     where
         F: FnMut(InstallState, Option<(usize, usize)>),
     {
         let dest_path = self.system.install_path();
 
-        // Open the file one time at the beginning
+        // Open the file once at the beginning.
         let mut file = File::open(self.data)?;
         let mut entries = 0;
 
-        // First step: check that the files we want to install will not overwrite any existing ones
+        // First step: check that the files we want to install will not overwrite any existing ones.
         {
             cb(InstallState::Check, None);
             let mut data = Archive::new(GzDecoder::new(&file));

@@ -1,4 +1,4 @@
-//! Types to represent the cache of a repository on local disk
+//! Types to represent the cache of a repository on local disk.
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -12,7 +12,7 @@ use package::Manifest;
 /// The cache of a repository on the filesystem.
 ///
 /// This cache holds a bunch of cache for each categories, which contains a list of manifests
-/// and their name, versions, description, dependencies etc.
+/// and their name, versions, description, dependencies, etc.
 ///
 /// This structure is used to browse this cache and retrieve any kind of informations.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
@@ -21,7 +21,7 @@ pub struct RepositoryCache {
 }
 
 impl RepositoryCache {
-    /// Creates (or loads) a new cache located at the given path
+    /// Creates (or loads) a new cache located at the given path.
     #[inline]
     pub(crate) fn new(path: PathBuf) -> RepositoryCache {
         RepositoryCache { path }
@@ -77,7 +77,7 @@ impl RepositoryCache {
         Ok(vec.into_iter())
     }
 
-    /// Updates the cache of the given manifest
+    /// Updates the cache of the given manifest.
     ///
     /// # Filesystem
     ///
@@ -97,9 +97,9 @@ impl RepositoryCache {
 
 /// The cache of a category for a given repository on the filesystem.
 ///
-/// This cache holds a list of manifests: package's name, versions, description, dependencies etc.
+/// This cache holds a list of manifests: package's name, versions, description, dependencies, etc.
 ///
-/// This structure is used to browse this cache and retrieve any kind of informations.
+/// This structure is used to browse this cache and retrieve any kind of information.
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct CategoryCache {
     path: PathBuf,
@@ -153,7 +153,7 @@ impl CategoryCache {
         Ok(vec.into_iter())
     }
 
-    /// Updates the cache of the given manifest
+    /// Updates the cache of the given manifest.
     ///
     /// # Filesystem
     ///
@@ -206,7 +206,7 @@ impl ManifestCache {
         &self.path
     }
 
-    /// Returns the content of the cache
+    /// Returns the content of the cache.
     #[inline]
     pub fn manifest(&self) -> &Manifest {
         &self.manifest

@@ -17,7 +17,7 @@ use query;
 
 /// Installs the given package
 ///
-/// This function will draw a progress bar on the user's output
+/// This function will draw a progress bar on the user's output.
 /// It will return `Ok` if the install succeed, or `Err` otherwise.
 pub fn install_package(
     config: &Config,
@@ -62,7 +62,7 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
     let targets = query::packages(config, &matches.values_of_lossy("PACKAGE").unwrap())?;
     let mut progress = Progress::new(targets.len());
 
-    // Targetted system
+    // targeted system
     let mut sys = System::current();
     if let Some(path) = matches.value_of("install-dir") {
         *sys.install_path_mut() = PathBuf::from(path);

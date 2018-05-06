@@ -1,4 +1,4 @@
-//! Queries to search between available packages.
+//! Queries to search in available packages.
 //!
 //! This module provides a structure to look for manifests that are stored in the local cache.
 
@@ -57,7 +57,7 @@ pub struct CacheQuery<'a> {
 }
 
 impl<'a> CacheQuery<'a> {
-    /// Creates a new, empty, query.
+    /// Creates a new, empty query.
     ///
     /// # Examples
     ///

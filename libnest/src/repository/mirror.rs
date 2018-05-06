@@ -1,4 +1,4 @@
-//! Mirrors for a given repository
+//! Mirrors for a given repository.
 
 use std::fmt::{self, Display, Formatter};
 

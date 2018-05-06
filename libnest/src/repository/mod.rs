@@ -1,4 +1,4 @@
-//! Repositories and mirrors
+//! Repositories and mirrors.
 //!
 //! This module contains types to handle repositories and repository-related stuff, like mirrors.
 //!
@@ -41,7 +41,7 @@ pub use self::mirror::Mirror;
 /// # use std::error::Error;
 /// # fn test() -> Result<(), Box<Error>> {
 ///
-/// // First, create an empty repository with name "stable":
+/// // First, create an empty repository with the name "stable":
 /// let mut repo = Repository::new("stable");
 ///
 /// // Then, let's add a mirror:
@@ -186,7 +186,7 @@ impl Repository {
     /// # Blocking function
     ///
     /// This is a blocking function, that's why the `cb` parameter is a
-    /// [`FnMut(f64, f64) -> bool`](https://doc.rust-lang.org/std/ops/trait.FnMut.html) that let's you
+    /// [`FnMut(f64, f64) -> bool`](https://doc.rust-lang.org/std/ops/trait.FnMut.html) which lets you
     /// update any kind of progress bar during the download.
     ///
     /// The first parameter is the number of downloaded bytes, and the second one is the total
@@ -246,7 +246,7 @@ impl Repository {
     {
         let mut data = Vec::new();
 
-        // Download data from mirror and catch all CURL errors
+        // Download data from mirror and catch all CURL errors.
         let pull_url = mirror.url().join("pull")?;
 
         let r: Result<_, curl::Error> = do catch {
@@ -277,7 +277,7 @@ impl Repository {
         };
         let manifests = r.or_else(|_| Err(PullErrorKind::InvalidData(pull_url.clone())))?;
 
-        // Remove existing cache
+        // Remove existing cache.
         let cache = self.cache(config);
         let display_cache = cache.path().display().to_string();
         if cache.path().exists() {
@@ -286,7 +286,7 @@ impl Repository {
         }
         fs::create_dir_all(cache.path()).context(PullErrorKind::CantCreateCache(display_cache))?;
 
-        // Write output to disk
+        // Write output to disk.
         for manifest in manifests {
             cache.update(&manifest)?;
         }
@@ -298,7 +298,7 @@ impl Repository {
     /// # Blocking function
     ///
     /// This is a blocking function, that's why the `cb` parameter is a
-    /// [`FnMut(f64, f64) -> bool`](https://doc.rust-lang.org/std/ops/trait.FnMut.html) that let's you
+    /// [`FnMut(f64, f64) -> bool`](https://doc.rust-lang.org/std/ops/trait.FnMut.html) which lets you
     /// update any kind of progress bar during the download.
     ///
     /// The first parameter is the number of downloaded bytes, and the second one is the total
@@ -375,7 +375,7 @@ impl Repository {
     where
         F: FnMut(f64, f64) -> bool,
     {
-        // Init download
+        // Init download.
         let mut file = File::create(dest).context(dest.display().to_string())?;
         let dl_url = mirror.url().join(&format!(
             "/download/{}/{}",
@@ -383,7 +383,7 @@ impl Repository {
             manifest.metadata().name(),
         ))?;
 
-        // Download data from mirror
+        // Download data from mirror.
         let r: Result<_, curl::Error> = do catch {
             let mut handle = Easy::try_from(config)?;
             handle.url(dl_url.as_str())?;

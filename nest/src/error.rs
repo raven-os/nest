@@ -1,4 +1,4 @@
-//! Types, enums and macros for error handling, using [`failure`]
+//! Types, enums and macros for error handling, using [`failure`].
 //!
 //! [`failure`](https://docs.rs/failure/0.1.1/failure/)
 
@@ -22,25 +22,25 @@ macro_rules! format_error {
     }};
 }
 
-/// The kind of a [`RepositoryError`]
+/// The kind of a [`RepositoryError`].
 ///
-/// [`RepositoryError`](html.struct.RepositoryError)
+/// [`RepositoryError`](struct.RepositoryError.html)
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
 pub enum RepositoryErrorKind {
     #[fail(display = "all mirrors are down")]
     AllMirrorDown,
 }
 
-/// Errors that may occure when manipulating repositories.
+/// Errors that may occur when manipulating repositories.
 #[derive(Debug)]
 pub struct RepositoryError {
     inner: Context<RepositoryErrorKind>,
 }
 
 impl RepositoryError {
-    /// Returns a [`RepositoryErrorKind`] the reason why this error was thrown
+    /// Returns a [`RepositoryErrorKind`] the reason why this error was thrown.
     ///
-    /// [`RepositoryErrorKind`](html.enum.RepositoryErrorKind)
+    /// [`RepositoryErrorKind`](enum.RepositoryErrorKind.html)
     pub fn kind(&self) -> RepositoryErrorKind {
         *self.inner.get_context()
     }
@@ -76,10 +76,10 @@ impl From<Context<RepositoryErrorKind>> for RepositoryError {
     }
 }
 
-/// The kind of a [`QueryError`]
+/// The kind of a [`QueryError`].
 ///
-/// [`QueryError`](html.struct.QueryError)
-// XXX The display implementation for this enum members aren't used. Instead, QueryError implements a long, nice and complete error message.
+/// [`QueryError`](struct.QueryError.html)
+// XXX The display implementation for this enum members isn't used. Instead, QueryError implements a long, nice and complete error message.
 #[derive(Clone, Eq, PartialEq, Debug, Fail)]
 pub enum QueryErrorKind {
     #[fail(display = "couldn't find a package with name \"{}\"", _0)]
@@ -91,7 +91,7 @@ pub enum QueryErrorKind {
 }
 
 impl QueryErrorKind {
-    /// Returns an advice (for the end-user) to help him understand a failed query
+    /// Returns an advice (for the end-user) to help them understand a failed query.
     ///
     /// The returned advices may be on multiple lines, start with an uppercase
     /// letter and end with a dot followed by a '\n'.
@@ -116,7 +116,7 @@ impl QueryErrorKind {
     }
 }
 
-/// Errors that may occure when querying manifests
+/// Errors that may occur when querying manifests.
 #[derive(Debug)]
 pub struct QueryError {
     inner: Context<QueryErrorKind>,
