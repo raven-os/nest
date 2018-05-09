@@ -268,7 +268,7 @@ impl Repository {
         r.map_err(|e| {
             use std::error::Error;
             PullErrorKind::Download(e.description().to_string())
-        }).context(pull_url.to_string())?;
+        }).context(mirror.url().to_string())?;
 
         // Parse data to UTF8 and deserialize it.
         let r: Result<Vec<Manifest>, Error> = do catch {
@@ -403,7 +403,7 @@ impl Repository {
         r.map_err(|e| {
             use std::error::Error;
             DownloadErrorKind::Download(e.description().to_string())
-        }).context(dl_url.to_string())?;
+        }).context(mirror.url().to_string())?;
 
         Ok(())
     }

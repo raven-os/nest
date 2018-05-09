@@ -33,7 +33,7 @@ pub fn install_package(
         target.manifest().metadata().name()
     ));
 
-    let res = sys.installer(&target.data_path(config), &target.manifest())
+    let res = sys.installer(config, &target.data_path(config), &target)
         .perform(|state, progression| {
             // Update the action only when it's significant
             if old_state != state {
@@ -77,7 +77,10 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
 
         // Download and install the package
         download_package(config, &progress, target)?;
-        install_package(config, &sys, &progress, target)?;
+        install_package(config, &sys, &progress, target).context(format!(
+            "the installation of \"{}\" failed",
+            purple!(target)
+        ))?;
         progress.next();
     }
     Ok(())
