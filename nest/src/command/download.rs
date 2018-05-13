@@ -24,13 +24,18 @@ pub fn download_package(
     let target_path = target.data_path(config);
     let repo = target.repository();
 
+    let mut first = true;
     let any = repo.mirrors().iter().any(|mirror| {
         let mut pb = ProgressBar::new(String::from("download"));
+
         pb.set_target(format!(
-            "({}) {}",
+            "({}) {}{}",
             progress,
-            target.manifest().metadata().name()
+            target.manifest().metadata().name(),
+            if first { "" } else { " (retry)" },
         ));
+
+        first = false;
 
         let res = repo.download(
             config,

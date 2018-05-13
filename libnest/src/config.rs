@@ -28,15 +28,17 @@ lazy_static! {
     static ref NEST_PATH_CONFIG: &'static Path = Path::new("/etc/nest/config.toml");
     static ref NEST_PATH_CACHE: &'static Path = Path::new("/var/nest/cache/");
     static ref NEST_PATH_DOWNLOAD: &'static Path = Path::new("/var/nest/download/");
+    static ref NEST_PATH_INSTALLED: &'static Path = Path::new("/var/nest/installed/");
 }
 
-/// A structure holding all important paths for libnest. It's a sub member of [`Config`].
+/// A structure holding all important paths for libnest. It's a sub member of [`Config`][1].
 ///
-/// [`Config`](struct.Config.html)
+/// [1]: struct.Config.html
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 struct ConfigPaths {
     cache: PathBuf,
     download: PathBuf,
+    installed: PathBuf,
 }
 
 /// A handle to represent a configuration for Nest.
@@ -63,8 +65,9 @@ impl Config {
     /// Creates a default configuration.
     ///
     /// The default configuration is:
-    /// * Cache path: `/var/lib/nest/cache/`
-    /// * Download path: `/var/lib/nest/download/`
+    /// * Cache path: `/var/nest/cache/`
+    /// * Download path: `/var/nest/download/`
+    /// * Installed path: `/var/nest/installed/`
     ///
     /// All other fields are empty.
     ///
@@ -82,6 +85,7 @@ impl Config {
             paths: ConfigPaths {
                 cache: PathBuf::from(*NEST_PATH_CACHE),
                 download: PathBuf::from(*NEST_PATH_DOWNLOAD),
+                installed: PathBuf::from(*NEST_PATH_INSTALLED),
             },
             repositories: Vec::new(),
         }
@@ -205,6 +209,41 @@ impl Config {
     /// ```
     pub fn download_mut(&mut self) -> &mut PathBuf {
         &mut self.paths.download
+    }
+
+    /// Returns a reference to the path where installed packaged are logged.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate libnest;
+    /// use std::path::Path;
+    /// use libnest::config::Config;
+    ///
+    /// let config = Config::new();
+    /// assert_eq!(config.installed(), Path::new("/var/nest/installed/"));
+    /// ```
+    #[inline]
+    pub fn installed(&self) -> &Path {
+        &self.paths.installed
+    }
+
+    /// Returns a mutable reference to the path where packages' metadata are cached.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate libnest;
+    /// use std::path::{Path, PathBuf};
+    /// use libnest::config::Config;
+    ///
+    /// let mut config = Config::new();
+    /// *config.installed_mut() = PathBuf::from("/tmp/installed/");
+    /// assert_eq!(config.installed(), Path::new("/tmp/installed/"));
+    /// ```
+    #[inline]
+    pub fn installed_mut(&mut self) -> &mut PathBuf {
+        &mut self.paths.installed
     }
 
     /// Yields a reference to the underlying `Vec<Repository>`

@@ -41,6 +41,7 @@ extern crate tar;
 #[macro_use]
 extern crate failure_derive;
 
+pub mod chroot;
 pub mod config;
 pub mod error;
 pub mod package;
