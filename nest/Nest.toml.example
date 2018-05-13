@@ -6,6 +6,7 @@
 cache = "/var/nest/cache"
 download = "/var/nest/download"
 installed = "/var/nest/installed"
+user_deps = "/var/nest/user_deps"
 
 [[repositories]]
 name = "stable"

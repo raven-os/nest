@@ -24,6 +24,7 @@ pub fn install_package(
     sys: &System,
     progress: &Progress,
     target: &Package,
+    user_dep: bool,
 ) -> Result<(), Error> {
     let mut old_state = InstallState::Waiting;
     let mut pb = ProgressBar::new(old_state.to_string());
@@ -34,6 +35,7 @@ pub fn install_package(
     ));
 
     let res = sys.installer(config, &target.data_path(config), &target)
+        .set_user_dep(user_dep)
         .perform(|state, progression| {
             // Update the action only when it's significant
             if old_state != state {
@@ -77,7 +79,7 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
 
         // Download and install the package
         download_package(config, &progress, target)?;
-        install_package(config, &sys, &progress, target).context(format!(
+        install_package(config, &sys, &progress, target, true).context(format!(
             "the installation of \"{}\" failed",
             purple!(target)
         ))?;

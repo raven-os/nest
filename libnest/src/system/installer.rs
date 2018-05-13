@@ -7,7 +7,7 @@
 //!     * Install
 
 use std::fmt::{self, Display, Formatter};
-use std::fs::{self, File};
+use std::fs::{self, File, OpenOptions};
 use std::io::{Seek, SeekFrom, Write};
 use std::path::Path;
 
@@ -50,6 +50,7 @@ pub struct Installer<'a, 'b, 'c, 'd> {
     config: &'b Config,
     data: &'c Path,
     package: &'d Package<'d>,
+    user_dep: bool,
 }
 
 impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
@@ -65,7 +66,14 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
             config,
             data,
             package,
+            user_dep: false,
         }
+    }
+
+    /// Sets or unsets the user-dependency flag, preventing a package from being an orphan package.
+    pub fn set_user_dep(&mut self, b: bool) -> &mut Self {
+        self.user_dep = b;
+        self
     }
 
     /// Performs the installation
@@ -123,7 +131,7 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
             }
         }
 
-        // Step 3: Fill the log file with the installed files BEFORE INSTALLATIO so we can remove
+        // Step 3: Fill the log file with the installed files BEFORE INSTALLATION so we can remove
         // the package if the installation is cancelled or if it failed.
         //
         // The log file is used to know which files should be remove when uninstalling the package.
@@ -135,8 +143,8 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
             }
         }
 
-        // Step 4: extract the data to the destination folder (usually '/'), and fill the log file
-        // We're not using `archive.unpack_in()` because we want to be sure that extraction will behave the same way
+        // Step 4: Extract the data to the destination folder (usually '/'), and fill the log file
+        // We're not using `archive.unpack_in()` because we want to be sure the extraction will behave the same way
         // than when we filled the log file.
         {
             tarball.seek(SeekFrom::Start(0))?;
@@ -145,6 +153,16 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
                 cb(InstallState::Install, Some((i, files.len())));
                 entry?.unpack_in(&dest_path)?;
             }
+        }
+
+        // Step 5: If this package is not a dependency, it's then a user-dependency and should be listed in the `user-deps` file.
+        if self.user_dep {
+            let user_deps_path = dest_path.with_content(self.config.user_deps());
+            let mut user_deps = OpenOptions::new()
+                .append(true)
+                .create(true)
+                .open(&user_deps_path).context(user_deps_path.display().to_string())?;
+            writeln!(user_deps, "{}", self.package).context(user_deps_path.display().to_string())?;
         }
         Ok(())
     }

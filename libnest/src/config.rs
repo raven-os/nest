@@ -29,6 +29,7 @@ lazy_static! {
     static ref NEST_PATH_CACHE: &'static Path = Path::new("/var/nest/cache/");
     static ref NEST_PATH_DOWNLOAD: &'static Path = Path::new("/var/nest/download/");
     static ref NEST_PATH_INSTALLED: &'static Path = Path::new("/var/nest/installed/");
+    static ref NEST_PATH_USER_DEPS: &'static Path = Path::new("/var/nest/user_deps");
 }
 
 /// A structure holding all important paths for libnest. It's a sub member of [`Config`][1].
@@ -39,6 +40,7 @@ struct ConfigPaths {
     cache: PathBuf,
     download: PathBuf,
     installed: PathBuf,
+    user_deps: PathBuf,
 }
 
 /// A handle to represent a configuration for Nest.
@@ -86,6 +88,7 @@ impl Config {
                 cache: PathBuf::from(*NEST_PATH_CACHE),
                 download: PathBuf::from(*NEST_PATH_DOWNLOAD),
                 installed: PathBuf::from(*NEST_PATH_INSTALLED),
+                user_deps: PathBuf::from(*NEST_PATH_USER_DEPS),
             },
             repositories: Vec::new(),
         }
@@ -244,6 +247,39 @@ impl Config {
     #[inline]
     pub fn installed_mut(&mut self) -> &mut PathBuf {
         &mut self.paths.installed
+    }
+
+    /// Returns a reference to the file's path where user-dependencies are listed
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate libnest;
+    /// use std::path::Path;
+    /// use libnest::config::Config;
+    ///
+    /// let config = Config::new();
+    /// assert_eq!(config.download(), Path::new("/var/nest/download/"));
+    /// ```
+    pub fn user_deps(&self) -> &Path {
+        &self.paths.user_deps
+    }
+
+    /// Returns a mutable reference to the file's path where user-dependencies are listed
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate libnest;
+    /// use std::path::{Path, PathBuf};
+    /// use libnest::config::Config;
+    ///
+    /// let mut config = Config::new();
+    /// *config.download_mut() = PathBuf::from("/tmp/download/");
+    /// assert_eq!(config.download(), Path::new("/tmp/download/"));
+    /// ```
+    pub fn user_deps_mut(&mut self) -> &mut PathBuf {
+        &mut self.paths.user_deps
     }
 
     /// Yields a reference to the underlying `Vec<Repository>`
