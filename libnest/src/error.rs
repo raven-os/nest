@@ -1,10 +1,11 @@
-//! Types and enum for error handling, using [`failure`].
+//! Types and enum for error handling, using [`failure`][1].
 //!
-//! [`failure`](https://docs.rs/failure/0.1.1/failure/)
+//! [1]: https://docs.rs/failure/0.1.1/failure/
 
 use std::fmt::{self, Display, Formatter};
 
 use failure::{Backtrace, Context, Fail};
+use toml;
 use url::Url;
 
 /// Kind of errors that may occur when using the manifests cache.
@@ -162,11 +163,18 @@ impl From<Context<DownloadErrorKind>> for DownloadError {
 }
 
 /// Kind of errors that may occur when installing a package.
-#[derive(Clone, PartialEq, Debug, Fail)]
+#[derive(Debug, Fail)]
+
 pub enum InstallErrorKind {
     /// One of the installed file already exists on the targeted system.
     #[fail(display = "{} already exists", _0)]
     FileAlreadyExists(String),
+    /// The destination directory isn't valid (either does not exist or is not a directory).
+    #[fail(display = "\"{}\" either does not exist or is not a directory", _0)]
+    DestFolderError(String),
+    /// The package is already installed.
+    #[fail(display = "the package is already installed")]
+    PackageAlreadyInstalled,
 }
 
 /// A type for errors that may occur when installing a package.
@@ -202,5 +210,52 @@ impl From<InstallErrorKind> for InstallError {
 impl From<Context<InstallErrorKind>> for InstallError {
     fn from(inner: Context<InstallErrorKind>) -> InstallError {
         InstallError { inner }
+    }
+}
+
+/// The kind of a [`ConfigLoadError`][1].
+///
+/// [1]: struct.ConfigLoadError.html
+// XXX The display implementation for this enum members aren't used. Instead, QueryError implements a long, nice and complete error message.
+#[derive(Debug, Fail)]
+pub enum ConfigLoadErrorKind {
+    /// The error is caused by an invalid config file that couldn't be deserialized.
+    #[fail(display = "couldn't deserialize {}", _0)]
+    Deserialize(String, #[cause] toml::de::Error),
+}
+
+/// Errors that may occur when querying manifests.
+#[derive(Debug)]
+pub struct ConfigLoadError {
+    inner: Context<ConfigLoadErrorKind>,
+}
+
+impl Fail for ConfigLoadError {
+    fn cause(&self) -> Option<&Fail> {
+        self.inner.cause()
+    }
+
+    fn backtrace(&self) -> Option<&Backtrace> {
+        self.inner.backtrace()
+    }
+}
+
+impl Display for ConfigLoadError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        Display::fmt(&self.inner, f)
+    }
+}
+
+impl From<ConfigLoadErrorKind> for ConfigLoadError {
+    fn from(kind: ConfigLoadErrorKind) -> ConfigLoadError {
+        ConfigLoadError {
+            inner: Context::new(kind),
+        }
+    }
+}
+
+impl From<Context<ConfigLoadErrorKind>> for ConfigLoadError {
+    fn from(inner: Context<ConfigLoadErrorKind>) -> ConfigLoadError {
+        ConfigLoadError { inner }
     }
 }

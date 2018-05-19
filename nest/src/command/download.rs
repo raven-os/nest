@@ -24,13 +24,18 @@ pub fn download_package(
     let target_path = target.data_path(config);
     let repo = target.repository();
 
+    let mut first = true;
     let any = repo.mirrors().iter().any(|mirror| {
         let mut pb = ProgressBar::new(String::from("download"));
+
         pb.set_target(format!(
-            "({}) {}",
+            "({}) {}{}",
             progress,
-            target.manifest().metadata().name()
+            target.manifest().metadata().name(),
+            if first { "" } else { " (retry)" },
         ));
+
+        first = false;
 
         let res = repo.download(
             config,
@@ -65,7 +70,7 @@ pub fn download(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
 
     if let Some(path) = matches.value_of("download-dir") {
         use std::path::PathBuf;
-        *config.download_path_mut() = PathBuf::from(path);
+        *config.download_mut() = PathBuf::from(path);
     }
 
     // Retrieve targets

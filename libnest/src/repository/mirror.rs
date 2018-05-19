@@ -2,11 +2,13 @@
 
 use std::fmt::{self, Display, Formatter};
 
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use url::Url;
+use url_serde;
 
 /// A mirror for a given repository.
 ///
-/// It's basically a wrapper arround an [`Url`](https://docs.rs/url/1.7.0/url/struct.Url.html).
+/// It's basically a wrapper around an [`Url`](https://docs.rs/url/1.7.0/url/struct.Url.html).
 ///
 /// # Examples
 ///
@@ -102,5 +104,30 @@ impl Display for Mirror {
     #[inline]
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "{}", self.url)
+    }
+}
+
+impl From<Url> for Mirror {
+    fn from(url: Url) -> Mirror {
+        Mirror::new(url)
+    }
+}
+
+// Transparent implementation of Serialize and deserialize for Mirror
+impl Serialize for Mirror {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        url_serde::serialize(&self.url, serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for Mirror {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        url_serde::deserialize::<Url, _>(deserializer).map(Mirror::from)
     }
 }

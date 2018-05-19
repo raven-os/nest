@@ -1,3 +1,5 @@
+//! A structure representing the progress of the operation executed.
+
 use std::fmt::{self, Display, Formatter};
 
 /// Represents the number of steps done out of the total number of steps.

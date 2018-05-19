@@ -14,7 +14,8 @@ pub mod installer;
 
 use std::path::{Path, PathBuf};
 
-use package::Manifest;
+use config::Config;
+use package::Package;
 
 use self::arch::Arch;
 use self::installer::Installer;
@@ -121,11 +122,12 @@ impl System {
     }
 
     /// Installs the package located at the given path, following the given manifest.
-    pub fn installer<'a, 'b, 'c>(
+    pub fn installer<'a, 'b, 'c, 'd>(
         &'a self,
-        path: &'b Path,
-        manifest: &'c Manifest,
-    ) -> Installer<'a, 'b, 'c> {
-        Installer::from(self, path, manifest)
+        config: &'b Config,
+        path: &'c Path,
+        package: &'d Package<'d>,
+    ) -> Installer<'a, 'b, 'c, 'd> {
+        Installer::from(self, config, path, package)
     }
 }

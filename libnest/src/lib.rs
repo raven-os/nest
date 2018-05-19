@@ -29,9 +29,11 @@
 extern crate curl;
 #[macro_use]
 extern crate serde_derive;
+extern crate serde;
 extern crate serde_json as json;
 extern crate toml;
 extern crate url;
+extern crate url_serde;
 #[macro_use]
 extern crate lazy_static;
 extern crate failure;
@@ -40,6 +42,7 @@ extern crate tar;
 #[macro_use]
 extern crate failure_derive;
 
+pub mod chroot;
 pub mod config;
 pub mod error;
 pub mod package;

@@ -15,9 +15,19 @@ pub fn pull(config: &Config) -> Result<(), Error> {
     let mut progress = Progress::new(config.repositories().len());
 
     for repo in config.repositories().iter() {
+        let mut first = true;
+
         let any = repo.mirrors().iter().any(|mirror| {
             let mut pb = ProgressBar::new(String::from("pull"));
-            pb.set_target(format!("({}) {}", progress, repo.name()));
+
+            pb.set_target(format!(
+                "({}) {}{}",
+                progress,
+                repo.name(),
+                if first { "" } else { " (retry)" },
+            ));
+
+            first = false;
 
             let res = repo.pull(config, mirror, |cur: f64, max: f64| {
                 pb.set_max(max as usize);

@@ -1,6 +1,6 @@
-//! Types, enums and macros for error handling, using [`failure`].
+//! Types, enums and macros for error handling, using [`failure`][1].
 //!
-//! [`failure`](https://docs.rs/failure/0.1.1/failure/)
+//! [1]: https://docs.rs/failure/0.1.1/failure/
 
 use std::fmt::{self, Display, Formatter};
 
@@ -22,9 +22,9 @@ macro_rules! format_error {
     }};
 }
 
-/// The kind of a [`RepositoryError`].
+/// The kind of a [`RepositoryError`][1].
 ///
-/// [`RepositoryError`](struct.RepositoryError.html)
+/// [1]: html.struct.RepositoryError
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
 pub enum RepositoryErrorKind {
     #[fail(display = "all mirrors are down")]
@@ -38,9 +38,9 @@ pub struct RepositoryError {
 }
 
 impl RepositoryError {
-    /// Returns a [`RepositoryErrorKind`] the reason why this error was thrown.
+    /// Returns a [`RepositoryErrorKind`][1] the reason why this error was thrown.
     ///
-    /// [`RepositoryErrorKind`](enum.RepositoryErrorKind.html)
+    /// [1]: html.enum.RepositoryErrorKind
     pub fn kind(&self) -> RepositoryErrorKind {
         *self.inner.get_context()
     }
@@ -76,9 +76,9 @@ impl From<Context<RepositoryErrorKind>> for RepositoryError {
     }
 }
 
-/// The kind of a [`QueryError`].
+/// The kind of a [`QueryError`][1].
 ///
-/// [`QueryError`](struct.QueryError.html)
+/// [1]: html.struct.QueryError
 // XXX The display implementation for this enum members isn't used. Instead, QueryError implements a long, nice and complete error message.
 #[derive(Clone, Eq, PartialEq, Debug, Fail)]
 pub enum QueryErrorKind {
