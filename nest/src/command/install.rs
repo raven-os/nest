@@ -33,7 +33,8 @@ pub fn install_package(
         target.manifest().metadata().name()
     ));
 
-    let res = sys.installer(config, &target.data_path(config), &target)
+    let res = sys
+        .installer(config, &target.data_path(config), &target)
         .perform(|state, progression| {
             // Update the action only when it's significant
             if old_state != state {

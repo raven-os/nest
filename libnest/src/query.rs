@@ -174,7 +174,8 @@ impl<'a> CacheQuery<'a> {
     pub fn perform(&self) -> Result<Vec<Package<'a>>, Error> {
         let mut vec: Vec<Package> = Vec::new();
 
-        let repositories: Vec<&Repository> = self.config
+        let repositories: Vec<&Repository> = self
+            .config
             .repositories()
             .iter()
             .filter(|repo| {
@@ -186,7 +187,8 @@ impl<'a> CacheQuery<'a> {
             })
             .collect();
         for repo in repositories {
-            let categories: Vec<CategoryCache> = repo.cache(self.config)
+            let categories: Vec<CategoryCache> = repo
+                .cache(self.config)
                 .categories()?
                 .filter(|&(ref name, _)| {
                     if let Some(ref cat_name) = self.category {

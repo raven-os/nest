@@ -89,7 +89,8 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
         // Step 1: Check that the package isn't already installed
         cb(InstallState::Check, None);
         let log_path = {
-            let mut content_path = self.config
+            let mut content_path = self
+                .config
                 .installed()
                 .join(self.package.repository().name())
                 .join(self.package.manifest().metadata().category());

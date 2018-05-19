@@ -130,7 +130,8 @@ impl Config {
         let mut file = File::open(path).context(path.display().to_string())?;
 
         // Allocate a string long enough to hold the entire file
-        let mut s = file.metadata()
+        let mut s = file
+            .metadata()
             .map(|m| String::with_capacity(m.len() as usize))
             .unwrap_or_default();
 
