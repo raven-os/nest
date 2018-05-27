@@ -10,18 +10,22 @@ pub struct Progress {
 }
 
 impl Progress {
+    /// Creates a new `Progress`.
     pub fn new(max: usize) -> Progress {
         Progress { current: 1, max }
     }
 
+    /// Returns the current number of steps done.
     pub fn current(&self) -> usize {
         self.current
     }
 
+    /// Returns the total number of steps done.
     pub fn max(&self) -> usize {
         self.max
     }
 
+    /// Returns the current number of steps incremented by one.
     pub fn next(&mut self) {
         self.current += 1
     }

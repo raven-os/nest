@@ -72,7 +72,7 @@ impl ProgressBar {
         self.max = max;
     }
 
-    /// Updates the current value with the one given.
+    /// Updates the current value with the one given, then renders the progress bar.
     ///
     /// If the given value is over the maximum value, it will be troncated.
     pub fn update(&mut self, mut val: usize) {
@@ -83,6 +83,7 @@ impl ProgressBar {
         self.render();
     }
 
+    /// Returns the speed at which the progress bar is going.
     // XXX: Should return a more accurate speed instead of average speed
     pub fn speed(&self, time_elapsed: &Duration) -> f64 {
         let ftime_elapsed = time_elapsed.as_secs() as f64
@@ -90,6 +91,7 @@ impl ProgressBar {
         self.current as f64 / ftime_elapsed
     }
 
+    /// Returns how much time is left before the action ends.
     pub fn time_left(&self, speed: f64) -> f64 {
         if speed > 0.0 {
             1.0 / speed * (self.max - self.current) as f64
@@ -98,6 +100,7 @@ impl ProgressBar {
         }
     }
 
+    /// Returns a ratio of the current value to the max value.
     pub fn ratio(&self) -> f64 {
         if self.max > 0 {
             self.current as f64 / self.max as f64
@@ -106,6 +109,7 @@ impl ProgressBar {
         }
     }
 
+    /// Renders the progress bar on screen.
     pub fn render(&mut self) {
         let now = Instant::now();
 

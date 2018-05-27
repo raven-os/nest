@@ -14,6 +14,7 @@ lazy_static! {
     ).unwrap();
 }
 
+/// Looks for the cache of the given argument, whether it's a package, a category or a repository.
 pub fn cache<'a>(config: &'a Config, arg: &str) -> Option<CacheQuery<'a>> {
     if let Some(caps) = REGEX_PACKAGE_QUERY.captures(arg) {
         let mut query = CacheQuery::new(config);

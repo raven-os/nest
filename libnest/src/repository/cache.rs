@@ -38,6 +38,23 @@ impl RepositoryCache {
     /// # Filesystem
     ///
     /// This operation assumes the current user has the rights to read the local cache.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # extern crate libnest;
+    /// use libnest::config::Config;
+    /// use libnest::repository::Repository;
+    ///
+    /// let config = Config::new();
+    ///
+    /// let repository = Repository::new("stable");
+    /// if let Some(category_cache) = repository.cache(&config).category("shell") {
+    ///    println!("The category exists!");
+    /// } else {
+    ///    println!("Can't find the category \"shell\" for the repository \"{}\"", repository.name());
+    /// }
+    /// ```
     #[inline]
     pub fn category(&self, category: &str) -> Option<CategoryCache> {
         let mut path = self.path.clone();
@@ -58,6 +75,24 @@ impl RepositoryCache {
     /// # Filesystem
     ///
     /// This operation assumes the current user has the rights to read the local cache.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # extern crate libnest;
+    /// use libnest::repository::Repository;
+    /// use libnest::config::Config;
+    ///
+    /// let config = Config::new();
+    ///
+    /// let repository = Repository::new("stable");
+    /// let repository_cache = repository.cache(&config);
+    /// if let Ok(categories) = repository_cache.categories() {
+    ///     println!("Categories found !");
+    /// } else {
+    ///     println!("Can't find any category for the repository \"{}\"", repository.name());
+    /// }
+    /// ```
     #[inline]
     pub fn categories(&self) -> Result<impl Iterator<Item = (String, CategoryCache)>, Error> {
         let mut vec = Vec::new();
@@ -106,6 +141,7 @@ pub struct CategoryCache {
 }
 
 impl CategoryCache {
+    /// Creates a new category cache located at the given path.
     #[inline]
     pub(crate) fn new(path: PathBuf) -> CategoryCache {
         CategoryCache { path }
@@ -122,6 +158,27 @@ impl CategoryCache {
     /// # Filesystem
     ///
     /// This operation assumes the current user has the rights to read the local cache.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # extern crate libnest;
+    /// use libnest::config::Config;
+    /// use libnest::repository::Repository;
+    ///
+    /// let config = Config::new();
+    ///
+    /// let repository = Repository::new("stable");
+    /// if let Some(category_cache) = repository.cache(&config).category("shell") {
+    ///    if let Some(Ok(manifest_cache)) = category_cache.manifest("bash") {
+    ///         println!("This manifest exists !");
+    ///     } else {
+    ///         println!("Can't find the manifest \"bash\" for the repository \"{}\"", repository.name());
+    ///     }
+    /// } else {
+    ///    println!("Can't find the category \"shell\" for the repository \"{}\"", repository.name());
+    /// }
+    /// ```
     #[inline]
     pub fn manifest(&self, name: &str) -> Option<Result<ManifestCache, Error>> {
         let mut path = self.path.clone();
@@ -140,6 +197,27 @@ impl CategoryCache {
     /// # Filesystem
     ///
     /// This operation assumes the current user has the rights to read the local cache.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # extern crate libnest;
+    /// use libnest::config::Config;
+    /// use libnest::repository::Repository;
+    ///
+    /// let config = Config::new();
+    ///
+    /// let repository = Repository::new("stable");
+    /// if let Some(category_cache) = repository.cache(&config).category("sys-devel") {
+    ///     if let Ok(manifests_cache) = category_cache.manifests() {
+    ///         println!("The manifests exist !");
+    ///     } else {
+    ///         println!("Can't find the manifests for the repository \"{}\"", repository.name());
+    ///     }
+    /// } else {
+    ///     println!("Can't find the category \"sys-devel\" for the repository \"{}\"", repository.name());
+    /// }
+    /// ```
     #[inline]
     pub fn manifests(&self) -> Result<impl Iterator<Item = ManifestCache>, Error> {
         let mut vec = Vec::new();
@@ -187,6 +265,8 @@ pub struct ManifestCache {
 
 impl ManifestCache {
     #[inline]
+    /// Loads the cache of the manifest at the given path, or an
+    /// [`std::error::Error`](https://doc.rust-lang.org/std/error/trait.Error.html) in case of failure.
     pub(crate) fn load(path: PathBuf) -> Result<ManifestCache, Error> {
         let display = path.display().to_string();
         let mut file = File::open(path.clone()).context(display.clone())?;

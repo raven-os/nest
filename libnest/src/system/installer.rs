@@ -69,6 +69,40 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
     }
 
     /// Performs the installation.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # extern crate libnest;
+    /// # use std::path::Path;
+    /// // Let's install the `gcc` package
+    /// use libnest::system::System;
+    /// use libnest::system::installer::Installer;
+    /// use libnest::config::Config;
+    /// use libnest::repository::Repository;
+    /// use libnest::package::Package;
+    ///
+    /// let config = Config::new();
+    /// let repository = Repository::new("stable");
+    /// let system = System::current();
+    /// let data = Path::new("/var/nest");
+    ///
+    /// if let Some(category_cache) = repository.cache(&config).category("sys-devel") {
+    ///    if let Some(Ok(manifest_cache)) = category_cache.manifest("gcc") {
+    ///         let package = Package::from(&repository, manifest_cache.manifest().clone());
+    ///         let mut installer = system.installer(&config, &data, &package);
+    ///         if let Ok(result) = installer.perform(|state, step| println!("State: {}, Step: {:?}", state, step)) {
+    ///             println!("Installation complete !");
+    ///         } else {
+    ///             println!("Could not perform the installation of \"{}\"", package.manifest().metadata().name());
+    ///         }
+    ///     } else {
+    ///         println!("Can't find the manifest \"gcc\" for the repository \"{}\"", repository.name());
+    ///     }
+    /// } else {
+    ///    println!("Can't find the category \"sys-devel\" for the repository \"{}\"", repository.name());
+    /// }
+    /// ```
     pub fn perform<F>(&mut self, mut cb: F) -> Result<(), Error>
     where
         F: FnMut(InstallState, Option<(usize, usize)>),
@@ -76,7 +110,7 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
         // We'll use ChrootPath instead of PathBuf in this function
         let dest_path = self.system.install_path();
 
-        // Check the existence and validity of destination directory
+        // Check the existence and the validity of the destination directory
         if !dest_path.exists() || !dest_path.is_dir() {
             Err(InstallErrorKind::DestFolderError(
                 dest_path.display().to_string(),
