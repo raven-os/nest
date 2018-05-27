@@ -25,7 +25,7 @@ impl Progress {
         self.max
     }
 
-    /// Returns the current number of steps incremented by one.
+    /// Increments by one the current number of steps done.
     pub fn next(&mut self) {
         self.current += 1
     }

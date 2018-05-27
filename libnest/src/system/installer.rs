@@ -85,7 +85,7 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
     /// let config = Config::new();
     /// let repository = Repository::new("stable");
     /// let system = System::current();
-    /// let data = Path::new("/var/nest");
+    /// let data = Path::new("/tmp/gcc.tar.gz");
     ///
     /// if let Some(category_cache) = repository.cache(&config).category("sys-devel") {
     ///    if let Some(Ok(manifest_cache)) = category_cache.manifest("gcc") {

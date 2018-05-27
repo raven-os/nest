@@ -48,11 +48,10 @@ impl RepositoryCache {
     ///
     /// let config = Config::new();
     ///
-    /// let repository = Repository::new("stable");
-    /// if let Some(category_cache) = repository.cache(&config).category("shell") {
-    ///    println!("The category exists!");
-    /// } else {
-    ///    println!("Can't find the category \"shell\" for the repository \"{}\"", repository.name());
+    /// let repository_cache = Repository::new("stable").cache(&config);
+    /// match repository_cache.category("shell") {
+    ///     Some(category) => println!("The category exists !"),
+    ///     None => println!("The category \"shell\" doesn't exist")
     /// }
     /// ```
     #[inline]
@@ -87,10 +86,9 @@ impl RepositoryCache {
     ///
     /// let repository = Repository::new("stable");
     /// let repository_cache = repository.cache(&config);
-    /// if let Ok(categories) = repository_cache.categories() {
-    ///     println!("Categories found !");
-    /// } else {
-    ///     println!("Can't find any category for the repository \"{}\"", repository.name());
+    /// match repository_cache.categories() {
+    ///     Ok(categories) => println!("There are {} categories for this repository", categories.count()),
+    ///     Err(e) => eprintln!("Couldn't access the categories of this repository: {}", e)
     /// }
     /// ```
     #[inline]
@@ -169,14 +167,13 @@ impl CategoryCache {
     /// let config = Config::new();
     ///
     /// let repository = Repository::new("stable");
-    /// if let Some(category_cache) = repository.cache(&config).category("shell") {
-    ///    if let Some(Ok(manifest_cache)) = category_cache.manifest("bash") {
-    ///         println!("This manifest exists !");
-    ///     } else {
-    ///         println!("Can't find the manifest \"bash\" for the repository \"{}\"", repository.name());
-    ///     }
+    /// let manifest = repository.cache(&config).category("shell")
+    ///     .and_then(|category| category.manifest("bash"));
+    ///
+    /// if let Some(manifest) = manifest {
+    ///     println!("There is a package named bash within the shell category");
     /// } else {
-    ///    println!("Can't find the category \"shell\" for the repository \"{}\"", repository.name());
+    ///     println!("There is no such package");
     /// }
     /// ```
     #[inline]
@@ -208,14 +205,13 @@ impl CategoryCache {
     /// let config = Config::new();
     ///
     /// let repository = Repository::new("stable");
-    /// if let Some(category_cache) = repository.cache(&config).category("sys-devel") {
-    ///     if let Ok(manifests_cache) = category_cache.manifests() {
-    ///         println!("The manifests exist !");
-    ///     } else {
-    ///         println!("Can't find the manifests for the repository \"{}\"", repository.name());
+    /// if let Some(category_cache) = repository.cache(&config).category("shell") {
+    ///     match category_cache.manifests() {
+    ///     Ok(manifests) => println!("There are {} manifests for this repository", manifests.count()),
+    ///     Err(e) => eprintln!("Couldn't access the manifests of this repository: {}", e)
     ///     }
     /// } else {
-    ///     println!("Can't find the category \"sys-devel\" for the repository \"{}\"", repository.name());
+    ///     println!("Can't find the category \"shell\" for the repository\"{}\"", repository.name());
     /// }
     /// ```
     #[inline]
@@ -265,7 +261,7 @@ pub struct ManifestCache {
 
 impl ManifestCache {
     #[inline]
-    /// Loads the cache of the manifest at the given path, or an
+    /// Loads the cache of the manifest at the given path, or returns an
     /// [`std::error::Error`](https://doc.rust-lang.org/std/error/trait.Error.html) in case of failure.
     pub(crate) fn load(path: PathBuf) -> Result<ManifestCache, Error> {
         let display = path.display().to_string();
