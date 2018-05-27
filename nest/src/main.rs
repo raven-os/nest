@@ -32,7 +32,6 @@
 #![cfg_attr(feature = "cargo-clippy", warn(used_underscore_binding))]
 #![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
 #![feature(catch_expr)]
-#![feature(extern_prelude)]
 
 extern crate ansi_term;
 #[macro_use]
