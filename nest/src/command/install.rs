@@ -15,10 +15,10 @@ use progress::Progress;
 use progressbar::ProgressBar;
 use query;
 
-/// Installs the given package
+/// Installs the given package.
 ///
-/// This function will draw a progress bar on the user's output
-/// It will return `Ok` if the install succeed, or `Err` otherwise.
+/// This function will draw a progress bar on the user's output.
+/// It will return `Ok` if the install succeeds, or `Err` otherwise.
 pub fn install_package(
     config: &Config,
     sys: &System,
@@ -33,7 +33,8 @@ pub fn install_package(
         target.manifest().metadata().name()
     ));
 
-    let res = sys.installer(config, &target.data_path(config), &target)
+    let res = sys
+        .installer(config, &target.data_path(config), &target)
         .perform(|state, progression| {
             // Update the action only when it's significant
             if old_state != state {
@@ -52,7 +53,7 @@ pub fn install_package(
     res
 }
 
-/// Installs all the given packages
+/// Installs all the given packages.
 ///
 /// This will go through all targets, check that they exist, resolve the dependency graph,
 /// download the packages, ensure the installation will not break anything nor delete any file
@@ -62,7 +63,7 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
     let targets = query::packages(config, &matches.values_of_lossy("PACKAGE").unwrap())?;
     let mut progress = Progress::new(targets.len());
 
-    // Targetted system
+    // targeted system
     let mut sys = System::current();
     if let Some(path) = matches.value_of("install-dir") {
         *sys.install_path_mut() = PathBuf::from(path);

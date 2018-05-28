@@ -7,7 +7,7 @@ use error::{RepositoryError, RepositoryErrorKind};
 use progress::Progress;
 use progressbar::ProgressBar;
 
-/// Pulls all repository
+/// Pulls all repositories.
 ///
 /// This will go through all repositories, and for each one of them, go through all mirrors until the pull is
 /// complete.

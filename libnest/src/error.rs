@@ -1,4 +1,4 @@
-//! Types and enum for error handling, using [`failure`][1]
+//! Types and enum for error handling, using [`failure`][1].
 //!
 //! [1]: https://docs.rs/failure/0.1.1/failure/
 
@@ -8,28 +8,28 @@ use failure::{Backtrace, Context, Fail};
 use toml;
 use url::Url;
 
-/// Kind of errors that may occure when using the manifests cache.
+/// Kind of errors that may occur when using the manifests cache.
 #[derive(Clone, PartialEq, Debug, Fail)]
 pub enum CacheErrorKind {
-    /// The error occured doing an IO operation
+    /// The error occured doing an IO operation.
     #[fail(display = "{}", _0)]
     IO(String),
-    /// The error occured when deserializing a manifest
+    /// The error occured when deserializing a manifest.
     #[fail(display = "{}", _0)]
     Deserialize(String),
-    /// The error occured when serializing a manifest
+    /// The error occured when serializing a manifest.
     #[fail(display = "{}", _0)]
     Serialize(String),
 }
 
-/// A type for errors that may occure when using the manifests cache.
+/// A type for errors that may occur when using the manifest's cache.
 #[derive(Debug)]
 pub struct CacheError {
     inner: Context<CacheErrorKind>,
 }
 
 impl CacheError {
-    /// Returns a [`CacheErrorKind`] the reason why this error was thrown
+    /// Returns a [`CacheErrorKind`] the reason why this error was thrown.
     pub fn kind(&self) -> &CacheErrorKind {
         &self.inner.get_context()
     }
@@ -65,24 +65,24 @@ impl From<Context<CacheErrorKind>> for CacheError {
     }
 }
 
-/// Kind of errors that may occure when pulling a repository
+/// Kind of errors that may occur when pulling a repository.
 #[derive(Clone, PartialEq, Debug, Fail)]
 pub enum PullErrorKind {
-    /// The error is network-based and occured while downloading the data
+    /// The error is network-based and occured while downloading the data.
     #[fail(display = "{}", _0)]
     Download(String),
-    /// The error occured while interpreting the received data
+    /// The error occured while interpreting the received data.
     #[fail(display = "{}: received invalid data", _0)]
     InvalidData(Url),
-    /// The error occured while trying to remove the old cache
+    /// The error occured while trying to remove the old cache.
     #[fail(display = "can't remove old cache: {}", _0)]
     CantRemoveCache(String),
-    /// The error occured while trying to create the new cache
+    /// The error occured while trying to create the new cache.
     #[fail(display = "can't create cache: {}", _0)]
     CantCreateCache(String),
 }
 
-/// A type for errors that may occure when pulling a repository
+/// A type for errors that may occur when pulling a repository.
 #[derive(Debug)]
 pub struct PullError {
     inner: Context<PullErrorKind>,
@@ -118,15 +118,15 @@ impl From<Context<PullErrorKind>> for PullError {
     }
 }
 
-/// Kind of errors that may occure when downloading a package from a repository
+/// Kind of errors that may occur when downloading a package from a repository.
 #[derive(Clone, PartialEq, Debug, Fail)]
 pub enum DownloadErrorKind {
-    /// The error is network-based and occured while downloading the data
+    /// The error is network-based and occured while downloading the data.
     #[fail(display = "{}", _0)]
     Download(String),
 }
 
-/// A type for errors that may occure when downloading a package from a repository
+/// A type for errors that may occur when downloading a package from a repository.
 #[derive(Debug)]
 pub struct DownloadError {
     inner: Context<DownloadErrorKind>,
@@ -162,21 +162,22 @@ impl From<Context<DownloadErrorKind>> for DownloadError {
     }
 }
 
-/// Kind of errors that may occure when installing a package
+/// Kind of errors that may occur when installing a package.
 #[derive(Debug, Fail)]
+
 pub enum InstallErrorKind {
-    /// One of the installed file already exists on the targetted system.
+    /// One of the installed file already exists on the targeted system.
     #[fail(display = "{} already exists", _0)]
     FileAlreadyExists(String),
-    /// The destination directory isn't valid (either doesn't not exist or is not a directory)
+    /// The destination directory isn't valid (either does not exist or is not a directory).
     #[fail(display = "\"{}\" either does not exist or is not a directory", _0)]
     DestFolderError(String),
-    /// The package is already installed
+    /// The package is already installed.
     #[fail(display = "the package is already installed")]
     PackageAlreadyInstalled,
 }
 
-/// A type for errors that may occure when installing a package
+/// A type for errors that may occur when installing a package.
 #[derive(Debug)]
 pub struct InstallError {
     inner: Context<InstallErrorKind>,
@@ -212,18 +213,18 @@ impl From<Context<InstallErrorKind>> for InstallError {
     }
 }
 
-/// The kind of a [`ConfigLoadError`][1]
+/// The kind of a [`ConfigLoadError`][1].
 ///
 /// [1]: struct.ConfigLoadError.html
 // XXX The display implementation for this enum members aren't used. Instead, QueryError implements a long, nice and complete error message.
 #[derive(Debug, Fail)]
 pub enum ConfigLoadErrorKind {
-    /// The error is caused by an invalid config file that couldn't be deserialized
+    /// The error is caused by an invalid config file that couldn't be deserialized.
     #[fail(display = "couldn't deserialize {}", _0)]
     Deserialize(String, #[cause] toml::de::Error),
 }
 
-/// Errors that may occure when querying manifests
+/// Errors that may occur when querying manifests.
 #[derive(Debug)]
 pub struct ConfigLoadError {
     inner: Context<ConfigLoadErrorKind>,

@@ -1,6 +1,6 @@
 //! Types to install a package on the targeted system.
 //!
-//! This module provides the struct [`Installer`]  to perform an installation of a package on the targetted system.
+//! This module provides the struct [`Installer`]  to perform an installation of a package on the targeted system.
 //! The installation is divided into steps (See [`InstallState`]):
 //!     * Waiting
 //!     * Check
@@ -68,7 +68,41 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
         }
     }
 
-    /// Performs the installation
+    /// Performs the installation.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # extern crate libnest;
+    /// # use std::path::Path;
+    /// // Let's install the `gcc` package
+    /// use libnest::system::System;
+    /// use libnest::system::installer::Installer;
+    /// use libnest::config::Config;
+    /// use libnest::repository::Repository;
+    /// use libnest::package::Package;
+    ///
+    /// let config = Config::new();
+    /// let repository = Repository::new("stable");
+    /// let system = System::current();
+    /// let data = Path::new("/tmp/gcc.tar.gz");
+    ///
+    /// if let Some(category_cache) = repository.cache(&config).category("sys-devel") {
+    ///    if let Some(Ok(manifest_cache)) = category_cache.manifest("gcc") {
+    ///         let package = Package::from(&repository, manifest_cache.manifest().clone());
+    ///         let mut installer = system.installer(&config, &data, &package);
+    ///         if let Ok(result) = installer.perform(|state, step| println!("State: {}, Step: {:?}", state, step)) {
+    ///             println!("Installation complete !");
+    ///         } else {
+    ///             println!("Could not perform the installation of \"{}\"", package.manifest().metadata().name());
+    ///         }
+    ///     } else {
+    ///         println!("Can't find the manifest \"gcc\" for the repository \"{}\"", repository.name());
+    ///     }
+    /// } else {
+    ///    println!("Can't find the category \"sys-devel\" for the repository \"{}\"", repository.name());
+    /// }
+    /// ```
     pub fn perform<F>(&mut self, mut cb: F) -> Result<(), Error>
     where
         F: FnMut(InstallState, Option<(usize, usize)>),
@@ -76,7 +110,7 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
         // We'll use ChrootPath instead of PathBuf in this function
         let dest_path = self.system.install_path();
 
-        // Check existence and validity of destination directory
+        // Check the existence and the validity of the destination directory
         if !dest_path.exists() || !dest_path.is_dir() {
             Err(InstallErrorKind::DestFolderError(
                 dest_path.display().to_string(),
@@ -89,7 +123,8 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
         // Step 1: Check that the package isn't already installed
         cb(InstallState::Check, None);
         let log_path = {
-            let mut content_path = self.config
+            let mut content_path = self
+                .config
                 .installed()
                 .join(self.package.repository().name())
                 .join(self.package.manifest().metadata().category());
@@ -100,7 +135,7 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
             content_path.push(self.package.manifest().metadata().name());
             let log_path = dest_path.with_content(content_path);
 
-            // If the log file exists then package is already installed.
+            // If the log file exists, then the package is already installed
             if log_path.exists() {
                 Err(InstallErrorKind::PackageAlreadyInstalled)?;
             }
@@ -119,14 +154,14 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
                         path.display().to_string(),
                     ))?;
                 }
-                files.push(Path::new("/").with_content(relative_path.to_path_buf())); // Absolute path here, no relative ones.
+                files.push(Path::new("/").with_content(relative_path.to_path_buf())); // Absolute path here, no relative ones
             }
         }
 
-        // Step 3: Fill the log file with the installed files BEFORE INSTALLATIO so we can remove
-        // the package if the installation is cancelled or if it failed.
+        // Step 3: Fill the log file with the installed files BEFORE INSTALLATION so we can remove
+        // the package if the installation is cancelled or if it failed
         //
-        // The log file is used to know which files should be remove when uninstalling the package.
+        // The log file is used to know which files should be remove when uninstalling the package
         {
             let mut log = File::create(&log_path).context(log_path.display().to_string())?;
             cb(InstallState::Prepare, None);
@@ -137,7 +172,7 @@ impl<'a, 'b, 'c, 'd> Installer<'a, 'b, 'c, 'd> {
 
         // Step 4: extract the data to the destination folder (usually '/'), and fill the log file
         // We're not using `archive.unpack_in()` because we want to be sure that extraction will behave the same way
-        // than when we filled the log file.
+        // than when we filled the log file
         {
             tarball.seek(SeekFrom::Start(0))?;
             let mut archive = Archive::new(GzDecoder::new(&tarball));

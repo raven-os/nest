@@ -1,8 +1,8 @@
 //! Packages and their content.
 //!
 //! Packages are made of three things, represented as three different files:
-//!  * The manifest: name, version, dependencies etc.
-//!  * The data to install, a compressed tarball (`.tar.gz`).
+//!  * The manifest: name, version, dependencies, etc.
+//!  * The data to install: a compressed tarball (`.tar.gz`).
 //!  * The build file: instructions to follow when installing / removing the package. It's taking
 //!  the form of a shell script (`.sh`).
 //!
@@ -23,7 +23,7 @@ use std::path::PathBuf;
 use config::Config;
 use repository::Repository;
 
-/// Represents package as a whole: it's manifest, it's data and it's build file.
+/// Represents a package as a whole: its manifest, its data and its build file.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Package<'a> {
     repository: &'a Repository,
@@ -31,7 +31,7 @@ pub struct Package<'a> {
 }
 
 impl<'a> Package<'a> {
-    /// Creates a package from it's repository and it's manifest.
+    /// Creates a package from its repository and its manifest.
     ///
     /// Usually, you'd like to use a query to get one instead of making it by hand.
     #[inline]
@@ -42,7 +42,7 @@ impl<'a> Package<'a> {
         }
     }
 
-    /// Returns the repository this package belongs to.
+    /// Returns the repository the package belongs to.
     #[inline]
     pub fn repository(&self) -> &Repository {
         self.repository
@@ -54,7 +54,7 @@ impl<'a> Package<'a> {
         &self.manifest
     }
 
-    /// Returns the path where data should be located
+    /// Returns the path where data should be located.
     #[inline]
     pub fn data_path(&self, config: &Config) -> PathBuf {
         let mut path = config.download().to_path_buf();

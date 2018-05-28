@@ -1,4 +1,4 @@
-//! Mirrors for a given repository
+//! Mirrors for a given repository.
 
 use std::fmt::{self, Display, Formatter};
 
@@ -8,7 +8,7 @@ use url_serde;
 
 /// A mirror for a given repository.
 ///
-/// It's basically a wrapper arround an [`Url`](https://docs.rs/url/1.7.0/url/struct.Url.html).
+/// It's basically a wrapper around an [`Url`](https://docs.rs/url/1.7.0/url/struct.Url.html).
 ///
 /// # Examples
 ///

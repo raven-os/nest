@@ -1,6 +1,6 @@
 //! Nest is Raven's package manager.
 //!
-//! This implementation is the CLI (command-line interface) version of Nest. A GUI version may be
+//! This implementation is the CLI (Command-Line Interface) version of Nest. A GUI version may be
 //! added one day.
 //!
 //! Nest's implementation is split in two parts: `nest` (where you are), and
@@ -165,7 +165,7 @@ fn main() {
 
         eprintln!("{}", format_error!(err));
 
-        // We'd like to print advices for these errors, if any is available.
+        // We'd like to print advices for these errors, if any are available.
         // These advices should be preceded by a blank line.
 
         // Try to downcast errors to query_error

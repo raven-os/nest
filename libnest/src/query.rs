@@ -1,4 +1,4 @@
-//! Queries to search between available packages.
+//! Queries to search in available packages.
 //!
 //! This module provides a structure to look for manifests that are stored in the local cache.
 
@@ -57,7 +57,7 @@ pub struct CacheQuery<'a> {
 }
 
 impl<'a> CacheQuery<'a> {
-    /// Creates a new, empty, query.
+    /// Creates a new, empty query.
     ///
     /// # Examples
     ///
@@ -174,7 +174,8 @@ impl<'a> CacheQuery<'a> {
     pub fn perform(&self) -> Result<Vec<Package<'a>>, Error> {
         let mut vec: Vec<Package> = Vec::new();
 
-        let repositories: Vec<&Repository> = self.config
+        let repositories: Vec<&Repository> = self
+            .config
             .repositories()
             .iter()
             .filter(|repo| {
@@ -186,7 +187,8 @@ impl<'a> CacheQuery<'a> {
             })
             .collect();
         for repo in repositories {
-            let categories: Vec<CategoryCache> = repo.cache(self.config)
+            let categories: Vec<CategoryCache> = repo
+                .cache(self.config)
                 .categories()?
                 .filter(|&(ref name, _)| {
                     if let Some(ref cat_name) = self.category {

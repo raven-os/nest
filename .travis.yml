@@ -7,7 +7,7 @@ before_script:
   - cargo update
 
 script:
-  - cargo fmt --all -- --write-mode=diff
+  - cargo fmt --all -- --check
   - cargo build --all
   - cargo test --all
 

@@ -1,4 +1,4 @@
-//! Nest backend library
+//! Nest backend library.
 //!
 //! This crate performs backend operations for Raven's Package Manager, like installation, removal, and search of a package.
 

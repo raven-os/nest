@@ -22,7 +22,7 @@ pub enum ProgressState {
     Err,
 }
 
-/// A progres bar and all it's internal data.
+/// A progress bar and all its internal data.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct ProgressBar {
     current: usize,
@@ -37,7 +37,7 @@ pub struct ProgressBar {
 impl ProgressBar {
     /// Creates a new `ProgressBar` with default values.
     ///
-    /// The given `action` parameter is the name of the action done. It will be printed with
+    /// The given `action` parameter is the name of the executed action. It will be printed with
     /// colors, and cannot go over 8 chars.
     /// Maximum value is 100.
     pub fn new(action: String) -> ProgressBar {
@@ -48,12 +48,12 @@ impl ProgressBar {
             action,
             target: String::new(),
             start_time: now,
-            next_time: now, // Make sure the progress bar will be drawed on first update
+            next_time: now, // Make sure the progress bar will be drawn on first update
             status: ProgressState::Running,
         }
     }
 
-    /// Sets the action that should be color-printed at the beginning of the progress bar
+    /// Sets the action that should be color-printed at the beginning of the progress bar.
     pub fn set_action(&mut self, action: String) {
         self.action = action;
     }
@@ -72,7 +72,7 @@ impl ProgressBar {
         self.max = max;
     }
 
-    /// Updates the current value with the one given.
+    /// Updates the current value with the one given, then renders the progress bar.
     ///
     /// If the given value is over the maximum value, it will be troncated.
     pub fn update(&mut self, mut val: usize) {
@@ -83,6 +83,7 @@ impl ProgressBar {
         self.render();
     }
 
+    /// Returns the speed at which the progress bar is going.
     // XXX: Should return a more accurate speed instead of average speed
     pub fn speed(&self, time_elapsed: &Duration) -> f64 {
         let ftime_elapsed = time_elapsed.as_secs() as f64
@@ -90,6 +91,7 @@ impl ProgressBar {
         self.current as f64 / ftime_elapsed
     }
 
+    /// Returns how much time is left before the action ends.
     pub fn time_left(&self, speed: f64) -> f64 {
         if speed > 0.0 {
             1.0 / speed * (self.max - self.current) as f64
@@ -98,6 +100,7 @@ impl ProgressBar {
         }
     }
 
+    /// Returns a ratio of the current value to the max value.
     pub fn ratio(&self) -> f64 {
         if self.max > 0 {
             self.current as f64 / self.max as f64
@@ -106,6 +109,7 @@ impl ProgressBar {
         }
     }
 
+    /// Renders the progress bar on screen.
     pub fn render(&mut self) {
         let now = Instant::now();
 
@@ -116,7 +120,7 @@ impl ProgressBar {
         }
     }
 
-    /// Draws the progress bar
+    /// Draws the progress bar.
     fn draw(&self) {
         let now = Instant::now();
         let time_elapsed = now.duration_since(self.start_time);
@@ -142,7 +146,7 @@ impl ProgressBar {
                 ProgressState::Ok => green!(" {:>8.8} ", self.action),
                 ProgressState::Err => red!(" {:>8.8} ", self.action),
             },
-            // Draw progress bar if the operation is running since at least 0.25s
+            // Draws progress bar if the operation is running since at least 0.25s
             if self.status == ProgressState::Running
                 && (time_elapsed.as_secs() > 0 || time_elapsed.subsec_nanos() > NANOS_PER_SEC / 4)
                 && self.max > 0
