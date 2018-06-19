@@ -200,17 +200,19 @@ impl<'a> CacheQuery<'a> {
                 .map(|(_, cache)| cache)
                 .collect();
             for category in categories {
-                vec.append(&mut category
-                    .manifests()?
-                    .filter(|cache| {
-                        if let Some(ref package_name) = self.name {
-                            cache.manifest().metadata().name() == package_name
-                        } else {
-                            true
-                        }
-                    })
-                    .map(|cache| Package::from(repo, cache.manifest().clone()))
-                    .collect());
+                vec.append(
+                    &mut category
+                        .manifests()?
+                        .filter(|cache| {
+                            if let Some(ref package_name) = self.name {
+                                cache.manifest().metadata().name() == package_name
+                            } else {
+                                true
+                            }
+                        })
+                        .map(|cache| Package::from(repo, cache.manifest().clone()))
+                        .collect(),
+                );
             }
         }
         Ok(vec)
