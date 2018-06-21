@@ -3,6 +3,8 @@
 use std::io::{self, Write};
 use std::time::{Duration, Instant};
 
+use libnest::transaction::{TransactionKind, TransactionStep};
+
 use failure::Error;
 use tty;
 
@@ -15,23 +17,25 @@ static BYTES_UNITS: [&'static str; 9] =
 static TIME_UNITS: [&'static str; 3] = ["s", "m", "h"];
 
 /// Current state of a progress bar.
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum ProgressState {
     Running,
     Ok,
     Err,
 }
 
-/// A progress bar and all its internal data.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+/// A progres bar and all it's internal data.
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct ProgressBar {
+    transaction: TransactionKind,
+    target: String,
+    retry: bool,
+    status: ProgressState,
+    step: TransactionStep,
     current: usize,
     max: usize,
-    action: String,
-    target: String,
     start_time: Instant,
     next_time: Instant,
-    status: ProgressState,
 }
 
 impl ProgressBar {
@@ -40,45 +44,29 @@ impl ProgressBar {
     /// The given `action` parameter is the name of the executed action. It will be printed with
     /// colors, and cannot go over 8 chars.
     /// Maximum value is 100.
-    pub fn new(action: String) -> ProgressBar {
+    pub fn new(transaction: TransactionKind, target: String) -> ProgressBar {
         let now = Instant::now();
         ProgressBar {
-            current: 0,
-            max: 100,
-            action,
-            target: String::new(),
-            start_time: now,
-            next_time: now, // Make sure the progress bar will be drawn on first update
+            transaction,
+            target,
+            retry: false,
             status: ProgressState::Running,
+            step: TransactionStep::Waiting,
+            current: 0,
+            max: 0,
+            start_time: now,
+            next_time: now, //XXX: Make sure the progress bar will be drawed on first update
         }
     }
 
-    /// Sets the action that should be color-printed at the beginning of the progress bar.
-    pub fn set_action(&mut self, action: String) {
-        self.action = action;
-    }
-
-    /// Sets the name of the target of the current action.
+    /// Updates the current value and maximum value with the ones given.
     ///
-    /// This will be printed after the action, in white.
-    pub fn set_target(&mut self, target: String) {
-        self.target = target;
-    }
-
-    /// Sets the maximum value for the progress bar.
-    ///
-    /// `0` is a valid value.
-    pub fn set_max(&mut self, max: usize) {
+    /// If the current value is over the maximum value, it will be set as equal to the maximum value.
+    pub fn update(&mut self, mut val: usize, max: usize) {
+        if val > max {
+            val = max;
+        }
         self.max = max;
-    }
-
-    /// Updates the current value with the one given, then renders the progress bar.
-    ///
-    /// If the given value is over the maximum value, it will be troncated.
-    pub fn update(&mut self, mut val: usize) {
-        if val > self.max {
-            val = self.max;
-        }
         self.current = val;
         self.render();
     }
@@ -114,7 +102,7 @@ impl ProgressBar {
         let now = Instant::now();
 
         // Refresh rate
-        if now > self.next_time {
+        if now >= self.next_time {
             self.draw();
             self.next_time = now + *REFRESH_RATE;
         }
@@ -122,8 +110,7 @@ impl ProgressBar {
 
     /// Draws the progress bar.
     fn draw(&self) {
-        let now = Instant::now();
-        let time_elapsed = now.duration_since(self.start_time);
+        let time_elapsed = Instant::now().duration_since(self.start_time);
 
         // Speed calculation
         let speed = self.speed(&time_elapsed);
@@ -132,29 +119,49 @@ impl ProgressBar {
 
         // Width calculation
         let tty_width = tty::width();
-        let half_width = tty_width / 2;
-        let bar_width = half_width as f64 - 22.0; // half_width - "1000MiB/s 59m [>] 100%"
-        let left_width = half_width - 27; // half_width - " <action> " ... " 1000MiB/1000MiB "
-        let right_width = half_width + 17; // half_width + " 1000MiB/1000MiB "
+
+        let mut bar_width = tty_width as f64 - 78.0; // Everything but the progress bar
+        let content_length = tty_width - 41;
+
+        if bar_width < 0. {
+            bar_width = 0.;
+        }
         let current_width = (ratio * bar_width).round();
         let remaining_width = bar_width - current_width;
 
+        /*
+0         1         2         3         4         5         6         7
+01234567890123456789012345678901234567890123456789012345678901234567890123456789
+ <action> <target             > <state >
+ <action> <target             > <step  > <cur  >/<max  > <speed>/s <T> [PB.]<%%>
+
+ Examples:
+  install sys-lib/gcc           download 1000MiB/1999MiB 1999MiB/s 33s [=>-] 99%
+  install sys-lib/gcc           Finished
+*/
+
+        /// XXX: Me having fun with nested scopes and block values
         print!(
-            "\r{}{}",
-            match self.status {
-                ProgressState::Running => cyan!(" {:>8.8} ", self.action),
-                ProgressState::Ok => green!(" {:>8.8} ", self.action),
-                ProgressState::Err => red!(" {:>8.8} ", self.action),
+            "\r {action} {target:<21.21} {state} {progress:<content_length$.content_length$}",
+            action = match self.transaction {
+                TransactionKind::Pull => cyan!("{:>8.8}", "pull"),
+                TransactionKind::Install => green!("{:>8.8}", "install"),
             },
-            // Draws progress bar if the operation is running since at least 0.25s
-            if self.status == ProgressState::Running
-                && (time_elapsed.as_secs() > 0 || time_elapsed.subsec_nanos() > NANOS_PER_SEC / 4)
-                && self.max > 0
-            {
-                format!(
-                    "{:<left_width$.left_width$}{:<right_width$.right_width$}",
-                    &self.target,
-                    format!(" {current:>7.7}/{max:<7.7} {speed:>7.7}/s {time_left:>3.3} [{phantom:=<current_width$.width$}>{phantom:-<remaining_width$.width$}] {percent:>3.3}%",
+            target = self.target,
+            state = match self.status {
+                ProgressState::Ok => green!("{:<8.8}", "Finished"),
+                ProgressState::Err => red!("{:<8.8}", "Failed"),
+                ProgressState::Running => cyan!("{:<8.8}", self.step.to_string()),
+            },
+            progress = {
+                // Draw progress bar only after 0.25s and max > 0
+                if self.status == ProgressState::Running
+                    && (time_elapsed.as_secs() > 0
+                        || time_elapsed.subsec_nanos() > NANOS_PER_SEC / 4)
+                    && self.max > 0
+                {
+                    format!(
+                        "{current:>7.7}/{max:<7.7} {speed:>7.7}/s {time_left:>3.3} [{phantom:=<current_width$.width$}>{phantom:-<remaining_width$.width$}]{percent:>3.3}%",
                         current = humanize_bytes(self.current as f64),
                         max = humanize_bytes(self.max as f64),
                         speed = humanize_bytes(speed),
@@ -164,38 +171,48 @@ impl ProgressBar {
                         current_width = current_width as usize,
                         remaining_width = remaining_width as usize,
                         percent = (ratio * 100.0).round() as u32,
-                    ),
-                    left_width = left_width,
-                    right_width = right_width,
-                )
-            } else {
-                format!(
-                    "{:<width$.width$}",
-                    self.target.clone(),
-                    width = left_width + right_width,
-                )
-            }
+                    )
+                } else {
+                    String::new()
+                }
+            },
+            content_length = content_length,
         );
         io::stdout().flush().expect("Couldn't flush stdout");
     }
 
-    /// Redraws the `ProgressBar` with the given status.
-    pub fn finish<T>(&mut self, status: &Result<T, Error>) {
-        match *status {
-            Ok(_) => self.status = ProgressState::Ok,
-            Err(ref e) => {
-                self.target = format!("{} - {}.", self.target, format_error_causes!(e));
-                self.status = ProgressState::Err;
-            }
-        }
-        self.draw();
-        println!();
+    /// Resets the current step, marking this attemps as a retry
+    pub fn retry(&mut self) {
+        self.retry = true;
+        self.status = ProgressState::Running;
+        self.max = 0;
+        self.current = 0;
+        self.next_time = Instant::now();
+        self.start_time = Instant::now();
+        self.render();
     }
-}
 
-impl Default for ProgressBar {
-    fn default() -> ProgressBar {
-        ProgressBar::new(String::from("default"))
+    pub fn next_step(&mut self, step: TransactionStep) {
+        self.retry = false;
+        self.status = ProgressState::Running;
+        self.max = 0;
+        self.current = 0;
+        self.step = step;
+        self.next_time = Instant::now();
+        self.start_time = Instant::now();
+        self.render();
+    }
+
+    /// Redraws the `ProgressBar` with the given step status.
+    pub fn finish<T>(&mut self, status: &Result<T, Error>) {
+        if self.status == ProgressState::Running {
+            match status {
+                Ok(_) => self.status = ProgressState::Ok,
+                Err(_) => self.status = ProgressState::Err,
+            }
+            self.draw();
+        }
+        println!();
     }
 }
 

@@ -1,54 +1,26 @@
 //! Functions to execute the `pull` operation.
 
-use failure::{Error, Fail};
+use failure::Error;
 use libnest::config::Config;
+use libnest::transaction::{Orchestrator, Pull, Transaction};
 
-use error::{RepositoryError, RepositoryErrorKind};
-use progress::Progress;
-use progressbar::ProgressBar;
+use command;
 
 /// Pulls all repositories.
 ///
-/// This will go through all repositories, and for each one of them, go through all mirrors until the pull is
-/// complete.
+/// This creates an orchestrator that will pull all repositories and setups a bunch of callbacks to alert
+/// the user of what's happening.
 pub fn pull(config: &Config) -> Result<(), Error> {
-    let mut progress = Progress::new(config.repositories().len());
+    // Create all the pull transactions
+    let pulls: Vec<_> = config
+        .repositories()
+        .into_iter()
+        .map(|repository| Box::new(Pull::from(repository)) as Box<Transaction>)
+        .collect();
 
-    for repo in config.repositories().iter() {
-        let mut first = true;
+    // Setup the orchestrator
+    let orchestrator = Orchestrator::from(pulls);
 
-        let any = repo.mirrors().iter().any(|mirror| {
-            let mut pb = ProgressBar::new(String::from("pull"));
-
-            pb.set_target(format!(
-                "({}) {}{}",
-                progress,
-                repo.name(),
-                if first { "" } else { " (retry)" },
-            ));
-
-            first = false;
-
-            let res = repo.pull(config, mirror, |cur: f64, max: f64| {
-                pb.set_max(max as usize);
-                pb.update(cur as usize);
-                true
-            });
-
-            pb.finish(&res);
-
-            // Print error and continue
-            res.is_ok()
-        });
-
-        // Throw error if all mirrors are down
-        if !any {
-            Err(
-                Into::<RepositoryError>::into(RepositoryErrorKind::AllMirrorDown)
-                    .context(purple!(repo.name())),
-            )?;
-        }
-        progress.next();
-    }
-    Ok(())
+    // Perform and monitor the transactions.
+    command::orchestrate(config, orchestrator)
 }

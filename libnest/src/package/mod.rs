@@ -15,37 +15,52 @@
 //! The other ones are downloaded when installing the package, to avoid filling the user's disk.
 
 mod manifest;
+mod name;
 pub use self::manifest::{Manifest, Metadata};
+pub use self::name::{PackageFullName, PackageId, PackageRequirement};
 
 use std::fmt::{self, Display, Formatter};
-use std::path::PathBuf;
+use std::fs::File;
+use std::path::Path;
 
-use config::Config;
+use failure::{Error, ResultExt};
+use json;
+
 use repository::Repository;
 
-/// Represents a package as a whole: its manifest, its data and its build file.
-#[derive(Clone, Eq, PartialEq, Hash, Debug)]
-pub struct Package<'a> {
-    repository: &'a Repository,
+/// A handler that encapsulate a manifest and the repository's name this package belongs.
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub struct Package {
+    repository: String,
     manifest: Manifest,
 }
 
-impl<'a> Package<'a> {
-    /// Creates a package from its repository and its manifest.
-    ///
-    /// Usually, you'd like to use a query to get one instead of making it by hand.
+impl Package {
+    /// Creates a new package from a [`Repository`] and a [`Manifest`].
     #[inline]
-    pub fn from(repository: &'a Repository, manifest: Manifest) -> Package<'a> {
+    pub fn from(repository: &Repository, manifest: Manifest) -> Package {
         Package {
-            repository,
+            repository: repository.name().to_string(),
             manifest,
         }
     }
 
-    /// Returns the repository the package belongs to.
     #[inline]
-    pub fn repository(&self) -> &Repository {
-        self.repository
+    pub(crate) fn load<P: AsRef<Path>>(repository: String, cache: P) -> Result<Package, Error> {
+        let file =
+            File::open(cache.as_ref()).with_context(|_| cache.as_ref().display().to_string())?;
+
+        Ok(Package {
+            repository,
+            manifest: json::from_reader(&file)
+                .with_context(|_| cache.as_ref().display().to_string())?,
+        })
+    }
+
+    /// Returns the repository's name this package belongs to.
+    #[inline]
+    pub fn repository(&self) -> &str {
+        &self.repository
     }
 
     /// Returns the manifest of the package.
@@ -54,27 +69,33 @@ impl<'a> Package<'a> {
         &self.manifest
     }
 
-    /// Returns the path where data should be located.
+    /// Returns the [`PackageFullName`] of this package, that is a structure representing the `stable::category/package_name` part of the package's id.
     #[inline]
-    pub fn data_path(&self, config: &Config) -> PathBuf {
-        let mut path = config.download().to_path_buf();
-        path.push(self.repository.name());
-        path.push(self.manifest.metadata().category());
-        path.push(self.manifest.metadata().name());
-        path.set_extension("tar.gz");
-        path
+    pub fn full_name(&self) -> PackageFullName {
+        PackageFullName::from(
+            self.repository.clone(),
+            self.manifest.metadata().category().to_string(),
+            self.manifest.metadata().name().to_string(),
+        )
+    }
+
+    /// Returns the [`PackageId`] of this package: a unique identifier to represent a package, in the form `stable::category/package_name#version`.
+    #[inline]
+    pub fn id(&self) -> PackageId {
+        PackageId::from(
+            PackageFullName::from(
+                self.repository.to_string(),
+                self.manifest.metadata().category().to_string(),
+                self.manifest.metadata().name().to_string(),
+            ),
+            self.manifest.metadata().version().clone(),
+        )
     }
 }
 
-impl<'a> Display for Package<'a> {
+impl Display for Package {
     #[inline]
     fn fmt(&self, f: &mut Formatter) -> Result<(), fmt::Error> {
-        write!(
-            f,
-            "{}::{}/{}",
-            self.repository().name(),
-            self.manifest.metadata().category(),
-            self.manifest.metadata().name(),
-        )
+        write!(f, "{}", self.id())
     }
 }
