@@ -43,6 +43,12 @@ macro_rules! red {
     ( $( $arg:expr ), * ) => (color!(Red, $( $arg ),* ));
 }
 
+/// Returned a formatted strings that will appear in white bold in an ANSI terminal.
+macro_rules! bold {
+    ( $var:expr ) => (color!(White, "{}", $var));
+    ( $( $arg:expr ), * ) => (color!(White, $( $arg ),* ));
+}
+
 #[repr(C)]
 struct WinSize {
     row: c_ushort,
