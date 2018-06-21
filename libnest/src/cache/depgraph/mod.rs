@@ -126,7 +126,7 @@ impl DependencyGraph {
         let path = config.paths().depgraph();
         let mut file = File::create(path).with_context(|_| path.display().to_string())?;
         json::to_writer_pretty(&file, self).with_context(|_| path.display().to_string())?;
-        writeln!(file, "")?;
+        writeln!(file)?;
         Ok(())
     }
 
@@ -150,8 +150,8 @@ impl DependencyGraph {
     /// [1]: struct.Node.html
     /// [2]: type.NodeId.html
     #[inline]
-    pub fn node(&self, id: &NodeId) -> Option<&Node> {
-        self.nodes.get(id)
+    pub fn node(&self, id: NodeId) -> Option<&Node> {
+        self.nodes.get(&id)
     }
 
     /// Returns a mutable reference on the [`Node`][1] with the given [`NodeId`][2], or `None` if it wasn't found.
@@ -159,8 +159,8 @@ impl DependencyGraph {
     /// [1]: struct.Node.html
     /// [2]: type.NodeId.html
     #[inline]
-    pub fn node_mut(&mut self, id: &NodeId) -> Option<&mut Node> {
-        self.nodes.get_mut(id)
+    pub fn node_mut(&mut self, id: NodeId) -> Option<&mut Node> {
+        self.nodes.get_mut(&id)
     }
 
     /// Returns a [`HashMap`][1]<[`NodeId`], [`Node`]> of all [`Node`][3]s and it's [`NodeId`][2] currently in the dependency graph.
@@ -191,7 +191,7 @@ impl DependencyGraph {
     ) -> Result<(), Error> {
         // First, check if their isn't already a package that matches the requirement
         let packages = self.search(requirement).perform();
-        if packages.len() > 0 {
+        if !packages.is_empty() {
             return Ok(());
         }
 
@@ -202,7 +202,7 @@ impl DependencyGraph {
         };
         let package = results
             .get(0)
-            .ok_or(DepGraphErrorKind::CantFindPackage(requirement.to_string()))?;
+            .ok_or_else(|| DepGraphErrorKind::CantFindPackage(requirement.to_string()))?;
 
         // Create and insert the child node
         let child_id = self.next_id();
@@ -215,7 +215,7 @@ impl DependencyGraph {
         // Create the connexion with the parent node
         {
             let parent = self
-                .node_mut(&parent)
+                .node_mut(parent)
                 .ok_or(DepGraphErrorKind::InvalidNodeId)
                 .with_context(|_| parent.to_string())?;
 
@@ -246,8 +246,8 @@ impl Sub for DependencyGraph {
 
     fn sub(self, other: DependencyGraph) -> Self::Output {
         let mut out = Vec::new();
-        let left_root = self.nodes.get(&self.root_id()).unwrap();
-        let right_root = other.nodes.get(&self.root_id()).unwrap();
+        let left_root = &self.nodes[&self.root_id()];
+        let right_root = &other.nodes[&self.root_id()];
         diff_common_nodes(&mut out, &self, &other, left_root, right_root);
         out
     }
@@ -262,7 +262,7 @@ fn diff_added_nodes(
     // First handle requirements
     for requirement in node.requirements() {
         let fulfiller_id = requirement.fulfiller();
-        let right_node = right_graph.nodes.get(&fulfiller_id).unwrap();
+        let right_node = &right_graph.nodes[&fulfiller_id];
         if let Some(left_node) = left_graph.nodes.get(&fulfiller_id) {
             diff_common_nodes(v, left_graph, right_graph, left_node, right_node);
         } else {
@@ -284,7 +284,7 @@ fn diff_removed_nodes(
     // First handle requirements
     for requirement in node.requirements() {
         let fulfiller_id = requirement.fulfiller();
-        let left_node = left_graph.nodes.get(&fulfiller_id).unwrap();
+        let left_node = &left_graph.nodes[&fulfiller_id];
         if let Some(right_node) = right_graph.nodes.get(&fulfiller_id) {
             diff_common_nodes(v, left_graph, right_graph, left_node, right_node);
         } else {
@@ -307,7 +307,7 @@ fn diff_common_nodes(
 ) {
     for requirement in left_node.requirements() {
         let fulfiller_id = requirement.fulfiller();
-        let left_node = left_graph.nodes.get(&fulfiller_id).unwrap();
+        let left_node = &left_graph.nodes[&fulfiller_id];
 
         // Test if this node is present in the left graph but not in the right graph (REMOVED)
         // If this node is present in both graph, then diff it's representation on both graphs.
@@ -320,10 +320,10 @@ fn diff_common_nodes(
 
     for requirement in right_node.requirements() {
         let fulfiller_id = requirement.fulfiller();
-        let new_node = right_graph.nodes.get(&fulfiller_id).unwrap();
+        let new_node = &right_graph.nodes[&fulfiller_id];
 
         // Test if this node is present in the righ graph but not in the left graph (ADDED)
-        if let None = left_graph.nodes.get(&fulfiller_id) {
+        if left_graph.nodes.get(&fulfiller_id).is_none() {
             diff_added_nodes(v, left_graph, right_graph, new_node);
         }
     }

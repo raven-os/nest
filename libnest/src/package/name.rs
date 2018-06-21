@@ -36,7 +36,7 @@ impl PackageFullName {
 
     /// Parses a string into a [`PackageFullName`].
     #[inline]
-    pub fn from_str(s: &str) -> Option<PackageFullName> {
+    pub fn parse(s: &str) -> Option<PackageFullName> {
         let matches = REGEX_PACKAGE_ID.captures(s)?;
 
         match (
@@ -103,7 +103,7 @@ impl PackageId {
 
     /// Parses an `&str` into a [`PackageId`].
     #[inline]
-    pub fn from_str(s: &str) -> Option<PackageId> {
+    pub fn parse(s: &str) -> Option<PackageId> {
         let matches = REGEX_PACKAGE_ID.captures(s)?;
 
         match (
@@ -210,9 +210,9 @@ impl PackageRequirement {
     /// if the parsing failed.
     #[inline]
     pub fn parse(s: &str) -> Result<PackageRequirement, PackageRequirementParseError> {
-        let matches = REGEX_PACKAGE_ID.captures(s).ok_or(
-            PackageRequirementParseError::InvalidPackageName(s.to_string()),
-        )?;
+        let matches = REGEX_PACKAGE_ID
+            .captures(s)
+            .ok_or_else(|| PackageRequirementParseError::InvalidPackageName(s.to_string()))?;
         let version_req = {
             if let Some(exa) = matches.name("exact_version") {
                 VersionReq::parse(&format!("={}", exa.as_str()))
@@ -259,6 +259,12 @@ impl Display for PackageRequirement {
     }
 }
 
+impl Default for PackageRequirement {
+    fn default() -> PackageRequirement {
+        PackageRequirement::new()
+    }
+}
+
 // The following are implementation of serde's `Serialize` and `Deserialize` traits and their associated visitor.
 
 struct PackageFullNameVisitor;
@@ -276,9 +282,12 @@ impl<'de> Visitor<'de> for PackageFullNameVisitor {
     where
         E: serde::de::Error,
     {
-        PackageFullName::from_str(value).ok_or(E::custom(format!(
-            "the package's full name doesn't follow the convention `repository::category/name`"
-        )))
+        PackageFullName::parse(value).ok_or_else(|| {
+            E::custom(
+                "the package's full name doesn't follow the convention `repository::category/name`"
+                    .to_string(),
+            )
+        })
     }
 }
 
@@ -317,8 +326,9 @@ impl<'de> Visitor<'de> for PackageIdVisitor {
     where
         E: serde::de::Error,
     {
-        PackageId::from_str(value)
-            .ok_or(E::custom(format!("the package's full name doesn't follow the convention `repository::category/name#version`")))
+        PackageId::parse(value).ok_or_else(|| {
+            E::custom("the package's full name doesn't follow the convention `repository::category/name#version`".to_string())
+        })
     }
 }
 
@@ -358,7 +368,7 @@ impl<'de> Visitor<'de> for PackageRequirementVisitor {
         E: serde::de::Error,
     {
         PackageRequirement::parse(value).map_err(|_| {
-            E::custom(format!("the package requirement doesn't follow the convention `repository::category/name#version_req`"))
+            E::custom("the package requirement doesn't follow the convention `repository::category/name#version_req`".to_string())
         })
     }
 }

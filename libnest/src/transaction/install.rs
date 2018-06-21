@@ -63,10 +63,12 @@ impl Transaction for Install {
             .repositories()
             .into_iter()
             .find(|repository| repository.name() == self.target.full_name().repository())
-            .ok_or(InstallError::CantFindRepository(
-                self.target.full_name().repository().to_string(),
-                self.target.full_name().repository().to_string(),
-            ))?;
+            .ok_or_else(|| {
+                InstallError::CantFindRepository(
+                    self.target.full_name().repository().to_string(),
+                    self.target.full_name().repository().to_string(),
+                )
+            })?;
 
         // Build target URL
         let target_url = format!(
@@ -169,7 +171,9 @@ impl Transaction for Install {
                 entry?.unpack_in(config.paths().root())?;
                 notifier.notify(self, Notification::Progress(i, nb_files));
             }
+            ()
         };
-        Ok(res.with_context(|_| tarball_path.display().to_string())?)
+        res.with_context(|_| tarball_path.display().to_string())?;
+        Ok(())
     }
 }

@@ -29,7 +29,7 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
 
     let transactions = original_graph - graph.clone();
 
-    if transactions.len() == 0 {
+    if transactions.is_empty() {
         println!("All given requirements are already satifisfied. There is nothing to do.");
     } else {
         // Calculate the transactions that we have to do, setup the orchestrator

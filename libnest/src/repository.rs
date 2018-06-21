@@ -28,7 +28,7 @@ impl<'a, 'b> Repository<'a, 'b> {
     }
 
     /// Returns a new [`Transfer`] to download a target file from this repository.
-    pub fn transfer<'c, 'd>(&self, config: &'c Config) -> Transfer<'c, 'b> {
+    pub fn transfer<'c>(&self, config: &'c Config) -> Transfer<'c, 'b> {
         Transfer::from(config, self.config)
     }
 }

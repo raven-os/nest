@@ -81,6 +81,7 @@ impl<'a, 'b> Transfer<'a, 'b> {
                     })?;
                     transfer.perform()?;
                 }
+                ()
             };
             let res: Result<_, Error> =
                 res.with_context(|_| mirror.to_string()).map_err(From::from);

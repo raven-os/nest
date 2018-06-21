@@ -105,7 +105,8 @@ fn main() {
             ("pull", _) => command::pull::pull(&config),
             ("install", Some(matches)) => command::install::install(&config, matches),
             _ => unimplemented!(),
-        }?
+        }?;
+        ()
     };
 
     // All fatal errors arrive here. It's our job to print them on screen and then exit(1).

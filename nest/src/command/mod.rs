@@ -29,24 +29,52 @@ pub fn yesno(question: &str, default: bool) -> Result<bool, Error> {
             "" => return Ok(default),
             "y" | "yes" | "true" => return Ok(true),
             "n" | "no" | "false" => return Ok(false),
-            s @ _ => print!("Sory, \"{}\" isn't a valid answer. [{}] ", s, yesno),
+            s => print!("Sory, \"{}\" isn't a valid answer. [{}] ", s, yesno),
         }
     }
 }
 
 pub fn orchestrate(config: &Config, mut orchestrator: Orchestrator) -> Result<(), Error> {
+    println!(
+        "{}\n",
+        bold!(
+            "{} transaction{} pending:",
+            orchestrator.transactions().len(),
+            if orchestrator.transactions().len() <= 1 {
+                ""
+            } else {
+                "s"
+            }
+        ),
+    );
     for transaction in orchestrator.transactions() {
         println!(
             " {} {}",
             match transaction.kind() {
                 TransactionKind::Pull => cyan!("{:>8.8}", "pull"),
-                TransactionKind::Install => green!("{:<8.8}", "install"),
+                TransactionKind::Install => green!("{:>8.8}", "install"),
             },
             transaction.target(),
         );
     }
 
-    if yesno("Would you like to apply these transactions?", true)? {
+    let question = format!(
+        "Would you like to apply {} transaction{}?",
+        if orchestrator.transactions().len() <= 1 {
+            "this"
+        } else {
+            "these"
+        },
+        if orchestrator.transactions().len() <= 1 {
+            ""
+        } else {
+            "s"
+        },
+    );
+
+    if yesno(&question, true)? {
+        println!();
+
         let mut pbs = orchestrator
             .transactions()
             .iter()
@@ -79,5 +107,6 @@ pub fn orchestrate(config: &Config, mut orchestrator: Orchestrator) -> Result<()
         );
         orchestrator.perform(config, &mut notifier)?;
     }
+    println!("\n{}", bold!("Done."));
     Ok(())
 }
