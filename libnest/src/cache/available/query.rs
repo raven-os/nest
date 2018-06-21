@@ -117,29 +117,37 @@ impl<'a, 'b> AvailablePackagesCacheQuery<'a, 'b> {
                             }
                         }
                         AvailablePackagesCacheQueryStrategy::AllMatchesUnsorted => {
-                            results.append(&mut versions
-                                .iter()
-                                .filter(|version| self.requirement.version_req().matches(version))
-                                .map(|version| {
-                                    Package::load(
-                                        repository.clone(),
-                                        &path.join(version.to_string()),
-                                    )
-                                })
-                                .collect::<Result<Vec<_>, _>>()?);
+                            results.append(
+                                &mut versions
+                                    .iter()
+                                    .filter(|version| {
+                                        self.requirement.version_req().matches(version)
+                                    })
+                                    .map(|version| {
+                                        Package::load(
+                                            repository.clone(),
+                                            &path.join(version.to_string()),
+                                        )
+                                    })
+                                    .collect::<Result<Vec<_>, _>>()?,
+                            );
                         }
                         AvailablePackagesCacheQueryStrategy::AllMatchesSorted => {
                             versions.sort_unstable_by(|a, b| b.cmp(a));
-                            results.append(&mut versions
-                                .iter()
-                                .filter(|version| self.requirement.version_req().matches(version))
-                                .map(|version| {
-                                    Package::load(
-                                        repository.clone(),
-                                        &path.join(version.to_string()),
-                                    )
-                                })
-                                .collect::<Result<Vec<_>, _>>()?);
+                            results.append(
+                                &mut versions
+                                    .iter()
+                                    .filter(|version| {
+                                        self.requirement.version_req().matches(version)
+                                    })
+                                    .map(|version| {
+                                        Package::load(
+                                            repository.clone(),
+                                            &path.join(version.to_string()),
+                                        )
+                                    })
+                                    .collect::<Result<Vec<_>, _>>()?,
+                            );
                         }
                     }
                 }

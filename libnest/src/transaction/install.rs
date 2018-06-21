@@ -140,9 +140,11 @@ impl Transaction for Install {
             {
                 let entry = entry.with_context(|_| tarball_path.display().to_string())?;
 
-                let path = config.paths().root().join(entry
-                    .path()
-                    .with_context(|_| tarball_path.display().to_string())?);
+                let path = config.paths().root().join(
+                    entry
+                        .path()
+                        .with_context(|_| tarball_path.display().to_string())?,
+                );
 
                 if !path.is_dir() && path.exists() {
                     Err(InstallError::FileAlreadyExists(path.display().to_string()))?;
