@@ -1,4 +1,4 @@
-//! Types and enum for error handling, using [`failure`][1]
+//! Types and enum for error handling, using [`failure`][1].
 //!
 //! [1]: https://docs.rs/failure/0.1.1/failure/
 

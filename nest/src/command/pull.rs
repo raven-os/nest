@@ -6,7 +6,7 @@ use libnest::transaction::{Orchestrator, Pull, Transaction};
 
 use command;
 
-/// Pulls all repository
+/// Pulls all repositories.
 ///
 /// This creates an orchestrator that will pull all repositories and setups a bunch of callbacks to alert
 /// the user of what's happening.

@@ -1,4 +1,4 @@
-//! Functions to resolve package's name
+//! Functions to resolve package's name.
 
 use failure::Error;
 use libnest::config::Config;

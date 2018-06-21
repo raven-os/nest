@@ -1,8 +1,8 @@
 //! Packages and their content.
 //!
 //! Packages are made of three things, represented as three different files:
-//!  * The manifest: name, version, dependencies etc.
-//!  * The data to install, a compressed tarball (`.tar.gz`).
+//!  * The manifest: name, version, dependencies, etc.
+//!  * The data to install: a compressed tarball (`.tar.gz`).
 //!  * The build file: instructions to follow when installing / removing the package. It's taking
 //!  the form of a shell script (`.sh`).
 //!

@@ -9,7 +9,7 @@ use libnest::transaction::Orchestrator;
 
 use command;
 
-/// Installs all the given packages
+/// Installs all the given packages.
 ///
 /// This will go through all targets, check that they exist, resolve the dependency graph,
 /// download the packages, ensure the installation will not break anything nor delete any file
