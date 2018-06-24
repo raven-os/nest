@@ -23,8 +23,8 @@ pub enum RequirementKind {
 impl Display for RequirementKind {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
-            RequirementKind::Group{name, ..} => write!(f, "@{}", name),
-            RequirementKind::Package{package_req, ..} => write!(f, "{}", package_req),
+            RequirementKind::Group { name, .. } => write!(f, "@{}", name),
+            RequirementKind::Package { package_req, .. } => write!(f, "{}", package_req),
         }
     }
 }

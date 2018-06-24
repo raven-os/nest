@@ -3,8 +3,8 @@
 use clap::ArgMatches;
 use failure::Error;
 
-use libnest::config::Config;
 use libnest::cache::depgraph::DependencyGraphDiff;
+use libnest::config::Config;
 use libnest::package::PackageRequirement;
 use libnest::transaction::Orchestrator;
 
@@ -15,7 +15,6 @@ use command;
 /// This will go through all targets, add them to the dependency graph and perform all the operations
 /// needed in order to install the packages.
 pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
-
     // Add arguments as requirements of the root node.
     let mut graph = config.depgraph()?;
     let original_graph = graph.clone();

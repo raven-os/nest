@@ -7,18 +7,18 @@
 //! to show the evolution of each one of them.
 
 mod install;
-mod remove;
 mod notifier;
 mod orchestrator;
 mod pull;
+mod remove;
 mod transfer;
 
 pub use self::install::Install;
 pub use self::notifier::{Notification, Notifier};
 pub use self::orchestrator::Orchestrator;
 pub use self::pull::Pull;
-pub use self::transfer::Transfer;
 pub use self::remove::Remove;
+pub use self::transfer::Transfer;
 
 use std::fmt::Debug;
 use std::fmt::{self, Display, Formatter};

@@ -1,13 +1,13 @@
 //! Handles and methods to process the dependency graph.
 
+mod diff;
 mod query;
 mod requirement;
-mod diff;
+pub use self::diff::DependencyGraphDiff;
 pub use self::query::DependencyGraphQuery;
 pub use self::requirement::{Requirement, RequirementKind};
-pub use self::diff::DependencyGraphDiff;
 
-use std::collections::{HashSet, HashMap};
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
@@ -162,13 +162,13 @@ impl DependencyGraph {
         parent_id: NodeId,
         package_req: PackageRequirement,
     ) -> Result<(), Error> {
-
         let manifest;
         let child_id;
 
         // First, check if their isn't already a package that matches the requirement
         let node_ids = self.search(&package_req).perform();
-        if node_ids.is_empty() { // If this requirement isn't satisfied yet, find the package and add it as a new node.
+        if node_ids.is_empty() {
+            // If this requirement isn't satisfied yet, find the package and add it as a new node.
             // Look for a package in the cache that matches the requirement
             let mut results = config.available().search(&package_req).perform()?;
 
@@ -179,20 +179,19 @@ impl DependencyGraph {
                     Err(DepGraphErrorKind::CantFindPackage(package_req.to_string()))?;
                     unreachable!()
                 } else {
-                    Err(DepGraphErrorKind::ImpreciseRequirement(package_req.to_string()))?;
+                    Err(DepGraphErrorKind::ImpreciseRequirement(
+                        package_req.to_string(),
+                    ))?;
                     unreachable!()
                 }
             };
             // Generate an id for the child node
             child_id = self.next_node_id();
-            self.nodes.insert(
-                child_id,
-                Node::new(NodeKind::Package {
-                    id: package.id()
-                }),
-            );
+            self.nodes
+                .insert(child_id, Node::new(NodeKind::Package { id: package.id() }));
             manifest = Some(package.manifest().clone());
-        } else { // The requirement is already satisfied by an other node: let's find it.
+        } else {
+            // The requirement is already satisfied by an other node: let's find it.
             // We'll take the first one that matches our requirement (that's debatable, actually. We should probably be a bit more picky)
             child_id = node_ids[0];
             manifest = None;
@@ -208,9 +207,7 @@ impl DependencyGraph {
         self.requirements.insert(
             requirement_id,
             Requirement::from(
-                RequirementKind::Package {
-                    package_req,
-                },
+                RequirementKind::Package { package_req },
                 child_id,
                 parent_id,
             ),
@@ -221,15 +218,13 @@ impl DependencyGraph {
             .get_mut(&parent_id)
             .expect("invalid parent node id")
             .requirements
-            .insert(requirement_id)
-        ;
+            .insert(requirement_id);
 
         self.nodes
             .get_mut(&child_id)
             .expect("invalid child node id")
             .dependents
-            .insert(requirement_id)
-        ;
+            .insert(requirement_id);
 
         // Repeat for all dependencies only if this is a new package (not needed otherwise).
         if let Some(manifest) = manifest {
@@ -250,8 +245,8 @@ impl DependencyGraph {
         parent_id: NodeId,
         target_requirement: &RequirementKind,
     ) -> Result<(), Error> {
-
-        let requirement_id = self.nodes
+        let requirement_id = self
+            .nodes
             .get(&parent_id)
             .expect("invalid parent node id")
             .requirements
@@ -260,11 +255,11 @@ impl DependencyGraph {
                 // This is unfortunately ugly, but it looks like `RequirementKind` fails to implement `Eq` correctly.
                 // I'm not sure of that yet, nor how it fails, and will investigate soon.
                 // This `to_string()` serves as a temporary mesure.
-                self.requirements[&requirement_id].kind().to_string() == target_requirement.to_string()
+                self.requirements[&requirement_id].kind().to_string()
+                    == target_requirement.to_string()
             })
             .cloned()
-            .ok_or_else(|| DepGraphErrorKind::UnknownRequirement(target_requirement.to_string()))
-        ?;
+            .ok_or_else(|| DepGraphErrorKind::UnknownRequirement(target_requirement.to_string()))?;
 
         // We want to remove the child node only if this requirement was it's last bound to the DependencyGraph.
         // If it's the case, we also want to repeat this recursively.
@@ -273,32 +268,32 @@ impl DependencyGraph {
 
         // Remove the bound parent_node->child_node
         {
-            let parent_node = self.nodes
+            let parent_node = self
+                .nodes
                 .get_mut(&parent_id)
-                .expect("invalid parent node id")
-            ;
+                .expect("invalid parent node id");
             parent_node.requirements.remove(&requirement_id);
         }
 
         // Remove the bound child_node->parent_node, and tests if it was the last bound of child_node.
         let last_dependent = {
-            let child_node = self.nodes
+            let child_node = self
+                .nodes
                 .get_mut(&child_id)
-                .expect("invalid child node id")
-            ;
+                .expect("invalid child node id");
             child_node.dependents.remove(&requirement_id);
             child_node.dependents.is_empty()
         };
 
         // if it was the last bound of child_node, remove child_node
         if last_dependent {
-
             // Remove the child node's bounds, recursively
-            let requirements = &self.nodes.get(&child_id)
+            let requirements = &self
+                .nodes
+                .get(&child_id)
                 .expect("invalid child node id")
                 .requirements
-                .clone()
-            ;
+                .clone();
             for requirement_id in requirements {
                 let requirement = self.requirements[&requirement_id].kind().clone();
                 self.remove_requirement(child_id, &requirement)?;

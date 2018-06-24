@@ -3,9 +3,9 @@
 use clap::ArgMatches;
 use failure::Error;
 
+use libnest::cache::depgraph::{DependencyGraphDiff, RequirementKind};
 use libnest::config::Config;
 use libnest::package::PackageRequirement;
-use libnest::cache::depgraph::{DependencyGraphDiff, RequirementKind};
 use libnest::transaction::Orchestrator;
 
 use command;
@@ -15,7 +15,6 @@ use command;
 /// This will go through all targets, remove them of the dependency graph and perform the operations that are
 /// needed in order to remove the packages.
 pub fn remove(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
-
     // Remove arguments as requirements of the root node.
     let mut graph = config.depgraph()?;
     let original_graph = graph.clone();
@@ -26,7 +25,7 @@ pub fn remove(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
             graph.remove_requirement(
                 root,
                 &RequirementKind::Package {
-                    package_req: requirement
+                    package_req: requirement,
                 },
             )?;
         }

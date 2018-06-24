@@ -51,7 +51,9 @@ pub enum DepGraphErrorKind {
     #[fail(display = "can't find a package meeting the requirement \"{}\"", _0)]
     CantFindPackage(String),
     /// Too much package are satisfying this requirement
-    #[fail(display = "too much package satisfy this requirement, please be more exausthive: \"{}\"", _0)]
+    #[fail(
+        display = "too much package satisfy this requirement, please be more exausthive: \"{}\"", _0
+    )]
     ImpreciseRequirement(String),
     /// The given requirement couldn't be found
     #[fail(display = "can't find requirement \"{}\"", _0)]

@@ -1,14 +1,8 @@
-use std::fs::{self, File};
-use std::io::{Seek, SeekFrom, Write};
-
-use failure::{Error, ResultExt};
-use flate2::read::GzDecoder;
-use tar::Archive;
+use failure::Error;
 
 use config::Config;
-use error::InstallError;
 use package::PackageId;
-use transaction::{Notification, Notifier, Transaction, TransactionKind, TransactionStep};
+use transaction::{Notifier, Transaction, TransactionKind};
 
 /// A `remove` transaction: it performs the removal of the target on the system.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -52,7 +46,7 @@ impl Transaction for Remove {
         &self.target_name
     }
 
-    fn perform(&mut self, config: &Config, notifier: &mut Notifier) -> Result<(), Error> {
+    fn perform(&mut self, _config: &Config, _notifier: &mut Notifier) -> Result<(), Error> {
         Ok(())
     }
 }
