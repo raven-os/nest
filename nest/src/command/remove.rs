@@ -1,28 +1,34 @@
-//! Functions to execute the `install` operation.
+//! Functions to execute the `remove` operation.
 
 use clap::ArgMatches;
 use failure::Error;
 
 use libnest::config::Config;
-use libnest::cache::depgraph::DependencyGraphDiff;
 use libnest::package::PackageRequirement;
+use libnest::cache::depgraph::{DependencyGraphDiff, RequirementKind};
 use libnest::transaction::Orchestrator;
 
 use command;
 
-/// Installs all the given packages.
+/// Removes all the given packages.
 ///
-/// This will go through all targets, add them to the dependency graph and perform all the operations
-/// needed in order to install the packages.
-pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
+/// This will go through all targets, remove them of the dependency graph and perform the operations that are
+/// needed in order to remove the packages.
+pub fn remove(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
 
-    // Add arguments as requirements of the root node.
+    // Remove arguments as requirements of the root node.
     let mut graph = config.depgraph()?;
     let original_graph = graph.clone();
     {
         let root = graph.root_id();
         for target in &matches.values_of_lossy("PACKAGE").unwrap() {
-            graph.add_package(config, root, PackageRequirement::parse(target)?)?;
+            let requirement = PackageRequirement::parse(target)?;
+            graph.remove_requirement(
+                root,
+                &RequirementKind::Package {
+                    package_req: requirement
+                },
+            )?;
         }
     }
 

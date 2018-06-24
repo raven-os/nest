@@ -5,7 +5,9 @@
 //!
 //! It also contains a way to orchestrate multiple transactions so they can be performed in the most efficient way, and a notifier
 //! to show the evolution of each one of them.
+
 mod install;
+mod remove;
 mod notifier;
 mod orchestrator;
 mod pull;
@@ -16,6 +18,7 @@ pub use self::notifier::{Notification, Notifier};
 pub use self::orchestrator::Orchestrator;
 pub use self::pull::Pull;
 pub use self::transfer::Transfer;
+pub use self::remove::Remove;
 
 use std::fmt::Debug;
 use std::fmt::{self, Display, Formatter};
@@ -33,6 +36,8 @@ pub enum TransactionKind {
     Pull,
     /// The transaction is an Install
     Install,
+    /// The transaction is a Remove
+    Remove,
 }
 
 /// The step a transaction may be in.

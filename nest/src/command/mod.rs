@@ -2,6 +2,7 @@
 
 pub mod install;
 pub mod pull;
+pub mod remove;
 
 use std::io::{self, Write};
 
@@ -53,6 +54,7 @@ pub fn orchestrate(config: &Config, mut orchestrator: Orchestrator) -> Result<()
             match transaction.kind() {
                 TransactionKind::Pull => cyan!("{:>8.8}", "pull"),
                 TransactionKind::Install => green!("{:>8.8}", "install"),
+                TransactionKind::Remove => red!("{:>8.8}", "remove"),
             },
             transaction.target(),
         );

@@ -146,6 +146,7 @@ impl ProgressBar {
             action = match self.transaction {
                 TransactionKind::Pull => cyan!("{:>8.8}", "pull"),
                 TransactionKind::Install => green!("{:>8.8}", "install"),
+                TransactionKind::Remove => red!("{:>8.8}", "remove"),
             },
             target = self.target,
             state = match self.status {

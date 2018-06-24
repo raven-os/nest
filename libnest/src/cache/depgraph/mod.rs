@@ -2,13 +2,14 @@
 
 mod query;
 mod requirement;
+mod diff;
 pub use self::query::DependencyGraphQuery;
-pub use self::requirement::{NodeRequirement, NodeRequirementKind};
+pub use self::requirement::{Requirement, RequirementKind};
+pub use self::diff::DependencyGraphDiff;
 
-use std::collections::HashMap;
+use std::collections::{HashSet, HashMap};
 use std::fs::File;
 use std::io::Write;
-use std::ops::Sub;
 use std::path::Path;
 
 use failure::{Error, ResultExt};
@@ -17,10 +18,12 @@ use json;
 use config::Config;
 use error::DepGraphErrorKind;
 use package::{PackageId, PackageRequirement};
-use transaction::{Install, Transaction};
 
 /// The unique identifier of a node of the dependency graph.
 pub type NodeId = usize;
+
+/// The unique identifier of a requirement of the dependency graph.
+pub type RequirementId = usize;
 
 static ROOT_ID: NodeId = 0;
 
@@ -43,15 +46,16 @@ pub enum NodeKind {
 
 /// A node of the dependency graph.
 ///
-/// A node is represented by a content (a [`NodeKind`][1]) and a list of [`NodeRequirement`][2] that must
-/// be satisfied for the graph to be valid.
+/// A node is represented by a content (a [`NodeKind`][1]), a list of [`NodeRequirement`][2] that must
+/// be satisfied for the graph to be valid, and a list of requirements that other nodes have on this one.
 ///
 /// [1]: enum.NodeKind.html
 /// [2]: requirement/struct.NodeRequirement.html
-#[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct Node {
+#[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
+struct Node {
     kind: NodeKind,
-    requirements: Vec<NodeRequirement>,
+    requirements: HashSet<RequirementId>,
+    dependents: HashSet<RequirementId>,
 }
 
 impl Node {
@@ -59,25 +63,9 @@ impl Node {
     fn new(kind: NodeKind) -> Node {
         Node {
             kind,
-            requirements: Vec::new(),
+            requirements: HashSet::new(),
+            dependents: HashSet::new(),
         }
-    }
-
-    /// Returns the [`NodeKind`][1] of this node.
-    ///
-    /// [1]: enum.NodeKind.html
-    #[inline]
-    pub fn kind(&self) -> &NodeKind {
-        &self.kind
-    }
-
-    /// Returns a reference on a [`Vec`][1]<[`NodeRequirement`][2]> this node depends on.
-    ///
-    /// [1]: https://doc.rust-lang.org/std/vec/struct.Vec.html
-    /// [2]: requirement/struct.NodeRequirement.html
-    #[inline]
-    pub fn requirements(&self) -> &Vec<NodeRequirement> {
-        &self.requirements
     }
 }
 
@@ -86,8 +74,10 @@ impl Node {
 /// [1]: struct.Node.html
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct DependencyGraph {
-    next_id: usize,
+    next_node_id: usize,
+    next_requirement_id: usize,
     nodes: HashMap<NodeId, Node>,
+    requirements: HashMap<RequirementId, Requirement>,
 }
 
 impl DependencyGraph {
@@ -102,8 +92,10 @@ impl DependencyGraph {
             }),
         );
         DependencyGraph {
-            next_id: ROOT_ID + 1,
+            next_node_id: ROOT_ID + 1,
+            next_requirement_id: 0,
             nodes,
+            requirements: HashMap::new(),
         }
     }
 
@@ -131,9 +123,16 @@ impl DependencyGraph {
     }
 
     #[inline]
-    fn next_id(&mut self) -> usize {
-        let id = self.next_id;
-        self.next_id += 1;
+    fn next_node_id(&mut self) -> usize {
+        let id = self.next_node_id;
+        self.next_node_id += 1;
+        id
+    }
+
+    #[inline]
+    fn next_requirement_id(&mut self) -> usize {
+        let id = self.next_requirement_id;
+        self.next_requirement_id += 1;
         id
     }
 
@@ -143,34 +142,6 @@ impl DependencyGraph {
     #[inline]
     pub fn root_id(&self) -> NodeId {
         ROOT_ID
-    }
-
-    /// Returns a reference on the [`Node`][1] with the given [`NodeId`][2], or `None` if it wasn't found.
-    ///
-    /// [1]: struct.Node.html
-    /// [2]: type.NodeId.html
-    #[inline]
-    pub fn node(&self, id: NodeId) -> Option<&Node> {
-        self.nodes.get(&id)
-    }
-
-    /// Returns a mutable reference on the [`Node`][1] with the given [`NodeId`][2], or `None` if it wasn't found.
-    ///
-    /// [1]: struct.Node.html
-    /// [2]: type.NodeId.html
-    #[inline]
-    pub fn node_mut(&mut self, id: NodeId) -> Option<&mut Node> {
-        self.nodes.get_mut(&id)
-    }
-
-    /// Returns a [`HashMap`][1]<[`NodeId`], [`Node`]> of all [`Node`][3]s and it's [`NodeId`][2] currently in the dependency graph.
-    ///
-    /// [1]: https://doc.rust-lang.org/std/collections/struct.HashMap.html
-    /// [2]: type.NodeId.html
-    /// [3]: struct.Node.html
-    #[inline]
-    pub fn nodes(&self) -> &HashMap<NodeId, Node> {
-        &self.nodes
     }
 
     /// Returns a handle to perform a search on the dependency graph following the given package requirement.
@@ -183,148 +154,163 @@ impl DependencyGraph {
     }
 
     /// Adds the given [`PackgeRequirement`] to the [`DependencyGraph`], as a child of the given node (represented by it's [`NodeId`]).
+    ///
+    /// In case of error, the [`DependencyGraph`] is left in an unspecified state, possibly unstable, and shouldn't be used nor saved anymore.
     pub fn add_package(
         &mut self,
         config: &Config,
-        parent: NodeId,
-        requirement: &PackageRequirement,
+        parent_id: NodeId,
+        package_req: PackageRequirement,
     ) -> Result<(), Error> {
+
+        let manifest;
+        let child_id;
+
         // First, check if their isn't already a package that matches the requirement
-        let packages = self.search(requirement).perform();
-        if !packages.is_empty() {
-            return Ok(());
+        let node_ids = self.search(&package_req).perform();
+        if node_ids.is_empty() { // If this requirement isn't satisfied yet, find the package and add it as a new node.
+            // Look for a package in the cache that matches the requirement
+            let mut results = config.available().search(&package_req).perform()?;
+
+            let package = {
+                if results.len() == 1 {
+                    results.remove(0)
+                } else if results.is_empty() {
+                    Err(DepGraphErrorKind::CantFindPackage(package_req.to_string()))?;
+                    unreachable!()
+                } else {
+                    Err(DepGraphErrorKind::ImpreciseRequirement(package_req.to_string()))?;
+                    unreachable!()
+                }
+            };
+            // Generate an id for the child node
+            child_id = self.next_node_id();
+            self.nodes.insert(
+                child_id,
+                Node::new(NodeKind::Package {
+                    id: package.id()
+                }),
+            );
+            manifest = Some(package.manifest().clone());
+        } else { // The requirement is already satisfied by an other node: let's find it.
+            // We'll take the first one that matches our requirement (that's debatable, actually. We should probably be a bit more picky)
+            child_id = node_ids[0];
+            manifest = None;
         }
 
-        // Look for a package in the cache that matches the requirement
-        let results = {
-            let query = config.available().search(requirement);
-            query.perform()?
-        };
-        let package = results
-            .get(0)
-            .ok_or_else(|| DepGraphErrorKind::CantFindPackage(requirement.to_string()))?;
+        // From now on, the child node represent's either a new node freshly added (new package) or an existing node (like an already existing dependency).
+        // In either cases, we want to link the parent node with the child node.
 
-        // Create and insert the child node
-        let child_id = self.next_id();
-        {
-            let child_node = Node::new(NodeKind::Package { id: package.id() });
+        // Generate an id for the requirement that will link together the parent and the child node.
+        let requirement_id = self.next_requirement_id();
 
-            self.nodes.insert(child_id, child_node);
-        }
-
-        // Create the connexion with the parent node
-        {
-            let parent = self
-                .node_mut(parent)
-                .ok_or(DepGraphErrorKind::InvalidNodeId)
-                .with_context(|_| parent.to_string())?;
-
-            let req = NodeRequirement::from(
-                NodeRequirementKind::Package {
-                    requirement: requirement.clone(),
+        // Create the requirement and insert it.
+        self.requirements.insert(
+            requirement_id,
+            Requirement::from(
+                RequirementKind::Package {
+                    package_req,
                 },
                 child_id,
-            );
-            parent.requirements.push(req);
-        }
+                parent_id,
+            ),
+        );
 
-        for (name, req) in package.manifest().dependencies() {
-            self.add_package(
-                config,
-                child_id,
-                &PackageRequirement::from(name, req.clone()),
-            )?;
+        // Add this requirement as a dependency of the parent node.
+        self.nodes
+            .get_mut(&parent_id)
+            .expect("invalid parent node id")
+            .requirements
+            .insert(requirement_id)
+        ;
+
+        self.nodes
+            .get_mut(&child_id)
+            .expect("invalid child node id")
+            .dependents
+            .insert(requirement_id)
+        ;
+
+        // Repeat for all dependencies only if this is a new package (not needed otherwise).
+        if let Some(manifest) = manifest {
+            for (name, req) in manifest.dependencies() {
+                self.add_package(
+                    config,
+                    child_id,
+                    PackageRequirement::from(name, req.clone()),
+                )?;
+            }
         }
         Ok(())
     }
-}
 
-// XXX: The implementation of `sub` kind of sucks, but i don't have any immediate better ideas,
-// so if you have, feel free to improve.
-impl Sub for DependencyGraph {
-    type Output = Vec<Box<Transaction>>;
+    /// Removes the given [`PackgeRequirement`] of the [`DependencyGraph`] if it's a child of the given node (represented by it's [`NodeId`]).
+    pub fn remove_requirement(
+        &mut self,
+        parent_id: NodeId,
+        target_requirement: &RequirementKind,
+    ) -> Result<(), Error> {
 
-    fn sub(self, other: DependencyGraph) -> Self::Output {
-        let mut out = Vec::new();
-        let left_root = &self.nodes[&self.root_id()];
-        let right_root = &other.nodes[&self.root_id()];
-        diff_common_nodes(&mut out, &self, &other, left_root, right_root);
-        out
-    }
-}
+        let requirement_id = self.nodes
+            .get(&parent_id)
+            .expect("invalid parent node id")
+            .requirements
+            .iter()
+            .find(|requirement_id| {
+                // This is unfortunately ugly, but it looks like `RequirementKind` fails to implement `Eq` correctly.
+                // I'm not sure of that yet, nor how it fails, and will investigate soon.
+                // This `to_string()` serves as a temporary mesure.
+                self.requirements[&requirement_id].kind().to_string() == target_requirement.to_string()
+            })
+            .cloned()
+            .ok_or_else(|| DepGraphErrorKind::UnknownRequirement(target_requirement.to_string()))
+        ?;
 
-fn diff_added_nodes(
-    v: &mut Vec<Box<Transaction>>,
-    left_graph: &DependencyGraph,
-    right_graph: &DependencyGraph,
-    node: &Node,
-) {
-    // First handle requirements
-    for requirement in node.requirements() {
-        let fulfiller_id = requirement.fulfiller();
-        let right_node = &right_graph.nodes[&fulfiller_id];
-        if let Some(left_node) = left_graph.nodes.get(&fulfiller_id) {
-            diff_common_nodes(v, left_graph, right_graph, left_node, right_node);
-        } else {
-            diff_added_nodes(v, left_graph, right_graph, right_node);
+        // We want to remove the child node only if this requirement was it's last bound to the DependencyGraph.
+        // If it's the case, we also want to repeat this recursively.
+
+        let child_id = self.requirements[&requirement_id].fulfiller();
+
+        // Remove the bound parent_node->child_node
+        {
+            let parent_node = self.nodes
+                .get_mut(&parent_id)
+                .expect("invalid parent node id")
+            ;
+            parent_node.requirements.remove(&requirement_id);
         }
-    }
-    // Then add a new transaction if the node is a package
-    if let NodeKind::Package { id, .. } = node.kind() {
-        v.push(Box::new(Install::from(id.clone())));
-    }
-}
 
-fn diff_removed_nodes(
-    v: &mut Vec<Box<Transaction>>,
-    left_graph: &DependencyGraph,
-    right_graph: &DependencyGraph,
-    node: &Node,
-) {
-    // First handle requirements
-    for requirement in node.requirements() {
-        let fulfiller_id = requirement.fulfiller();
-        let left_node = &left_graph.nodes[&fulfiller_id];
-        if let Some(right_node) = right_graph.nodes.get(&fulfiller_id) {
-            diff_common_nodes(v, left_graph, right_graph, left_node, right_node);
-        } else {
-            diff_removed_nodes(v, left_graph, right_graph, left_node);
+        // Remove the bound child_node->parent_node, and tests if it was the last bound of child_node.
+        let last_dependent = {
+            let child_node = self.nodes
+                .get_mut(&child_id)
+                .expect("invalid child node id")
+            ;
+            child_node.dependents.remove(&requirement_id);
+            child_node.dependents.is_empty()
+        };
+
+        // if it was the last bound of child_node, remove child_node
+        if last_dependent {
+
+            // Remove the child node's bounds, recursively
+            let requirements = &self.nodes.get(&child_id)
+                .expect("invalid child node id")
+                .requirements
+                .clone()
+            ;
+            for requirement_id in requirements {
+                let requirement = self.requirements[&requirement_id].kind().clone();
+                self.remove_requirement(child_id, &requirement)?;
+            }
+
+            // Remove the child node
+            self.nodes.remove(&child_id);
         }
-    }
-    // Then add a new transaction if the node is a package
-    if let NodeKind::Package { .. } = node.kind() {
-        // TODO: Push a Remove transaction
-        // v.push(Box::new(Remove::new(id.clone())));
-    }
-}
 
-fn diff_common_nodes(
-    v: &mut Vec<Box<Transaction>>,
-    left_graph: &DependencyGraph,
-    right_graph: &DependencyGraph,
-    left_node: &Node,
-    right_node: &Node,
-) {
-    for requirement in left_node.requirements() {
-        let fulfiller_id = requirement.fulfiller();
-        let left_node = &left_graph.nodes[&fulfiller_id];
+        // Remove the requirement
+        self.requirements.remove(&requirement_id);
 
-        // Test if this node is present in the left graph but not in the right graph (REMOVED)
-        // If this node is present in both graph, then diff it's representation on both graphs.
-        if let Some(right_node) = right_graph.nodes.get(&fulfiller_id) {
-            diff_common_nodes(v, left_graph, right_graph, left_node, right_node);
-        } else {
-            diff_removed_nodes(v, left_graph, right_graph, left_node);
-        }
-    }
-
-    for requirement in right_node.requirements() {
-        let fulfiller_id = requirement.fulfiller();
-        let new_node = &right_graph.nodes[&fulfiller_id];
-
-        // Test if this node is present in the righ graph but not in the left graph (ADDED)
-        if left_graph.nodes.get(&fulfiller_id).is_none() {
-            diff_added_nodes(v, left_graph, right_graph, new_node);
-        }
+        Ok(())
     }
 }
