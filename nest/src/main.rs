@@ -90,6 +90,16 @@ fn main() {
                         .required(true),
                 )
         )
+        .subcommand(
+            SubCommand::with_name("remove")
+                .about("Removes the given packages")
+                .arg(
+                    Arg::with_name("PACKAGE")
+                        .help("Packages to remove")
+                        .multiple(true)
+                        .required(true),
+                )
+        )
         .get_matches();
 
     let res: Result<_, Error> = do catch {
@@ -104,6 +114,7 @@ fn main() {
         match matches.subcommand() {
             ("pull", _) => command::pull::pull(&config),
             ("install", Some(matches)) => command::install::install(&config, matches),
+            ("remove", Some(matches)) => command::remove::remove(&config, matches),
             _ => unimplemented!(),
         }?;
         ()

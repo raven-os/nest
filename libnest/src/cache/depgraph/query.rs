@@ -30,8 +30,8 @@ impl<'a, 'b> DependencyGraphQuery<'a, 'b> {
     pub fn perform(&self) -> Vec<NodeId> {
         let mut results = Vec::new();
 
-        for (node_id, node) in self.depgraph.nodes() {
-            if let NodeKind::Package { id, .. } = node.kind() {
+        for (node_id, node) in &self.depgraph.nodes {
+            if let NodeKind::Package { id, .. } = &node.kind {
                 if self.package_req.matches(&id) {
                     results.push(*node_id);
                 }

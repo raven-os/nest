@@ -182,6 +182,18 @@ impl PackageRequirement {
         }
     }
 
+    /// Creates a package requirement that matches the given package full name and version requirement.
+    #[inline]
+    pub fn from_id(id: &PackageId) -> PackageRequirement {
+        let full_name = id.full_name();
+        PackageRequirement {
+            repository: Some(full_name.repository().to_string()),
+            category: Some(full_name.category().to_string()),
+            name: full_name.name().to_string(),
+            version_req: VersionReq::exact(id.version()),
+        }
+    }
+
     /// Returns an [`Option`] over the repository part of this package requirement.
     #[inline]
     pub fn repository(&self) -> &Option<String> {
