@@ -4,10 +4,10 @@ use std::path::Path;
 
 use failure::{Error, ResultExt};
 
+use chroot::Chroot;
 use config::Config;
 use package::PackageId;
-use transaction::{Notifier, Notification, Transaction, TransactionKind, TransactionStep};
-use chroot::Chroot;
+use transaction::{Notification, Notifier, Transaction, TransactionKind, TransactionStep};
 
 /// A `remove` transaction: it performs the removal of the target on the system.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -62,8 +62,7 @@ impl Transaction for Remove {
             .join(self.target.full_name().repository())
             .join(self.target.full_name().category())
             .join(self.target.full_name().name())
-            .join(self.target.version().to_string())
-        ;
+            .join(self.target.version().to_string());
 
         let mut log_file = File::open(&log_path).with_context(|_| log_path.display().to_string())?;
 
@@ -72,8 +71,9 @@ impl Transaction for Remove {
         nb_files += 1; // The log file must be removed to.
 
         // Remove all the files in the log file. Remove directory if they are empty
-        log_file.seek(SeekFrom::Start(0))
-                .with_context(|_| log_path.display().to_string())?;
+        log_file
+            .seek(SeekFrom::Start(0))
+            .with_context(|_| log_path.display().to_string())?;
         for (i, entry_path) in BufReader::new(&log_file).lines().enumerate() {
             let entry_path = entry_path?;
             let abs_path = Path::new("/").with_content(&entry_path);
@@ -87,16 +87,12 @@ impl Transaction for Remove {
                         println!("Removed {}.", rel_path.display());
                     }
                 } else {
-                    fs::remove_file(rel_path)
-                        .with_context(|_| abs_path.display().to_string())
-                    ?;
+                    fs::remove_file(rel_path).with_context(|_| abs_path.display().to_string())?;
                 }
             }
             notifier.notify(self, Notification::Progress(i, nb_files));
         }
-        fs::remove_file(&log_path)
-            .with_context(|_| log_path.display().to_string())
-        ?;
+        fs::remove_file(&log_path).with_context(|_| log_path.display().to_string())?;
         Ok(())
     }
 }
