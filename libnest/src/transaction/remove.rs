@@ -81,11 +81,7 @@ impl Transaction for Remove {
 
             if let Ok(metadatas) = fs::symlink_metadata(&rel_path) {
                 if metadatas.is_dir() {
-                    println!("Trying to remove {}", rel_path.display());
-                    let res = fs::remove_dir(&rel_path); // Ignore errors so it doesn't stop on non-empty directory
-                    if res.is_ok() {
-                        println!("Removed {}.", rel_path.display());
-                    }
+                    let _ = fs::remove_dir(&rel_path); // Ignore errors so it doesn't stop on non-empty directory
                 } else {
                     fs::remove_file(rel_path).with_context(|_| abs_path.display().to_string())?;
                 }
