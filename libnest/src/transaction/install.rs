@@ -1,5 +1,6 @@
 use std::fs::{self, File};
 use std::io::{Seek, SeekFrom, Write};
+use std::path::Path;
 
 use failure::{Error, ResultExt};
 use flate2::read::GzDecoder;
@@ -9,6 +10,7 @@ use config::Config;
 use error::InstallError;
 use package::PackageId;
 use transaction::{Notification, Notifier, Transaction, TransactionKind, TransactionStep};
+use chroot::Chroot;
 
 /// An `install` transaction: it performs the installation of the target on the system.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -141,17 +143,17 @@ impl Transaction for Install {
                 .enumerate()
             {
                 let entry = entry.with_context(|_| tarball_path.display().to_string())?;
+                let entry_path = entry.path().with_context(|_| tarball_path.display().to_string())?;
 
-                let path = config.paths().root().join(
-                    entry
-                        .path()
-                        .with_context(|_| tarball_path.display().to_string())?,
-                );
+                let abs_path = Path::new("/").with_content(&entry_path);
+                let rel_path = config.paths().root().with_content(&entry_path);
 
-                if !path.is_dir() && path.exists() {
-                    Err(InstallError::FileAlreadyExists(path.display().to_string()))?;
+                if let Ok(metadatas) = fs::symlink_metadata(&rel_path) {
+                    if !metadatas.is_dir() {
+                        Err(InstallError::FileAlreadyExists(abs_path.display().to_string()))?;
+                    }
                 }
-                files.push(path.to_path_buf());
+                files.push(abs_path.to_path_buf());
                 notifier.notify(self, Notification::Progress(i, nb_files));
             }
         }
