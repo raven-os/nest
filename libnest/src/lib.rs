@@ -25,6 +25,7 @@
 #![feature(try_from)]
 #![feature(catch_expr)]
 #![feature(iterator_flatten)]
+#![feature(path_ancestors)]
 
 extern crate curl;
 #[macro_use]

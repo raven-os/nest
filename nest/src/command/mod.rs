@@ -2,7 +2,7 @@
 
 pub mod install;
 pub mod pull;
-pub mod remove;
+pub mod uninstall;
 
 use std::io::{self, Write};
 

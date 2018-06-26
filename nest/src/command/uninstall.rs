@@ -1,4 +1,4 @@
-//! Functions to execute the `remove` operation.
+//! Functions to execute the `uninstall` operation.
 
 use clap::ArgMatches;
 use failure::Error;
@@ -10,11 +10,11 @@ use libnest::transaction::Orchestrator;
 
 use command;
 
-/// Removes all the given packages.
+/// Uninstalls all the given packages.
 ///
 /// This will go through all targets, remove them of the dependency graph and perform the operations that are
-/// needed in order to remove the packages.
-pub fn remove(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
+/// needed in order to uninstall the packages.
+pub fn uninstall(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
     // Remove arguments as requirements of the root node.
     let mut graph = config.depgraph()?;
     let original_graph = graph.clone();

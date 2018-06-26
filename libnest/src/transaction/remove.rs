@@ -83,7 +83,16 @@ impl Transaction for Remove {
                 if metadatas.is_dir() {
                     let _ = fs::remove_dir(&rel_path); // Ignore errors so it doesn't stop on non-empty directory
                 } else {
-                    fs::remove_file(rel_path).with_context(|_| abs_path.display().to_string())?;
+                    fs::remove_file(&rel_path).with_context(|_| abs_path.display().to_string())?;
+
+                    // Try to remove the parent directories if they are empty
+                    for parent_dir in rel_path.ancestors() {
+                        if parent_dir == config.paths().root() {
+                            // Stop on root, don't access it's parent directory if we are chrooted.
+                            break;
+                        }
+                        let _ = fs::remove_dir(&parent_dir); // Ignore errors so it doesn't stop on non-empty directory
+                    }
                 }
             }
             notifier.notify(self, Notification::Progress(i, nb_files));
