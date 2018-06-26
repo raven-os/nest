@@ -308,4 +308,9 @@ impl DependencyGraph {
 
         Ok(())
     }
+
+    /// Updates all the fulfillers of the given node's requirements, recursively.
+    pub fn update_node(&mut self, _parent_id: NodeId) -> Result<(), Error> {
+        unimplemented!()
+    }
 }

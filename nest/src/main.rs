@@ -83,13 +83,18 @@ fn main() {
         .subcommand(
             SubCommand::with_name("install")
                 .alias("add")
-                .about("Download and install the given packages")
+                .about("Download and install the given packages [alias: add]")
                 .arg(
                     Arg::with_name("PACKAGE")
                         .help("Packages to install")
                         .multiple(true)
                         .required(true),
                 )
+        )
+        .subcommand(
+            SubCommand::with_name("upgrade")
+                .alias("update")
+                .about("Upgrade all installed packages [alias: update]")
         )
         .subcommand(
             SubCommand::with_name("uninstall")
@@ -116,6 +121,7 @@ fn main() {
         match matches.subcommand() {
             ("pull", _) => command::pull::pull(&config),
             ("install", Some(matches)) => command::install::install(&config, matches),
+            ("upgrade", _) => command::upgrade::upgrade(&config),
             ("uninstall", Some(matches)) => command::uninstall::uninstall(&config, matches),
             _ => unimplemented!(),
         }?;

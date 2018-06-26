@@ -3,6 +3,7 @@
 pub mod install;
 pub mod pull;
 pub mod uninstall;
+pub mod upgrade;
 
 use std::io::{self, Write};
 
