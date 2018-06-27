@@ -8,13 +8,16 @@ pub use self::query::DependencyGraphQuery;
 pub use self::requirement::{Requirement, RequirementKind};
 
 use std::collections::{HashMap, HashSet};
+use std::fmt::{self, Display, Formatter};
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
 use failure::{Error, ResultExt};
 use json;
+use semver::VersionReq;
 
+use cache::available::AvailablePackagesCacheQueryStrategy;
 use config::Config;
 use error::DepGraphErrorKind;
 use package::{PackageId, PackageRequirement};
@@ -65,6 +68,15 @@ impl Node {
             kind,
             requirements: HashSet::new(),
             dependents: HashSet::new(),
+        }
+    }
+}
+
+impl Display for Node {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match &self.kind {
+            NodeKind::Group { name, .. } => write!(f, "@{}", name),
+            NodeKind::Package { id, .. } => write!(f, "{}", id),
         }
     }
 }
@@ -164,37 +176,60 @@ impl DependencyGraph {
     ) -> Result<(), Error> {
         let manifest;
         let child_id;
+        let mut round = 0;
 
         // First, check if their isn't already a package that matches the requirement
-        let node_ids = self.search(&package_req).perform();
-        if node_ids.is_empty() {
-            // If this requirement isn't satisfied yet, find the package and add it as a new node.
-            // Look for a package in the cache that matches the requirement
-            let mut results = config.available().search(&package_req).perform()?;
 
-            let package = {
-                if results.len() == 1 {
-                    results.remove(0)
-                } else if results.is_empty() {
-                    Err(DepGraphErrorKind::CantFindPackage(package_req.to_string()))?;
-                    unreachable!()
-                } else {
-                    Err(DepGraphErrorKind::ImpreciseRequirement(
-                        package_req.to_string(),
-                    ))?;
-                    unreachable!()
+        // XXX: This loop is the worst code of my life, it's a temporary mesure and will be removed soon, *i promise*.
+        loop {
+            if round == 2 {
+                Err(DepGraphErrorKind::CantFindPackage(package_req.to_string()))?;
+            }
+            let node_ids = self.search(&package_req).perform();
+            if node_ids.is_empty() {
+                // If the package isn't satisfied, there is two possibilities:
+                //    - The version installed is too old for the requirement
+                //    - There is no version installed
+
+                // Tests if there is an other version of this package that could be updated
+                let version_less_package_req = package_req.clone().any_version();
+                let node_ids = self.search(&version_less_package_req).perform();
+                if let Some(node_id) = node_ids.get(0) {
+                    self.update_node(config, *node_id)?;
+                    round += 1;
+                    continue;
                 }
-            };
-            // Generate an id for the child node
-            child_id = self.next_node_id();
-            self.nodes
-                .insert(child_id, Node::new(NodeKind::Package { id: package.id() }));
-            manifest = Some(package.manifest().clone());
-        } else {
-            // The requirement is already satisfied by an other node: let's find it.
-            // We'll take the first one that matches our requirement (that's debatable, actually. We should probably be a bit more picky)
-            child_id = node_ids[0];
-            manifest = None;
+
+                // If this requirement isn't satisfied yet, find the package and add it as a new node.
+                // Look for a package in the cache that matches the requirement
+                let mut results = config.available().search(&package_req).perform()?;
+
+                let package = {
+                    if results.len() == 1 {
+                        results.remove(0)
+                    } else if results.is_empty() {
+                        Err(DepGraphErrorKind::CantFindPackage(package_req.to_string()))?;
+                        unreachable!()
+                    } else {
+                        Err(DepGraphErrorKind::ImpreciseRequirement(
+                            package_req.to_string(),
+                        ))?;
+                        unreachable!()
+                    }
+                };
+                // Generate an id for the child node
+                child_id = self.next_node_id();
+                self.nodes
+                    .insert(child_id, Node::new(NodeKind::Package { id: package.id() }));
+                manifest = Some(package.manifest().clone());
+                break;
+            } else {
+                // The requirement is already satisfied by an other node: let's find it.
+                // We'll take the first one that matches our requirement (that's debatable, actually. We should probably be a bit more picky)
+                child_id = node_ids[0];
+                manifest = None;
+                break;
+            }
         }
 
         // From now on, the child node represent's either a new node freshly added (new package) or an existing node (like an already existing dependency).
@@ -309,8 +344,142 @@ impl DependencyGraph {
         Ok(())
     }
 
-    /// Updates all the fulfillers of the given node's requirements, recursively.
-    pub fn update_node(&mut self, _parent_id: NodeId) -> Result<(), Error> {
-        unimplemented!()
+    fn update_node_rec(
+        &mut self,
+        data: &mut DependencyGraphUpdateData,
+        node_id: NodeId,
+    ) -> Result<(), Error> {
+        // Don't repeat the operation if the node has already been processed.
+        if data.taint.contains(&node_id) {
+            return Ok(());
+        }
+        data.taint.insert(node_id);
+
+        let mut new_version = None;
+
+        // Let's find a better version of ourself
+        {
+            let node = self.nodes.get(&node_id).expect("invalid parent node id");
+
+            // We can only update packages, not group (that doesn't make sense)
+            if let NodeKind::Package { id, .. } = &node.kind {
+                let requirement = PackageRequirement::from(id.full_name(), VersionReq::any());
+
+                // Find all versions of this package
+                let mut packages = data
+                    .config
+                    .available()
+                    .search(&requirement)
+                    .set_strategy(AvailablePackagesCacheQueryStrategy::AllMatchesSorted)
+                    .perform()?;
+
+                // Get all requirements
+                let requirements = node
+                    .dependents
+                    .iter()
+                    .map(|requirement_id| {
+                        self.requirements
+                            .get(&requirement_id)
+                            .expect("invalid requirement id")
+                    })
+                    .collect::<Vec<_>>();
+
+                // Look for the best version matches all requirements
+                for package in packages {
+                    let matches = requirements.iter().all(|requirement| {
+                        if let RequirementKind::Package { package_req, .. } = requirement.kind() {
+                            package_req.matches(&package.id())
+                        } else {
+                            panic!("invalid requirement kind");
+                        }
+                    });
+
+                    // If there is a new version that satisfies all dependencies, stop the search
+                    if matches && package.id() != *id {
+                        new_version = Some(package);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // If a new version was found
+        if let Some(package) = new_version {
+            let old_requirement;
+
+            // Get all old requirements ids.
+            old_requirement = self
+                .nodes
+                .get(&node_id)
+                .expect("invalid parent node id")
+                .requirements
+                .iter()
+                .map(|requirement_id| self.requirements[&requirement_id].kind().clone())
+                .collect::<Vec<_>>();
+
+            {
+                let node = self
+                    .nodes
+                    .get_mut(&node_id)
+                    .expect("invalid parent node id");
+
+                // Update the current node to reflect the change
+                node.kind = NodeKind::Package { id: package.id() };
+            }
+
+            // Add the new requirements
+            for (name, req) in package.manifest().dependencies() {
+                self.add_package(
+                    data.config,
+                    node_id,
+                    PackageRequirement::from(name, req.clone()),
+                )?;
+            }
+
+            // Remove the old requirements
+            for old_requirement in old_requirement {
+                self.remove_requirement(node_id, &old_requirement)?;
+            }
+        }
+
+        // Repeat recursively on child nodes.
+        let child_ids = self
+            .nodes
+            .get(&node_id)
+            .expect("invalid parent node id")
+            .requirements
+            .iter()
+            .map(|requiremend_id| {
+                self.requirements
+                    .get(&requiremend_id)
+                    .expect("invalid requirement id")
+                    .fulfiller()
+            })
+            .collect::<Vec<_>>();
+
+        for child_id in child_ids {
+            self.update_node_rec(data, child_id)?;
+        }
+        Ok(())
+    }
+
+    /// Updates the given node and all it's fulfillers, recursively.
+    pub fn update_node(&mut self, config: &Config, node_id: NodeId) -> Result<(), Error> {
+        let mut data = DependencyGraphUpdateData::from(config);
+        self.update_node_rec(&mut data, node_id)
+    }
+}
+
+struct DependencyGraphUpdateData<'a> {
+    config: &'a Config,
+    taint: HashSet<NodeId>,
+}
+
+impl<'a> DependencyGraphUpdateData<'a> {
+    fn from(config: &'a Config) -> DependencyGraphUpdateData<'a> {
+        DependencyGraphUpdateData {
+            config,
+            taint: HashSet::new(),
+        }
     }
 }

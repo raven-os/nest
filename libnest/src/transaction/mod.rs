@@ -12,6 +12,7 @@ mod orchestrator;
 mod pull;
 mod remove;
 mod transfer;
+mod upgrade;
 
 pub use self::install::Install;
 pub use self::notifier::{Notification, Notifier};
@@ -19,6 +20,7 @@ pub use self::orchestrator::Orchestrator;
 pub use self::pull::Pull;
 pub use self::remove::Remove;
 pub use self::transfer::Transfer;
+pub use self::upgrade::Upgrade;
 
 use std::fmt::Debug;
 use std::fmt::{self, Display, Formatter};
@@ -38,6 +40,12 @@ pub enum TransactionKind {
     Install,
     /// The transaction is a Remove
     Remove,
+    /// The transaction is an Upgrade
+    Upgrade,
+    /// The transaction is a Downgrade
+    Downgrade,
+    /// The transaction is a Reinstall
+    Reinstall,
 }
 
 /// The step a transaction may be in.
@@ -51,8 +59,10 @@ pub enum TransactionStep {
     Download,
     /// The transaction is checking the filesystem's content or integrity
     Check,
-    /// The transaction is extracting some data from an archive
+    /// The transaction is extracting some files on the filesystem from an archive
     Extract,
+    /// The transaction is removing some files of the filesystem
+    Remove,
 }
 
 impl Display for TransactionStep {
@@ -64,6 +74,7 @@ impl Display for TransactionStep {
             TransactionStep::Download => write!(f, "download"),
             TransactionStep::Check => write!(f, "check"),
             TransactionStep::Extract => write!(f, "extract"),
+            TransactionStep::Remove => write!(f, "remove"),
         }
     }
 }

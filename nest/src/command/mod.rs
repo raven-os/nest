@@ -56,6 +56,9 @@ pub fn orchestrate(config: &Config, mut orchestrator: Orchestrator) -> Result<()
                 TransactionKind::Pull => cyan!("{:>8.8}", "pull"),
                 TransactionKind::Install => green!("{:>8.8}", "install"),
                 TransactionKind::Remove => red!("{:>8.8}", "remove"),
+                TransactionKind::Upgrade => yellow!("{:>8.8}", "upgrade"),
+                TransactionKind::Downgrade => yellow!("{:>8.8}", "downgrade"),
+                TransactionKind::Reinstall => yellow!("{:>8.8}", "reinstall"),
             },
             transaction.target(),
         );

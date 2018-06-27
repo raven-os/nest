@@ -194,6 +194,13 @@ impl PackageRequirement {
         }
     }
 
+    /// Changes the version requirement to match any version
+    #[inline]
+    pub fn any_version(mut self) -> Self {
+        self.version_req = VersionReq::any();
+        self
+    }
+
     /// Returns an [`Option`] over the repository part of this package requirement.
     #[inline]
     pub fn repository(&self) -> &Option<String> {

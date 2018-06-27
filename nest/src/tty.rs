@@ -31,6 +31,12 @@ macro_rules! purple {
     ( $( $arg:expr ), * ) => (color!(Purple, $( $arg ),* ));
 }
 
+/// Returns a formatted string which will appear in purple (bold) in an ANSI terminal.
+macro_rules! yellow {
+    ( $var:expr ) => (color!(Yellow, "{}", $var));
+    ( $( $arg:expr ), * ) => (color!(Yellow, $( $arg ),* ));
+}
+
 /// Returns a formatted string which will appear in cyan (bold) in an ANSI terminal.
 macro_rules! cyan {
     ( $var:expr ) => (color!(Cyan, "{}", $var));

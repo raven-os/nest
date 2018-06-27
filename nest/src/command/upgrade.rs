@@ -14,7 +14,7 @@ pub fn upgrade(config: &Config) -> Result<(), Error> {
     let original_graph = graph.clone();
 
     let root = graph.root_id();
-    graph.update_node(root)?;
+    graph.update_node(config, root)?;
 
     let diff = DependencyGraphDiff::new();
     let transactions = diff.perform(&original_graph, &graph.clone())?;
