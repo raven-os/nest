@@ -15,7 +15,6 @@
 
 // Rustc
 #![warn(missing_debug_implementations)]
-#![warn(trivial_casts)]
 #![warn(trivial_numeric_casts)]
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
@@ -41,7 +40,6 @@ extern crate lazy_static;
 extern crate failure;
 extern crate libc;
 extern crate libnest;
-extern crate regex;
 #[macro_use]
 extern crate failure_derive;
 
@@ -50,9 +48,8 @@ pub mod tty;
 #[macro_use]
 pub mod error;
 pub mod command;
-pub mod progress;
 pub mod progressbar;
-pub mod query;
+//pub mod query;
 
 use clap::{App, AppSettings, Arg, SubCommand};
 use failure::Error;
@@ -60,116 +57,91 @@ use libnest::config::Config;
 
 fn main() {
     let matches = App::new(crate_name!())
-        .template("{usage}\n{about}\n\nFLAGS\n{flags}\n\nOPERATIONS\n{subcommands}")
-        .usage("nest [FLAGS] OPERATION [OPERATION'S FLAGS]")
-        .about("Raven-OS's package manager")
+        .template("{usage}\n\n{about}\n\nFLAGS\n{flags}\n\nSUBCOMMANDS\n{subcommands}")
+        .usage("nest [FLAGS] SUBCOMMAND [SUBCOMMANDS'S FLAGS]")
+        .about("Raven-OS's package manager.")
         .version(crate_version!())
+        .author(crate_authors!())
+        .setting(AppSettings::SubcommandRequiredElseHelp)
+        .setting(AppSettings::VersionlessSubcommands)
+        .setting(AppSettings::ColoredHelp)
         .arg(
             Arg::with_name("v")
                 .short("v")
                 .multiple(true)
                 .help("Sets the level of verbosity"),
         )
-        .setting(AppSettings::SubcommandRequiredElseHelp)
-        .setting(AppSettings::VersionlessSubcommands)
-        .setting(AppSettings::ColoredHelp)
-        .subcommand(
-            SubCommand::with_name("pull").about("Pulls repositories and updates local cache"),
+        .arg(
+            Arg::with_name("chroot")
+                .long("chroot")
+                .help("Use the current configuration but operate on the given folder, as if it was the root folder")
+                .takes_value(true)
         )
         .subcommand(
-            SubCommand::with_name("download")
-                .about("Downloads the given packages without installing them")
-                .arg(
-                    Arg::with_name("PACKAGE")
-                        .help("Packages to download")
-                        .multiple(true)
-                        .required(true),
-                )
-                .arg(
-                    Arg::with_name("download-dir")
-                        .help("Sets the output directory, overwriting the one in the configuration file")
-                        .takes_value(true)
-                        .long("download-dir")
-                ),
+            SubCommand::with_name("pull").about("Pull repositories and update local cache"),
         )
         .subcommand(
             SubCommand::with_name("install")
-                .about("Downloads and installs the given packages")
+                .alias("add")
+                .about("Download and install the given packages [alias: add]")
                 .arg(
                     Arg::with_name("PACKAGE")
                         .help("Packages to install")
                         .multiple(true)
                         .required(true),
                 )
-                .arg(
-                    Arg::with_name("install-dir")
-                        .help("Sets the installation directory, the default being '/'")
-                        .takes_value(true)
-                        .long("install-dir")
-                ),
+        )
+        .subcommand(
+            SubCommand::with_name("upgrade")
+                .alias("update")
+                .about("Upgrade all installed packages [alias: update]")
         )
         .subcommand(
             SubCommand::with_name("uninstall")
-                .visible_alias("remove")
-                .about("Uninstalls the given packages")
+                .alias("remove")
+                .about("Uninstall the given packages [alias: remove]")
                 .arg(
                     Arg::with_name("PACKAGE")
                         .help("Packages to uninstall")
                         .multiple(true)
                         .required(true),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("search")
-                .about("Searches the local database for packages")
-                .arg(
-                    Arg::with_name("KEYWORD")
-                        .help("A keyword that a package name or description must contain")
-                        .multiple(true)
-                        .required(true),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("upgrade")
-                .about("Upgrades installed packages")
-                .arg(
-                    Arg::with_name("PACKAGE")
-                        .help("Packages to upgrade. If no packages are given, upgrades all installed packages")
-                        .multiple(true)
-                        .required(true),
-                ),
-        )
-        .subcommand(
-            SubCommand::with_name("list")
-                .about("Lists installed packages")
+                )
         )
         .get_matches();
 
-    let res: Result<(), Error> = do catch {
+    let res: Result<_, Error> = do catch {
         // Load config file
-        let config = Config::load()?;
+        let mut config = Config::load()?;
+
+        // Chroot (if provided)
+        if let Some(path) = matches.value_of("chroot") {
+            config.paths_mut().chroot(path);
+        }
 
         match matches.subcommand() {
             ("pull", _) => command::pull::pull(&config),
-            ("download", Some(matches)) => command::download::download(&config, matches),
             ("install", Some(matches)) => command::install::install(&config, matches),
+            ("upgrade", _) => command::upgrade::upgrade(&config),
+            ("uninstall", Some(matches)) => command::uninstall::uninstall(&config, matches),
             _ => unimplemented!(),
         }?;
         ()
     };
 
-    // All errors arrive here. It's our job to print them on screen and then exit(1).
+    // All fatal errors arrive here. It's our job to print them on screen and then exit(1).
     if let Err(err) = res {
-        use error::QueryErrorKind;
+        use error::QueryError;
         use std::process::exit;
 
+        // TODO try the backtrace! macro from failure
         eprintln!("{}", format_error!(err));
 
         // We'd like to print advices for these errors, if any are available.
         // These advices should be preceded by a blank line.
 
         // Try to downcast errors to query_error
-        if let Ok(query_error) = err.downcast::<QueryErrorKind>() {
+        // XXX: Find a better way, this is hackish
+        if let Ok(query_error) = err.downcast::<QueryError>() {
             eprint!("\n{}", query_error.advices());
         }
         exit(1);

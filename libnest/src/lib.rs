@@ -24,6 +24,8 @@
 #![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
 #![feature(try_from)]
 #![feature(catch_expr)]
+#![feature(iterator_flatten)]
+#![feature(path_ancestors)]
 
 extern crate curl;
 #[macro_use]
@@ -31,7 +33,6 @@ extern crate serde_derive;
 extern crate serde;
 extern crate serde_json as json;
 extern crate toml;
-extern crate url;
 extern crate url_serde;
 #[macro_use]
 extern crate lazy_static;
@@ -40,11 +41,13 @@ extern crate flate2;
 extern crate tar;
 #[macro_use]
 extern crate failure_derive;
+extern crate regex;
+extern crate semver;
 
+pub mod cache;
 pub mod chroot;
 pub mod config;
 pub mod error;
 pub mod package;
-pub mod query;
 pub mod repository;
-pub mod system;
+pub mod transaction;

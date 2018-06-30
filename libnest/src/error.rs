@@ -2,260 +2,68 @@
 //!
 //! [1]: https://docs.rs/failure/0.1.1/failure/
 
-use std::fmt::{self, Display, Formatter};
-
-use failure::{Backtrace, Context, Fail};
-use toml;
-use url::Url;
-
-/// Kind of errors that may occur when using the manifests cache.
+/// Errors that may occure when pulling a repository
 #[derive(Clone, PartialEq, Debug, Fail)]
-pub enum CacheErrorKind {
-    /// The error occured doing an IO operation.
-    #[fail(display = "{}", _0)]
-    IO(String),
-    /// The error occured when deserializing a manifest.
-    #[fail(display = "{}", _0)]
-    Deserialize(String),
-    /// The error occured when serializing a manifest.
-    #[fail(display = "{}", _0)]
-    Serialize(String),
+pub enum PullError {
+    /// The error occured while interpreting the received data
+    #[fail(display = "received invalid data")]
+    InvalidData,
+    /// The removal of the old cache failed
+    #[fail(display = "can't remove old cache")]
+    CantRemoveCache,
+    /// The update of the cache failed
+    #[fail(display = "can't update cache of package {}", _0)]
+    CantUpdateCache(String),
 }
 
-/// A type for errors that may occur when using the manifest's cache.
-#[derive(Debug)]
-pub struct CacheError {
-    inner: Context<CacheErrorKind>,
-}
-
-impl CacheError {
-    /// Returns a [`CacheErrorKind`] the reason why this error was thrown.
-    pub fn kind(&self) -> &CacheErrorKind {
-        &self.inner.get_context()
-    }
-}
-
-impl Fail for CacheError {
-    fn cause(&self) -> Option<&Fail> {
-        self.inner.cause()
-    }
-
-    fn backtrace(&self) -> Option<&Backtrace> {
-        self.inner.backtrace()
-    }
-}
-
-impl Display for CacheError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        Display::fmt(&self.inner, f)
-    }
-}
-
-impl From<CacheErrorKind> for CacheError {
-    fn from(kind: CacheErrorKind) -> CacheError {
-        CacheError {
-            inner: Context::new(kind),
-        }
-    }
-}
-
-impl From<Context<CacheErrorKind>> for CacheError {
-    fn from(inner: Context<CacheErrorKind>) -> CacheError {
-        CacheError { inner }
-    }
-}
-
-/// Kind of errors that may occur when pulling a repository.
+/// Errors that may occure when installing a package
 #[derive(Clone, PartialEq, Debug, Fail)]
-pub enum PullErrorKind {
-    /// The error is network-based and occured while downloading the data.
-    #[fail(display = "{}", _0)]
-    Download(String),
-    /// The error occured while interpreting the received data.
-    #[fail(display = "{}: received invalid data", _0)]
-    InvalidData(Url),
-    /// The error occured while trying to remove the old cache.
-    #[fail(display = "can't remove old cache: {}", _0)]
-    CantRemoveCache(String),
-    /// The error occured while trying to create the new cache.
-    #[fail(display = "can't create cache: {}", _0)]
-    CantCreateCache(String),
-}
-
-/// A type for errors that may occur when pulling a repository.
-#[derive(Debug)]
-pub struct PullError {
-    inner: Context<PullErrorKind>,
-}
-
-impl Fail for PullError {
-    fn cause(&self) -> Option<&Fail> {
-        self.inner.cause()
-    }
-
-    fn backtrace(&self) -> Option<&Backtrace> {
-        self.inner.backtrace()
-    }
-}
-
-impl Display for PullError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        Display::fmt(&self.inner, f)
-    }
-}
-
-impl From<PullErrorKind> for PullError {
-    fn from(kind: PullErrorKind) -> PullError {
-        PullError {
-            inner: Context::new(kind),
-        }
-    }
-}
-
-impl From<Context<PullErrorKind>> for PullError {
-    fn from(inner: Context<PullErrorKind>) -> PullError {
-        PullError { inner }
-    }
-}
-
-/// Kind of errors that may occur when downloading a package from a repository.
-#[derive(Clone, PartialEq, Debug, Fail)]
-pub enum DownloadErrorKind {
-    /// The error is network-based and occured while downloading the data.
-    #[fail(display = "{}", _0)]
-    Download(String),
-}
-
-/// A type for errors that may occur when downloading a package from a repository.
-#[derive(Debug)]
-pub struct DownloadError {
-    inner: Context<DownloadErrorKind>,
-}
-
-impl Fail for DownloadError {
-    fn cause(&self) -> Option<&Fail> {
-        self.inner.cause()
-    }
-
-    fn backtrace(&self) -> Option<&Backtrace> {
-        self.inner.backtrace()
-    }
-}
-
-impl Display for DownloadError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        Display::fmt(&self.inner, f)
-    }
-}
-
-impl From<DownloadErrorKind> for DownloadError {
-    fn from(kind: DownloadErrorKind) -> DownloadError {
-        DownloadError {
-            inner: Context::new(kind),
-        }
-    }
-}
-
-impl From<Context<DownloadErrorKind>> for DownloadError {
-    fn from(inner: Context<DownloadErrorKind>) -> DownloadError {
-        DownloadError { inner }
-    }
-}
-
-/// Kind of errors that may occur when installing a package.
-#[derive(Debug, Fail)]
-
-pub enum InstallErrorKind {
-    /// One of the installed file already exists on the targeted system.
-    #[fail(display = "{} already exists", _0)]
+pub enum InstallError {
+    /// The package is already installed, therefore it can't be installed twice.
+    #[fail(display = "\"{}\" is already installed", _0)]
+    PackageAlreadyInstalled(String),
+    /// One of the installed file already exist on the filesystem, and libnest won't replace it.
+    #[fail(display = "\"{}\" already exists", _0)]
     FileAlreadyExists(String),
-    /// The destination directory isn't valid (either does not exist or is not a directory).
-    #[fail(display = "\"{}\" either does not exist or is not a directory", _0)]
-    DestFolderError(String),
-    /// The package is already installed.
-    #[fail(display = "the package is already installed")]
-    PackageAlreadyInstalled,
+    /// The user is trying to install or update a package where it's repository is no longer in the configuration file.
+    #[fail(display = "the repository \"{}\" of package \"{}\" can't be found", _0, _1)]
+    CantFindRepository(String, String),
 }
 
-/// A type for errors that may occur when installing a package.
-#[derive(Debug)]
-pub struct InstallError {
-    inner: Context<InstallErrorKind>,
-}
-
-impl Fail for InstallError {
-    fn cause(&self) -> Option<&Fail> {
-        self.inner.cause()
-    }
-
-    fn backtrace(&self) -> Option<&Backtrace> {
-        self.inner.backtrace()
-    }
-}
-
-impl Display for InstallError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        Display::fmt(&self.inner, f)
-    }
-}
-
-impl From<InstallErrorKind> for InstallError {
-    fn from(kind: InstallErrorKind) -> InstallError {
-        InstallError {
-            inner: Context::new(kind),
-        }
-    }
-}
-
-impl From<Context<InstallErrorKind>> for InstallError {
-    fn from(inner: Context<InstallErrorKind>) -> InstallError {
-        InstallError { inner }
-    }
-}
-
-/// The kind of a [`ConfigLoadError`][1].
-///
-/// [1]: struct.ConfigLoadError.html
-// XXX The display implementation for this enum members aren't used. Instead, QueryError implements a long, nice and complete error message.
+/// Errors that may occure when parsing a package requirement.
 #[derive(Debug, Fail)]
-pub enum ConfigLoadErrorKind {
-    /// The error is caused by an invalid config file that couldn't be deserialized.
-    #[fail(display = "couldn't deserialize {}", _0)]
-    Deserialize(String, #[cause] toml::de::Error),
+pub enum PackageRequirementParseError {
+    /// The package's name is invalid
+    #[fail(display = "invalid package name \"{}\"", _0)]
+    InvalidPackageName(String),
+    /// The version requirement is invalid
+    #[fail(display = "invalid version requirement in package name \"{}\"", _0)]
+    InvalidVersionRequirement(String),
 }
 
-/// Errors that may occur when querying manifests.
-#[derive(Debug)]
-pub struct ConfigLoadError {
-    inner: Context<ConfigLoadErrorKind>,
+/// Errors that may occure when manipulating the dependency graph.
+#[derive(Debug, Fail)]
+pub enum DepGraphErrorKind {
+    /// The [`NodeId`] doesn't match any [`Node`] inside the [`DependencyGraph`].
+    #[fail(display = "invalid node id")]
+    InvalidNodeId,
+    /// Can't find a package that matches the given requirement.
+    #[fail(display = "can't find a package meeting the requirement \"{}\"", _0)]
+    CantFindPackage(String),
+    /// Too much package are satisfying this requirement
+    #[fail(
+        display = "too much package satisfy this requirement, please be more exausthive: \"{}\"", _0
+    )]
+    ImpreciseRequirement(String),
+    /// The given requirement couldn't be found
+    #[fail(display = "can't find requirement \"{}\"", _0)]
+    UnknownRequirement(String),
 }
 
-impl Fail for ConfigLoadError {
-    fn cause(&self) -> Option<&Fail> {
-        self.inner.cause()
-    }
-
-    fn backtrace(&self) -> Option<&Backtrace> {
-        self.inner.backtrace()
-    }
-}
-
-impl Display for ConfigLoadError {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        Display::fmt(&self.inner, f)
-    }
-}
-
-impl From<ConfigLoadErrorKind> for ConfigLoadError {
-    fn from(kind: ConfigLoadErrorKind) -> ConfigLoadError {
-        ConfigLoadError {
-            inner: Context::new(kind),
-        }
-    }
-}
-
-impl From<Context<ConfigLoadErrorKind>> for ConfigLoadError {
-    fn from(inner: Context<ConfigLoadErrorKind>) -> ConfigLoadError {
-        ConfigLoadError { inner }
-    }
+/// Errors that may occure when downloading files from a [`Repository`].
+#[derive(Debug, Fail)]
+pub enum TransferError {
+    /// The transfer failed because all mirrors are down
+    #[fail(display = "all mirrors are down")]
+    AllMirrorsDown,
 }
