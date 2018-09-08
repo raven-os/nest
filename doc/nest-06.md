@@ -1,23 +1,31 @@
-# Fixing your system
+# The advanced mode
+
+If you disable the training-wheels mode, you'll end up with the advanced mode. As its name implies, it has a lot more commands and is more complete. All the training-wheels mode commands are still available, since most of them are basically shortcuts for other commands. We'll explain this in a bit.
+
+## Principles of the advanced mode
 
 [//]: # (TODO: add link to the first chapter)
-If you're not careful enough, you might install or remove a package which will damage your system. In the [first chapter]() we talked about how all Nest's transactions are reversible. Let's explain how that's possible, and how to do it.
+We talked about the requirements in the dependency tree during the [first chapter](). For the training-wheels mode, you didn't need to know more about that. But now, we need to clarify some things.
 
-## Nest log
+There are two types of requirements in Nest:
 
-You can see the list of all the operations made, ordered by chronological order with the command `nest log`. For example, it might look like :
-```
-16:20:42 - 531 - nest pull
-16:20:59 - 532 - nest install gcc
-16:21:14 - 533 - nest upgrade dash
-```
+* automatic requirements
+* static requirements
 
-Each line represents an operation done by Nest. You can see the date at which the operation began, a unique ID associated to each one of them, and finally, the operation itself.
+The automatic requirements are handled by their parent, and so, will be deleted or modified when the parent is updated. This is the case for classical dependencies.
 
-## Nest reverse
+The static requirements are dependencies that will stay, even if the parent if updated (but not if it's deleted of course). Those are usually the dependencies added by the user.
 
-To revert to a specific state, run `nest reverse <id>` with the ID of the operation you want to revert to. Nest will then rollback, up to that operation included (meaning it will be the last one from your log). You will lose all the operations you made after that one, as they won't be listed anymore in your log. So use it with extreme caution !
+This allows Nest to know which requirement to delete when a package is updated : removing all the automatic ones, and leaving the static ones. By default, all the commands of Nest are used to handle static requirements.
 
-## Conclusion of Chapter 6
+The advanced mode allows you to :
+
+* See all the requirements you currently have
+* Create and manage a group of requirements
+* Add requirements
+* Remove requirements
+* Update requirements
+* Merge your dependency trees
+
 [//]: # (TODO: add link to the next chapter)
-And that's it ! You know everything about Nest. Isn't this cool ? On the [next chapter]() you'll find a cheatsheet, summarizing everything you just read.
+Starting from the [next chapter](), we'll first go over all those sub-commands.
