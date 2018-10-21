@@ -1,25 +1,47 @@
-# Cheatsheet
+# Updating your system
 
-To conclude this Getting Started with Nest, we present to you the Nest's cheatsheet. Don't hesitate to come back to it if you have trouble remembering something about one of Nest's command. We do hope you'll have fun using Nest!
+## Update requirements
 
-| Task | Command | Notes |
-|-|-|-|
-|**TRAINING-WHEELS MODE COMMANDS**
-| Update the local cache | `nest pull` | The local cache must be kept up to date as often as possible |
-| Install a package | `nest install <package>` ||
-| Uninstall a package | `nest uninstall <package>` ||
-| Update and upgrade all | `nest upgrade <package>` | A full upgrade of the system if no packages are provided |
-| Search a package in the local cache | `nest search <package>` ||
-|**ADVANCED MODE COMMANDS**
-| Add a requirement | `nest requirement add <req> [--parent <parent>]` | Adds a requirement to the given parent (default: `@root`) |
-| Remove a requirement | `nest requirement remove <req> [--parent <parent>]` | Removes a requirement from the given parent (default: `@root`) |
-| Update a requirement | `nest requirement update [node]` | Updates all requirement's filler of the given node recursively (default: `@root`), fulfilling empty requirements |
-| Create a group | `nest group create <group> [--parent <parent>]` | Group names always start with `@`. Creates a group to the given parent (default: `@root`) |
-| Delete a group | `nest group delete <group>` | If the group is not empty, use `-f` or `--force` flag to force the removal |
-| List all existing groups | `nest group list` ||
-| Pull repositories | `nest repository pull <repo>`|Pulls all of the repositories if none are given |
-| List all available repositories and their mirrors | `nest repository list` ||
-| Show the current dependency graph of a package | `nest graph <package>` ||
-| Merge the dependencies graphs | `nest merge` | This command must be executed after a command altered the dependency graph in any way |
+To update all requirements' fulfiller of the given node recursively, run `nest requirement update [node]`. If no node is given, it will update the `@root` requirements' fulfiller.
 
-Just a reminder that all the training-wheels commands are still available in the advanced mode.
+Nest makes a copy of your dependency graph and updates all its requirements' recursively. Then Nest merges that graph with the current one.
+
+Its output looks like this:
+
+```
+$ nest requirement update
+You are about to update 1 requirement from the node @root to this:
+
+    stable::sys-devel/dash#0.6.0
+Some of its dependencies must be updated to this version:
+
+    stable::sys-lib/glibc#6
+```
+
+## Merging the dependency graphs
+
+`nest merge` is merging the copy of your dependency graph on which you applied the transactions to your current dependency graph.
+
+Those two graphs are compared to extract a list of transactions that Nest will do, in order to go from one graph to the other. And so, your old dependency graph is replaced by the one you altered with Nest's commands.
+
+As you might have guessed, it's really important to use this command when you're done modifying your dependency graph. Otherwise the transactions you did won't apply.
+
+Its output is, for example :
+
+```
+$ nest merge
+    Install (2) stable::sys-devel/gcc#8.2.1
+                stable::sys-devel/gcc-libs#8.2.1
+    Upgrade (1) stable::shell/dash#0.5.10
+You are going to apply those 3 transactions to your current dependency graph, continue? [Yes/no]
+```
+
+## Training-wheels mode shortcuts
+
+If you've read the chapters concerning the Training-wheels mode, you might notice that some of its commands look similar to some of the Advanced mode commands. This is simply because the Training-wheels commands are shortcuts for the advanced mode commands!
+
+`nest install [package]` is a shortcut for `nest requirement add [requirement] && nest merge`.
+
+`nest uninstall [package]` is a shortcut for `nest requirement remove [requirement] && nest merge`.
+
+`nest upgrade` is a shortcut for `nest requirement update && nest merge`.

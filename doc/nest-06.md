@@ -1,31 +1,42 @@
-# The advanced mode
+# The repositories
 
-If you disable the training-wheels mode, you'll end up with the advanced mode. As its name implies, it has a lot more commands and is more complete. All the training-wheels mode commands are still available, since most of them are basically shortcuts for other commands. We'll explain this in a bit.
+[//]: # (TODO: add link to the part about repositories from the introduction)
+The concept of repositories was explained in the [introduction](). If you remember, we said that only the `stable` repository was enabled by default. Now, we will explain here how to add the other ones.
 
-## Principles of the advanced mode
+## The official repositories
 
-[//]: # (TODO: add link to the first chapter)
-We talked about the requirements in the dependency tree during the [first chapter](). For the training-wheels mode, you didn't need to know more about that. But now, we need to clarify some things.
+The repositories' configuration in the `config.toml` of Nest looks like this:
 
-There are two types of requirements in Nest:
+```toml
+#
+# ...
+#
+[[repositories]]
+name = "stable"
+mirrors = [ "...", "...", "..." ]
 
-* automatic requirements
-* static requirements
+# [[repositories]]
+# name = "beta"
+# mirrors = [ "...", "..." ]
 
-The automatic requirements are handled by their parent, and so, will be deleted or modified when the parent is updated. This is the case for classical dependencies.
+# [[repositories]]
+# name = "nightly"
+# mirrors = [ "...", "...", "..." ]
+```
 
-The static requirements are dependencies that will stay, even if the parent if updated (but not if it's deleted of course). Those are usually the dependencies added by the user.
+A mirror is basically a copy of all the data from the main server. They exist for redundancy and speed. Mirrors are spread all over the globe in strategic locations. If you live in Sweden and use a mirror from Sweden, the download speed should be faster than if you used a mirror from Australia for example. The point of mirrors is to choose the nearest one from your location, so you'll download packages as fast as possible. It's advised to have several mirrors for each repository you use in your `config.toml` file, because a mirror can be down for a small period of time, or just be down forever. If Nest can't reach a mirror, it will try with the next one in the list. Nest always goes through the list of mirors in the order they are listed.
 
-This allows Nest to know which requirement to delete when a package is updated : removing all the automatic ones, and leaving the static ones. By default, all the commands of Nest are used to handle static requirements.
+If you followed the instructions during Raven's installation, you should have no configuration to do regarding the mirrors. Raven should have asked you in which country you live, and has selected mirrors accordingly.
 
-The advanced mode allows you to :
+Only `stable` is enabled by default, as it is the most stable repository available for Nest. You'll have to uncomment (remove the `#` characters at the beginning of the lines) the other repositories in order to use them. It is recommended to only install packages from the `stable` repository, since only the stable packages (hence the name) are uploaded there, meaning that any update won't break your system.
 
-* See all the requirements you currently have
-* Create and manage a group of requirements
-* Add requirements
-* Remove requirements
-* Update requirements
-* Merge your dependency trees
+## The unofficial repositories
 
-[//]: # (TODO: add link to the next chapter)
-Starting from the [next chapter](), we'll first go over all those sub-commands.
+There also exist unofficial repositories for Nest. They are not being maintained by the Raven's team or someone we can fully trust. You must decide whether to trust their maintainers and take full responsibility for any consequences of using any unofficial repository. To add them, it's the same as the official repositories, just add them to your `config.toml` file, with their list of mirrors.
+
+It's recommended to keep `stable` as the only repository for Nest. This is the default behaviour, so you don't need to worry about anything.
+
+## Conclusion
+
+[//]: # (TODO: add link to the last chapter)
+This concludes the guide for the Training-wheels mode for Nest. You don't have to keep reading if you're not going to use the Advanced mode, which, as its name implies, is for more experienced users, as it contains more commands that a newcomer may find too difficult to handle. Whatever you do, do not forget that at the [end]() of this Getting Started is a cheatsheet with all of Nest's commands. It might come in handy.

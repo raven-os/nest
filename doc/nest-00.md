@@ -1,9 +1,9 @@
 # Getting started with Nest
 
-## Introduction
+## Foreword
 
-Nest is Raven's Package Manager, and is dependency-based. Raven is an adaptive, customizable and evolutive open-source Operating System based on the Linux kernel. If you're not familiar with it, you can find more information about it [here](https://raven-os.org).
+[//]: # (TODO: add link to the installation instructions of Raven)
+Nest is a dependency-based package manager for Raven, which is an adaptive, customizable and evolutive open-source Operating System based on the Linux kernel. To use Nest, you will need to install Raven first, since it's not recommended to install Nest alone, as it may overlap with an already installed package manager. To install Raven, follow the instructions [here]().
 
-An important thing to keep in mind, is that you should not use Nest in an unprotected environment, as Nest assumes there's no other package manager installed on your current system.
-
-Now that it's said, let's explain what Nest do and how it works !
+[//]: # (TODO: add link to the introduction)
+Now that you're ready, let's start with the basics in the [introduction]().
