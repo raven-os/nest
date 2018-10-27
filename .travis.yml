@@ -10,6 +10,7 @@ script:
   - cargo fmt --all -- --check
   - cargo build --all
   - cargo test --all
+  - ./tests/run.sh
 
 # Discord notifications
 after_success:

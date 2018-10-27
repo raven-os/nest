@@ -1,0 +1,11 @@
+[[package]]
+name = "libnest"
+version = "0.1.0"
+
+[[package]]
+name = "nest-cli"
+version = "0.1.0"
+dependencies = [
+ "libnest 0.1.0",
+]
+

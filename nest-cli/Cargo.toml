@@ -1,13 +1,8 @@
 [package]
-name = "nest"
+name = "nest-cli"
 version = "0.1.0"
 authors = ["Benjamin Grange <benjamin.grange@epitech.eu>"]
+edition = "2018"
 
 [dependencies]
-libc = "0.2.39"
-clap = "2.31.1"
-ansi_term = "0.11.0"
-lazy_static = "1.0.0"
 libnest = { path = "../libnest" }
-failure = "0.1.1"
-failure_derive = "0.1.1"
