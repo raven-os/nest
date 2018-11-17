@@ -3,17 +3,17 @@
 ## Nest pull
 
 [//]: # (TODO: add link to the part of the introduction about the cache)
-The command `nest pull` synchronizes the local packages' cache with the one on Raven's server. The concept of the cache was already explained in the [introduction](). You need to run this command very often in order to keep your cache up to date. This operation is completely harmless, so don't hesitate to use it frequently!
+The command `nest pull` synchronizes the local packages' cache with the one on Raven's server. The concept of the cache was already explained in the [introduction](). You need to run this command regularly to update your cache. This operation is completely harmless, so don't hesitate to use it frequently!
 
 ## Nest install
 
 [//]: # (TODO: add link to the part about the package's syntax from the last chapter)
-To install packages, run `nest install <package>` in a terminal. You need to use the syntax `repository::category/package#[version|version_req]` explained in the [introduction]().
+To install packages, run `nest install <package>` in a terminal, by using the following syntax `repository::category/package#[version|version_req]` explained in the [last chapter]().
 
-Some parts of this syntax may be omitted if it only matches **one** and only one package. Otherwise, Nest will throw an error. That means you can use `repository/package` or `category/package`, or `package`. You obviously need at least the package's name. For example, if there is only one package named "super_cool_package" among all the repositories Nest is using, you can just input the package's name instead of the whole syntax. Nest always chooses the version by descending order, aka from the latest one to the oldest one.
+Some parts of this syntax may be omitted if it only matches **one** and only one package. Otherwise, Nest will throw an error. That means you can use `repository/package` or `category/package`, or `package`. At least the package's name is mandatory. For example, if there is only one package named "super_cool_package" among all the repositories Nest is using, you can just input the package's name instead of the whole syntax. Nest always chooses the version by descending order, aka from the latest one to the oldest one.
 
 [//]: # (TODO: add link to the part of the introduction talking about the dependencies)
-As said [before](), Nest might install more packages than the ones you initially wanted, those are just the dependencies of the packages you wanted to install.
+As previously quoted [before](), Nest might install more packages than the ones you initially wanted, those are just the dependencies of the packages you wanted to install.
 
 The output of the `nest install` command is as followed:
 
@@ -27,9 +27,9 @@ $ nest install stable/dash
 Would you like to apply these transactions? [Yes/no]
 ```
 
-The last package to get installed is the package itself, and the ones before are its dependencies. That's why here, the package `dash` is installed at the very end.
+The last package to get installed is the main package, dependencies packages having been installed in priority. That's why in our example above, the package `dash` is installed at the very end.
 
-To answer yes, just type *Yes* or *Y*, then press enter. You can also just press enter. When Nest (and most CLI programs) asks you a closed question like this one, the default answer usually begins with an uppercase letter. So in this case, just pressing enter is equivalent to type *yes* and then press enter.
+To answer yes, just type *Yes* or *Y*, then press enter, or simply just press enter. When Nest (and most CLI programs) asks you a closed question like this one, the default answer usually begins with an uppercase letter. So in this case, just pressing enter is equivalent to type *yes* and then press enter.
 
 ## Nest uninstall
 
@@ -71,4 +71,4 @@ Several packages match gcc:
 Aborting.
 ```
 
-It's pretty self-explanatory. You'll need to specify a little bit more what you want. In this case, specifying the category is enough, since the repository for both results are the same. So you would need to type `nest install sys-devel/gcc` for example.
+It's pretty self-explanatory. You'll need to specify your request. In this case, specifying the category is enough, since the repository for both results are the same. So you would need to type `nest install sys-devel/gcc` for example.

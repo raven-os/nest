@@ -2,7 +2,7 @@
 
 ## Nest search
 
-`nest search <package>` searches the given package in the local cache. You may need to update it first using `nest pull` in order to see an up to date results list. The output is for example:
+`nest search <package>` searches the given package in the local cache. You may need to update it first by using `nest pull` in order to see an up to date results list. The output is for example:
 
 ```
 $ nest search gcc

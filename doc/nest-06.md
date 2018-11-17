@@ -1,7 +1,7 @@
 # The repositories
 
 [//]: # (TODO: add link to the part about repositories from the introduction)
-The concept of repositories was explained in the [introduction](). If you remember, we said that only the `stable` repository was enabled by default. Now, we will explain here how to add the other ones.
+The concept of repositories was explained in the [introduction](). We exposed that only the `stable` repository was enabled by default. Now, we will explain here how to add the other ones.
 
 ## The official repositories
 
@@ -24,11 +24,11 @@ mirrors = [ "...", "...", "..." ]
 # mirrors = [ "...", "...", "..." ]
 ```
 
-A mirror is basically a copy of all the data from the main server. They exist for redundancy and speed. Mirrors are spread all over the globe in strategic locations. If you live in Sweden and use a mirror from Sweden, the download speed should be faster than if you used a mirror from Australia for example. The point of mirrors is to choose the nearest one from your location, so you'll download packages as fast as possible. It's advised to have several mirrors for each repository you use in your `config.toml` file, because a mirror can be down for a small period of time, or just be down forever. If Nest can't reach a mirror, it will try with the next one in the list. Nest always goes through the list of mirors in the order they are listed.
+A mirror is basically a copy of all datas from the main server. They exist for redundancy and speed. Mirrors are spread all over the globe in strategic locations. If you live in Sweden and use a mirror from Sweden, the download speed should be faster than if you used a mirror from Australia for example. The point of mirrors is to choose the nearest one from your location, so you'll download packages as fast as possible. It's advised to have several mirrors for each repository you use in your `config.toml` file, because a mirror can be down or broken for a small period of time, or just be down forever. If Nest can't reach a mirror, it will try with the next one in the list. Nest always goes through the list of mirors in the order they are listed.
 
-If you followed the instructions during Raven's installation, you should have no configuration to do regarding the mirrors. Raven should have asked you in which country you live, and has selected mirrors accordingly.
+If you followed the instructions during Raven's installation, no configuration is necessary regarding the mirrors. Raven should have asked you in which country you live, and has selected mirrors accordingly.
 
-Only `stable` is enabled by default, as it is the most stable repository available for Nest. You'll have to uncomment (remove the `#` characters at the beginning of the lines) the other repositories in order to use them. It is recommended to only install packages from the `stable` repository, since only the stable packages (hence the name) are uploaded there, meaning that any update won't break your system.
+Only `stable` is enabled by default, as it is the most stable repository available for Nest. You'll have to uncomment (remove the `#` characters at the beginning of the lines) on the other repositories in order to use them. It is recommended to only install packages from the `stable` repository only, since the stable packages (hence the name) only are uploaded there, meaning that any update won't break your system.
 
 ## The unofficial repositories
 
@@ -39,4 +39,6 @@ It's recommended to keep `stable` as the only repository for Nest. This is the d
 ## Conclusion
 
 [//]: # (TODO: add link to the last chapter)
-This concludes the guide for the Training-wheels mode for Nest. You don't have to keep reading if you're not going to use the Advanced mode, which, as its name implies, is for more experienced users, as it contains more commands that a newcomer may find too difficult to handle. Whatever you do, do not forget that at the [end]() of this Getting Started is a cheatsheet with all of Nest's commands. It might come in handy.
+This concludes the guide for the Training-wheels mode for Nest.
+
+To be followed is the Advanced mode. It concerns experienced users, as it contains more commands that a newcomer may find too difficult to handle. Whatever you do, do not forget that at the [end]() of this Getting Started is a cheatsheet with all of Nest's commands. It might come in handy.
