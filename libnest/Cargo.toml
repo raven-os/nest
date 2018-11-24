@@ -7,6 +7,7 @@ homepage = "https://raven-os.org"
 repository = "https://github.com/raven-os/nest"
 keywords = ["package-manager", "package", "manager", "raven", "nest"]
 categories = ["command-line-utilities", "development-tools", "filesystem", "os"]
+edition = "2018"
 
 [badges]
 travis-ci = { repository = "raven-os/nest" }

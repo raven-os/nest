@@ -23,10 +23,12 @@ use std::path::Path;
 
 use failure::{Error, ResultExt};
 use toml;
+use lazy_static::lazy_static;
+use serde_derive::{Serialize, Deserialize};
 
-use cache::available::AvailablePackages;
-use cache::depgraph::DependencyGraph;
-use repository::Repository;
+use crate::cache::available::AvailablePackages;
+use crate::cache::depgraph::DependencyGraph;
+use crate::repository::Repository;
 
 lazy_static! {
     static ref NEST_PATH_CONFIG: &'static Path = Path::new("/etc/nest/config.toml");

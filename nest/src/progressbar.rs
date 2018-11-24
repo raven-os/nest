@@ -6,7 +6,9 @@ use std::time::{Duration, Instant};
 use libnest::transaction::{TransactionKind, TransactionStep};
 
 use failure::Error;
-use tty;
+use lazy_static::lazy_static;
+
+use crate::tty;
 
 lazy_static! {
     static ref REFRESH_RATE: Duration = Duration::new(0, NANOS_PER_SEC / 10);

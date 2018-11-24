@@ -1,7 +1,9 @@
 use std::fmt::{self, Display, Formatter};
 
-use cache::depgraph::NodeId;
-use package::PackageRequirement;
+use serde_derive::{Serialize, Deserialize};
+
+use crate::cache::depgraph::NodeId;
+use crate::package::PackageRequirement;
 
 /// The kind of a node's requirement.
 ///

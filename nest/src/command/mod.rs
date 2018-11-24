@@ -11,7 +11,7 @@ use failure::{Error, ResultExt};
 use libnest::config::Config;
 use libnest::transaction::{Notification, Notifier, Orchestrator, TransactionKind};
 
-use progressbar::ProgressBar;
+use crate::progressbar::ProgressBar;
 
 pub fn yesno(question: &str, default: bool) -> Result<bool, Error> {
     let yesno = if default {

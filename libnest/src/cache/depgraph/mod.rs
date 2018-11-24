@@ -14,13 +14,14 @@ use std::io::Write;
 use std::path::Path;
 
 use failure::{Error, ResultExt};
-use json;
+use serde_json;
 use semver::VersionReq;
+use serde_derive::{Serialize, Deserialize};
 
-use cache::available::AvailablePackagesCacheQueryStrategy;
-use config::Config;
-use error::DepGraphErrorKind;
-use package::{PackageId, PackageRequirement};
+use crate::cache::available::AvailablePackagesCacheQueryStrategy;
+use crate::config::Config;
+use crate::error::DepGraphErrorKind;
+use crate::package::{PackageId, PackageRequirement};
 
 /// The unique identifier of a node of the dependency graph.
 pub type NodeId = usize;
@@ -116,7 +117,7 @@ impl DependencyGraph {
         let path = path.as_ref();
         if path.exists() {
             let file = File::open(path).with_context(|_| path.display().to_string())?;
-            Ok(json::from_reader(&file).with_context(|_| path.display().to_string())?)
+            Ok(serde_json::from_reader(&file).with_context(|_| path.display().to_string())?)
         } else {
             Ok(DependencyGraph::new())
         }
@@ -129,7 +130,7 @@ impl DependencyGraph {
     pub fn save(&self, config: &Config) -> Result<(), Error> {
         let path = config.paths().depgraph();
         let mut file = File::create(path).with_context(|_| path.display().to_string())?;
-        json::to_writer_pretty(&file, self).with_context(|_| path.display().to_string())?;
+        serde_json::to_writer_pretty(&file, self).with_context(|_| path.display().to_string())?;
         writeln!(file)?;
         Ok(())
     }
@@ -366,7 +367,7 @@ impl DependencyGraph {
                 let requirement = PackageRequirement::from(id.full_name(), VersionReq::any());
 
                 // Find all versions of this package
-                let mut packages = data
+                let packages = data
                     .config
                     .available()
                     .search(&requirement)

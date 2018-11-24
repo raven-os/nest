@@ -1,8 +1,8 @@
 use failure::Error;
 
-use config::Config;
-use package::PackageId;
-use transaction::{Install, Notifier, Remove, Transaction, TransactionKind};
+use crate::config::Config;
+use crate::package::PackageId;
+use crate::transaction::{Install, Notifier, Remove, Transaction, TransactionKind};
 
 /// An `upgrade` transaction: it performs the upgrade of the target on the system.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]

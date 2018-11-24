@@ -3,8 +3,9 @@
 use std::collections::HashMap;
 
 use semver::{Version, VersionReq};
+use serde_derive::{Serialize, Deserialize};
 
-use package::PackageFullName;
+use crate::package::PackageFullName;
 
 /// A subpart of the manifest.
 ///

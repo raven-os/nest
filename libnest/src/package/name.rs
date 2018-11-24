@@ -4,8 +4,9 @@ use regex::Regex;
 use semver::{Version, VersionReq};
 use serde::de::Visitor;
 use serde::{self, Deserialize, Deserializer, Serialize, Serializer};
+use lazy_static::lazy_static;
 
-use error::PackageRequirementParseError;
+use crate::error::PackageRequirementParseError;
 
 lazy_static! {
     static ref REGEX_PACKAGE_ID: Regex = Regex::new(

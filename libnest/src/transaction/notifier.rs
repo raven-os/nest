@@ -1,6 +1,6 @@
 use failure::Error;
 
-use transaction::{Transaction, TransactionStep};
+use crate::transaction::{Transaction, TransactionStep};
 
 /// Notifications that transactions may use to notify the parent function.
 #[derive(Debug)]

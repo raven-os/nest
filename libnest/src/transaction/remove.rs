@@ -4,10 +4,10 @@ use std::path::Path;
 
 use failure::{Error, ResultExt};
 
-use chroot::Chroot;
-use config::Config;
-use package::PackageId;
-use transaction::{Notification, Notifier, Transaction, TransactionKind, TransactionStep};
+use crate::chroot::Chroot;
+use crate::config::Config;
+use crate::package::PackageId;
+use crate::transaction::{Notification, Notifier, Transaction, TransactionKind, TransactionStep};
 
 /// A `remove` transaction: it performs the removal of the target on the system.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]

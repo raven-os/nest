@@ -3,9 +3,9 @@ use std::io::{Seek, SeekFrom, Write};
 use curl::easy::Easy;
 use failure::{Error, ResultExt};
 
-use config::{Config, RepositoryConfig};
-use error::TransferError;
-use transaction::{Notification, Notifier, Transaction, TransactionStep};
+use crate::config::{Config, RepositoryConfig};
+use crate::error::TransferError;
+use crate::transaction::{Notification, Notifier, Transaction, TransactionStep};
 
 /// Wraps in a uniform way a download from a repository (using the best mirror, and falling back
 /// to the others in case of failure) while notifying the user of it's progress.
@@ -57,7 +57,7 @@ impl<'a, 'b> Transfer<'a, 'b> {
         curl.progress(true)?;
 
         let any = self.repo_config.mirrors().iter().any(|mirror| {
-            let res: Result<_, Error> = do catch {
+            let res: Result<_, Error> = try {
                 // Notify parent about this new transfer attempt
                 notifier.notify(
                     transaction,

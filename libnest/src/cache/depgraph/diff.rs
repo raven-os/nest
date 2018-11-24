@@ -2,8 +2,8 @@ use std::collections::HashSet;
 
 use failure::Error;
 
-use cache::depgraph::{DependencyGraph, NodeId, NodeKind, ROOT_ID};
-use transaction::{Install, Remove, Transaction, Upgrade};
+use crate::cache::depgraph::{DependencyGraph, NodeId, NodeKind, ROOT_ID};
+use crate::transaction::{Install, Remove, Transaction, Upgrade};
 
 /// Stores intermediate results used when calculating the differences between two related [`DependencyGraph`].
 #[derive(Debug, Default)]

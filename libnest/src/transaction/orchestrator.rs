@@ -1,7 +1,7 @@
 use failure::{Error, ResultExt};
 
-use config::Config;
-use transaction::{Notification, Notifier, Transaction};
+use crate::config::Config;
+use crate::transaction::{Notification, Notifier, Transaction};
 
 /// The orchestrator takes a collection of transactions and performs them in a more efficient
 /// way (possibly using multiple threads).

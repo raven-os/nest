@@ -27,7 +27,7 @@ use std::fmt::{self, Display, Formatter};
 
 use failure::Error;
 
-use config::Config;
+use crate::config::Config;
 
 /// The kind of a [`Transaction`].
 ///
@@ -87,7 +87,7 @@ pub trait Transaction: Debug {
     /// Returns the number of this transaction out of the total number of transactions being performed at the same time.
     fn idx(&self) -> usize;
     /// Returns the total number of transactions being performed at the same time.
-    fn assign_idx(&mut self, usize);
+    fn assign_idx(&mut self, idx: usize);
 
     /// Returns the kind of this transaction. This must be a constant for a given transaction.
     fn kind(&self) -> TransactionKind;
@@ -102,5 +102,5 @@ pub trait Transaction: Debug {
     ///
     /// In addition, multiple transactions may be performed concurently, it's the responsability
     /// of the transaction to protect itself from race conditions or any kind of concurrency issues.
-    fn perform(&mut self, &Config, &mut Notifier) -> Result<(), Error>;
+    fn perform(&mut self, config: &Config, notifier: &mut Notifier) -> Result<(), Error>;
 }

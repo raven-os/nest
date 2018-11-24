@@ -19,29 +19,8 @@
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
-// Clippy
-#![cfg_attr(feature = "cargo-clippy", warn(fallible_impl_from))]
-#![cfg_attr(feature = "cargo-clippy", warn(int_plus_one))]
-#![cfg_attr(feature = "cargo-clippy", warn(mem_forget))]
-#![cfg_attr(feature = "cargo-clippy", warn(mut_mut))]
-#![cfg_attr(feature = "cargo-clippy", warn(mutex_integer))]
-#![cfg_attr(feature = "cargo-clippy", warn(pub_enum_variant_names))]
-#![cfg_attr(feature = "cargo-clippy", warn(range_plus_one))]
-#![cfg_attr(feature = "cargo-clippy", warn(use_debug))]
-#![cfg_attr(feature = "cargo-clippy", warn(used_underscore_binding))]
-#![cfg_attr(feature = "cargo-clippy", warn(wrong_pub_self_convention))]
-#![feature(catch_expr)]
 
-extern crate ansi_term;
-#[macro_use]
-extern crate clap;
-#[macro_use]
-extern crate lazy_static;
-extern crate failure;
-extern crate libc;
-extern crate libnest;
-#[macro_use]
-extern crate failure_derive;
+#![feature(try_blocks)]
 
 #[macro_use]
 pub mod tty;
@@ -49,9 +28,8 @@ pub mod tty;
 pub mod error;
 pub mod command;
 pub mod progressbar;
-//pub mod query;
 
-use clap::{App, AppSettings, Arg, SubCommand};
+use clap::{App, AppSettings, Arg, SubCommand, crate_name, crate_version, crate_authors};
 use failure::Error;
 use libnest::config::Config;
 
@@ -109,7 +87,7 @@ fn main() {
         )
         .get_matches();
 
-    let res: Result<_, Error> = do catch {
+    let res: Result<_, Error> = try {
         // Load config file
         let mut config = Config::load()?;
 
@@ -130,7 +108,7 @@ fn main() {
 
     // All fatal errors arrive here. It's our job to print them on screen and then exit(1).
     if let Err(err) = res {
-        use error::QueryError;
+        use crate::error::QueryError;
         use std::process::exit;
 
         // TODO try the backtrace! macro from failure

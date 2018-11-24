@@ -1,4 +1,5 @@
 use url_serde::SerdeUrl;
+use serde_derive::{Serialize, Deserialize};
 
 /// A structure holding all the configuration of a repository: mirrors, proxy etc.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Hash, Debug, Default)]

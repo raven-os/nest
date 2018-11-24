@@ -2,13 +2,13 @@ use std::io::Cursor;
 use std::str;
 
 use failure::{Error, ResultExt};
-use json;
+use serde_json;
 
-use config::Config;
-use error::PullError;
-use package::{Manifest, Package};
-use repository::Repository;
-use transaction::{Notification, Notifier, Transaction, TransactionKind, TransactionStep};
+use crate::config::Config;
+use crate::error::PullError;
+use crate::package::{Manifest, Package};
+use crate::repository::Repository;
+use crate::transaction::{Notification, Notifier, Transaction, TransactionKind, TransactionStep};
 
 /// An `pull` transaction: it pulls the target repository and updates the local cache of available packages.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -54,9 +54,9 @@ impl<'a, 'b> Transaction for Pull<'a, 'b> {
         notifier.notify(self, Notification::NewStep(TransactionStep::Extract, false));
 
         // Unserialize received datas
-        let res: Result<Vec<Manifest>, Error> = do catch {
+        let res: Result<Vec<Manifest>, Error> = try {
             let utf8 = str::from_utf8(&data)?;
-            json::from_str(utf8)?
+            serde_json::from_str(utf8)?
         };
 
         // Discard deserializing errors (too verbose) for a new one.

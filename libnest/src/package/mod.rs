@@ -24,9 +24,9 @@ use std::fs::File;
 use std::path::Path;
 
 use failure::{Error, ResultExt};
-use json;
+use serde_json;
 
-use repository::Repository;
+use crate::repository::Repository;
 
 /// A handler that encapsulate a manifest and the repository's name this package belongs.
 #[derive(Clone, Eq, PartialEq, Debug)]
@@ -52,7 +52,7 @@ impl Package {
 
         Ok(Package {
             repository,
-            manifest: json::from_reader(&file)
+            manifest: serde_json::from_reader(&file)
                 .with_context(|_| cache.as_ref().display().to_string())?,
         })
     }

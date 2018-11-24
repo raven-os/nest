@@ -8,10 +8,10 @@ use std::io::Write;
 use std::path::Path;
 
 use failure::{Error, ResultExt};
-use json;
+use serde_json;
 
-use package::{Package, PackageRequirement};
-use repository::Repository;
+use crate::package::{Package, PackageRequirement};
+use crate::repository::Repository;
 
 /// A handle on the cache of available packages, to perform searches or to erase it.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -68,13 +68,13 @@ impl<'a> AvailablePackages<'a> {
             .join(metadata.name())
             .join(metadata.version().to_string());
 
-        let res: Result<_, Error> = do catch {
+        let res: Result<_, Error> = try {
             if let Some(parent) = cache_path.parent() {
                 fs::create_dir_all(parent)?;
             }
 
             let mut file = File::create(&cache_path)?;
-            file.write_all(json::to_string_pretty(package.manifest())?.as_bytes())?;
+            file.write_all(serde_json::to_string_pretty(package.manifest())?.as_bytes())?;
             file.write_all(&[b'\n'])?;
         };
         res.with_context(|_| cache_path.display().to_string())?;

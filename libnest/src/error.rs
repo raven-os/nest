@@ -2,6 +2,8 @@
 //!
 //! [1]: https://docs.rs/failure/0.1.1/failure/
 
+use failure::Fail;
+
 /// Errors that may occure when pulling a repository
 #[derive(Clone, PartialEq, Debug, Fail)]
 pub enum PullError {

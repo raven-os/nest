@@ -4,7 +4,7 @@ use std::path::Path;
 use failure::{Error, ResultExt};
 use semver::Version;
 
-use package::{Package, PackageRequirement};
+use crate::package::{Package, PackageRequirement};
 
 /// The strategy to use when looking for packages in this cache.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]

@@ -6,7 +6,7 @@ use libnest::cache::depgraph::DependencyGraphDiff;
 use libnest::config::Config;
 use libnest::transaction::Orchestrator;
 
-use command;
+use crate::command;
 
 /// Updates all packages.
 pub fn upgrade(config: &Config) -> Result<(), Error> {

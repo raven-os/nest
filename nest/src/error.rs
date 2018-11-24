@@ -2,10 +2,12 @@
 //!
 //! [1]: https://docs.rs/failure/0.1.1/failure/
 
+use failure::Fail;
+
 macro_rules! format_error_causes {
     ($error:expr) => {{
-        let mut s = format!("{}", $error.cause());
-        for cause in $error.causes().skip(1) {
+        let mut s = format!("{}", $error.as_fail());
+        for cause in $error.iter_chain().skip(1) {
             s += &format!(": {}", cause);
         }
         s

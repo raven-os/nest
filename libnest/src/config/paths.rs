@@ -1,3 +1,6 @@
+use serde_derive::{Serialize, Deserialize};
+use lazy_static::lazy_static;
+
 use std::path::{Path, PathBuf};
 
 lazy_static! {
@@ -35,7 +38,7 @@ impl ConfigPaths {
     /// Changes all config's paths to make them relative to the given root path.
     #[inline]
     pub fn chroot<P: AsRef<Path>>(&mut self, root: P) {
-        use chroot::Chroot;
+        use crate::chroot::Chroot;
 
         self.root = self.root.with_root(root.as_ref());
         self.available = self.available.with_root(root.as_ref());

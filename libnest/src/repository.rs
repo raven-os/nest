@@ -1,7 +1,7 @@
 //! Repositories: wrappers around a name and a [`RepositoryConfig`].
 
-use config::{Config, RepositoryConfig};
-use transaction::Transfer;
+use crate::config::{Config, RepositoryConfig};
+use crate::transaction::Transfer;
 
 /// A repository.
 ///

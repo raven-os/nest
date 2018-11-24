@@ -6,11 +6,11 @@ use failure::{Error, ResultExt};
 use flate2::read::GzDecoder;
 use tar::Archive;
 
-use chroot::Chroot;
-use config::Config;
-use error::InstallError;
-use package::PackageId;
-use transaction::{Notification, Notifier, Transaction, TransactionKind, TransactionStep};
+use crate::chroot::Chroot;
+use crate::config::Config;
+use crate::error::InstallError;
+use crate::package::PackageId;
+use crate::transaction::{Notification, Notifier, Transaction, TransactionKind, TransactionStep};
 
 /// An `install` transaction: it performs the installation of the target on the system.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -103,7 +103,7 @@ impl Transaction for Install {
         // Calculate number of files to install (for progress)
         let mut tarball =
             File::open(&tarball_path).with_context(|_| tarball_path.display().to_string())?;
-        let res: Result<_, Error> = do catch {
+        let res: Result<_, Error> = try {
             tarball.seek(SeekFrom::Start(0))?;
 
             let mut archive = Archive::new(GzDecoder::new(&tarball));
@@ -162,7 +162,7 @@ impl Transaction for Install {
             }
         }
 
-        let res: Result<_, Error> = do catch {
+        let res: Result<_, Error> = try {
             // Step 5: Fill the log file with the files
             let mut log = File::create(&log_path)?;
             for file in &files {

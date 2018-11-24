@@ -1,5 +1,5 @@
-use cache::depgraph::{DependencyGraph, NodeId, NodeKind};
-use package::PackageRequirement;
+use crate::cache::depgraph::{DependencyGraph, NodeId, NodeKind};
+use crate::package::PackageRequirement;
 
 /// A query on the [`DependencyGraph`][1].
 ///

@@ -8,7 +8,7 @@ use libnest::config::Config;
 use libnest::package::PackageRequirement;
 use libnest::transaction::Orchestrator;
 
-use command;
+use crate::command;
 
 /// Installs all the given packages.
 ///

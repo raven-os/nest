@@ -4,7 +4,7 @@ use failure::Error;
 use libnest::config::Config;
 use libnest::transaction::{Orchestrator, Pull, Transaction};
 
-use command;
+use crate::command;
 
 /// Pulls all repositories.
 ///
