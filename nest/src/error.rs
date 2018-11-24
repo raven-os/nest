@@ -33,7 +33,10 @@ pub enum RepositoryError {
 pub enum QueryError {
     #[fail(display = "couldn't find a package with name \"{}\"", _0)]
     NoResult(String),
-    #[fail(display = "found {} packages with name \"{}\", please be more explicit", _1, _0)]
+    #[fail(
+        display = "found {} packages with name \"{}\", please be more explicit",
+        _1, _0
+    )]
     TooManyResults(String, usize, Vec<String>),
     #[fail(display = "\"{}\" isn't a valid package name", _0)]
     InvalidPackageName(String),

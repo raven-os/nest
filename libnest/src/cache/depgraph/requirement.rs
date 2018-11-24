@@ -1,6 +1,6 @@
 use std::fmt::{self, Display, Formatter};
 
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 
 use crate::cache::depgraph::NodeId;
 use crate::package::PackageRequirement;

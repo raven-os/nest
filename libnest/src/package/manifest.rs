@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use semver::{Version, VersionReq};
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 
 use crate::package::PackageFullName;
 

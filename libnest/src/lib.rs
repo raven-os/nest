@@ -11,7 +11,6 @@
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
-
 #![feature(try_blocks)]
 #![feature(try_from)]
 

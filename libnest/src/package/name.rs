@@ -1,10 +1,10 @@
 use std::fmt::{self, Display, Formatter};
 
+use lazy_static::lazy_static;
 use regex::Regex;
 use semver::{Version, VersionReq};
 use serde::de::Visitor;
 use serde::{self, Deserialize, Deserializer, Serialize, Serializer};
-use lazy_static::lazy_static;
 
 use crate::error::PackageRequirementParseError;
 

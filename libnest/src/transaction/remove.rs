@@ -64,7 +64,8 @@ impl Transaction for Remove {
             .join(self.target.full_name().name())
             .join(self.target.version().to_string());
 
-        let mut log_file = File::open(&log_path).with_context(|_| log_path.display().to_string())?;
+        let mut log_file =
+            File::open(&log_path).with_context(|_| log_path.display().to_string())?;
 
         // Count the number of files to remove (for progress)
         let mut nb_files = BufReader::new(&log_file).lines().count();

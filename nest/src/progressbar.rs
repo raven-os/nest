@@ -132,15 +132,15 @@ impl ProgressBar {
         let remaining_width = bar_width - current_width;
 
         /*
-0         1         2         3         4         5         6         7
-01234567890123456789012345678901234567890123456789012345678901234567890123456789
- <action> <target             > <state >
- <action> <target             > <step  > <cur  >/<max  > <speed>/s <T> [PB.]<%%>
+        0         1         2         3         4         5         6         7
+        01234567890123456789012345678901234567890123456789012345678901234567890123456789
+         <action> <target             > <state >
+         <action> <target             > <step  > <cur  >/<max  > <speed>/s <T> [PB.]<%%>
 
- Examples:
-  install sys-lib/gcc           download 1000MiB/1999MiB 1999MiB/s 33s [=>-] 99%
-  install sys-lib/gcc           Finished
-*/
+         Examples:
+          install sys-lib/gcc           download 1000MiB/1999MiB 1999MiB/s 33s [=>-] 99%
+          install sys-lib/gcc           Finished
+        */
 
         /// XXX: Me having fun with nested scopes and block values
         print!(

@@ -14,9 +14,9 @@ use std::io::Write;
 use std::path::Path;
 
 use failure::{Error, ResultExt};
-use serde_json;
 use semver::VersionReq;
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
+use serde_json;
 
 use crate::cache::available::AvailablePackagesCacheQueryStrategy;
 use crate::config::Config;

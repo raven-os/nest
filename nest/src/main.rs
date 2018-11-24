@@ -19,7 +19,6 @@
 #![warn(unused_extern_crates)]
 #![warn(unused_import_braces)]
 #![warn(unused_qualifications)]
-
 #![feature(try_blocks)]
 
 #[macro_use]
@@ -29,7 +28,7 @@ pub mod error;
 pub mod command;
 pub mod progressbar;
 
-use clap::{App, AppSettings, Arg, SubCommand, crate_name, crate_version, crate_authors};
+use clap::{crate_authors, crate_name, crate_version, App, AppSettings, Arg, SubCommand};
 use failure::Error;
 use libnest::config::Config;
 

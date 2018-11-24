@@ -22,9 +22,9 @@ use std::io::Read;
 use std::path::Path;
 
 use failure::{Error, ResultExt};
-use toml;
 use lazy_static::lazy_static;
-use serde_derive::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
+use toml;
 
 use crate::cache::available::AvailablePackages;
 use crate::cache::depgraph::DependencyGraph;

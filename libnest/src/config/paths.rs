@@ -1,5 +1,5 @@
-use serde_derive::{Serialize, Deserialize};
 use lazy_static::lazy_static;
+use serde_derive::{Deserialize, Serialize};
 
 use std::path::{Path, PathBuf};
 

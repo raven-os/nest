@@ -28,7 +28,10 @@ pub enum InstallError {
     #[fail(display = "\"{}\" already exists", _0)]
     FileAlreadyExists(String),
     /// The user is trying to install or update a package where it's repository is no longer in the configuration file.
-    #[fail(display = "the repository \"{}\" of package \"{}\" can't be found", _0, _1)]
+    #[fail(
+        display = "the repository \"{}\" of package \"{}\" can't be found",
+        _0, _1
+    )]
     CantFindRepository(String, String),
 }
 
@@ -54,7 +57,8 @@ pub enum DepGraphErrorKind {
     CantFindPackage(String),
     /// Too much package are satisfying this requirement
     #[fail(
-        display = "too much package satisfy this requirement, please be more exausthive: \"{}\"", _0
+        display = "too much package satisfy this requirement, please be more exausthive: \"{}\"",
+        _0
     )]
     ImpreciseRequirement(String),
     /// The given requirement couldn't be found
