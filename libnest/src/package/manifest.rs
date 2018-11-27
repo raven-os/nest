@@ -4,6 +4,7 @@ use std::collections::HashMap;
 
 use semver::{Version, VersionReq};
 use serde_derive::{Deserialize, Serialize};
+use chrono::{DateTime, Utc};
 
 use crate::package::PackageFullName;
 
@@ -17,6 +18,11 @@ pub struct Metadata {
     name: String,
     category: String,
     version: Version,
+    #[serde(default)]
+    description: String,
+    #[serde(default)]
+    tags: String,
+    created_at: DateTime<Utc>,
 }
 
 impl Metadata {
@@ -37,6 +43,24 @@ impl Metadata {
     pub fn version(&self) -> &Version {
         &self.version
     }
+
+    /// Returns the description of the package
+    #[inline]
+    pub fn description(&self) -> &str {
+        &self.description
+    }
+
+    /// Returns the tags of the package
+    #[inline]
+    pub fn tags(&self) -> &str {
+        &self.tags
+    }
+
+    /// Returns the creation date of the package
+    #[inline]
+    pub fn created_at(&self) -> &DateTime<Utc> {
+        &self.created_at
+    }
 }
 
 /// A package's metadata, dependencies, etc.
@@ -46,6 +70,7 @@ impl Metadata {
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct Manifest {
     metadata: Metadata,
+    #[serde(default)]
     dependencies: HashMap<PackageFullName, VersionReq>,
 }
 

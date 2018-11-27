@@ -74,7 +74,7 @@ impl Transaction for Install {
 
         // Build target URL
         let target_url = format!(
-            "download/{}/{}/{}",
+            "/p/{}/{}/{}/download",
             self.target.full_name().category(),
             self.target.full_name().name(),
             self.target.version(),
