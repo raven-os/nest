@@ -2,9 +2,9 @@
 
 use std::collections::HashMap;
 
+use chrono::{DateTime, Utc};
 use semver::{Version, VersionReq};
 use serde_derive::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
 
 use crate::package::PackageFullName;
 
