@@ -6,3 +6,5 @@ edition = "2018"
 
 [dependencies]
 libnest = { path = "../libnest" }
+failure = "0.1.1"
+clap = "2.32.0"
