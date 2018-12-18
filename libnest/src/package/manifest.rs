@@ -5,21 +5,21 @@ use semver::Version;
 /// A package's kind.
 ///
 /// All entities called 'package' may not represent the same thing.
-/// Some are actual binary or libraries like one may expect ('effective' packages), but
-/// others may be entierely empty used only to name a list of dependencies ('virtual' packages).
+/// Some are actual binaries or libraries like one may expect ('effective' packages), but
+/// others may be entirely empty, used only to name a list of dependencies ('virtual' packages).
 ///
-/// The `PackageKind` enum is used to differentiate those packages and speed up their installation process.
+/// The `Kind` enum is used to differentiate those packages and speed up their installation process.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub enum PackageKind {
+pub enum Kind {
     /// The package contains some installable data.
     Effective,
     /// The package doesn't contain any data.
     Virtual,
 }
 
-impl Default for PackageKind {
-    fn default() -> PackageKind {
-        PackageKind::Effective
+impl Default for Kind {
+    fn default() -> Kind {
+        Kind::Effective
     }
 }
 
@@ -61,11 +61,11 @@ pub struct Metadata {
     tags: Vec<Tag>,
 }
 
-/// Represents a package's manifest. It wraps the package's metdata and the versions
-/// available of this package for the current architecture.
+/// Represents a package's manifest. It wraps the package's metadata and the available
+/// versions of this package for the current architecture.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
-pub struct PackageManifest {
+pub struct Manifest {
     metadata: Metadata,
-    kind: PackageKind,
+    kind: Kind,
     versions: Vec<Version>,
 }
