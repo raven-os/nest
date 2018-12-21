@@ -1,4 +1,8 @@
+#![feature(try_blocks)]
+
 use clap::{crate_authors, crate_name, crate_version, App, AppSettings, Arg, SubCommand};
+use failure::Error;
+use libnest::config;
 
 pub mod commands;
 
@@ -56,12 +60,20 @@ fn main() {
         )
         .get_matches();
 
-    let result = match matches.subcommand() {
-        ("pull", _) => commands::pull(),
-        ("install", _) => commands::install(),
-        ("upgrade", _) => commands::upgrade(),
-        ("uninstall", _) => commands::uninstall(),
-        _ => unimplemented!(),
+    let result: Result<_, Error> = try {
+        let mut config = config::Config::load()?;
+
+        if let Some(chroot_path) = matches.value_of("chroot") {
+            config.paths_mut().chroot(chroot_path);
+        }
+
+        match matches.subcommand() {
+            ("pull", _) => commands::pull(&config),
+            ("install", _) => commands::install(&config),
+            ("upgrade", _) => commands::upgrade(&config),
+            ("uninstall", _) => commands::uninstall(&config),
+            _ => unimplemented!(),
+        }?;
     };
 
     if let Err(_) = result {

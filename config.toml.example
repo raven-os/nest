@@ -1,0 +1,11 @@
+# Example configuration file for nest
+
+[paths]
+# root = "/"
+available = "/path/to/available"
+downloaded = "/other/path/to/downloaded"
+installed = "/path/to/installed"
+depgraph = "/yet/another/path"
+
+[repositories.somerepo]
+mirrors = ["https://mirror1.somerepo.org", "https://mirror2.somerepo.org"]

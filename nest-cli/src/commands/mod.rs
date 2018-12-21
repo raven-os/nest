@@ -1,17 +1,18 @@
 use failure::Error;
+use libnest::config::Config;
 
-pub fn pull() -> Result<(), Error> {
+pub fn pull(_config: &Config) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn install() -> Result<(), Error> {
+pub fn install(_config: &Config) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn uninstall() -> Result<(), Error> {
+pub fn uninstall(_config: &Config) -> Result<(), Error> {
     Ok(())
 }
 
-pub fn upgrade() -> Result<(), Error> {
+pub fn upgrade(_config: &Config) -> Result<(), Error> {
     Ok(())
 }
