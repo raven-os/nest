@@ -1,11 +1,21 @@
-# Example configuration file for nest
+# Default configuration file for nest
 
+# Paths used by nest. Default paths will be used if this entry is omitted.
 [paths]
-# root = "/"
-available = "/path/to/available"
-downloaded = "/other/path/to/downloaded"
-installed = "/path/to/installed"
-depgraph = "/yet/another/path"
+root = "/"
+available = "/var/nest/available/"
+downloaded = "/var/nest/downloaded/"
+installed = "/var/nest/installed/"
+depgraph = "/var/nest/depgraph"
 
-[repositories.somerepo]
-mirrors = ["https://mirror1.somerepo.org", "https://mirror2.somerepo.org"]
+# Stable repository
+[repositories.stable]
+mirrors = ["https://stable.raven-os.org"]
+
+# Beta repository (uncomment to enable)
+# [repositories.beta]
+# mirrors = ["https://beta.raven-os.org"]
+
+# Nightly repository (uncomment to enable)
+# [repositories.nightly]
+# mirrors = ["https://nightly.raven-os.org"]

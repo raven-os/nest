@@ -37,15 +37,37 @@ impl ConfigPaths {
     }
 
     /// Changes all config paths to make them relative to the given root path.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # extern crate libnest;
+    /// fn main() -> Result<(), libnest::errors::Error> {
+    /// use libnest::config::ConfigPaths;
+    /// use std::path::Path;
+    ///
+    /// let chroot_path = "/chroot/";
+    /// let default_paths = ConfigPaths::default();
+    /// let paths = default_paths.chroot(chroot_path);
+    /// assert_eq!(paths.root(), Path::new("/chroot/"));
+    /// assert_eq!(paths.available(), Path::new("/chroot/var/nest/available"));
+    /// assert_eq!(paths.downloaded(), Path::new("/chroot/var/nest/downloaded"));
+    /// assert_eq!(paths.installed(), Path::new("/chroot/var/nest/installed"));
+    /// assert_eq!(paths.depgraph(), Path::new("/chroot/var/nest/depgraph"));
+    /// # Ok(())
+    /// # }
+    /// ```
     #[inline]
-    pub fn chroot<P: AsRef<Path>>(&mut self, root: P) {
+    pub fn chroot<P: AsRef<Path>>(&self, root: P) -> ConfigPaths {
         use crate::chroot::Chroot;
 
-        self.root = self.root.with_root(root.as_ref());
-        self.available = self.available.with_root(root.as_ref());
-        self.downloaded = self.downloaded.with_root(root.as_ref());
-        self.installed = self.installed.with_root(root.as_ref());
-        self.depgraph = self.depgraph.with_root(root.as_ref());
+        ConfigPaths {
+            root: self.root.with_root(root.as_ref()),
+            available: self.available.with_root(root.as_ref()),
+            downloaded: self.downloaded.with_root(root.as_ref()),
+            installed: self.installed.with_root(root.as_ref()),
+            depgraph: self.depgraph.with_root(root.as_ref()),
+        }
     }
 
     /// Returns a reference to the root path where packages should be installed.
@@ -54,8 +76,7 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # extern crate failure;
-    /// # fn main() -> Result<(), failure::Error> {
+    /// # fn main() -> Result<(), libnest::errors::Error> {
     /// use std::path::{Path, PathBuf};
     /// use libnest::config::Config;
     ///
@@ -75,8 +96,7 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # extern crate failure;
-    /// # fn main() -> Result<(), failure::Error> {
+    /// # fn main() -> Result<(), libnest::errors::Error> {
     /// use std::path::{Path, PathBuf};
     /// use libnest::config::Config;
     ///
@@ -97,8 +117,7 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # extern crate failure;
-    /// # fn main() -> Result<(), failure::Error> {
+    /// # fn main() -> Result<(), libnest::errors::Error> {
     /// use std::path::{Path, PathBuf};
     /// use libnest::config::Config;
     ///
@@ -118,8 +137,7 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # extern crate failure;
-    /// # fn main() -> Result<(), failure::Error> {
+    /// # fn main() -> Result<(), libnest::errors::Error> {
     /// use std::path::{Path, PathBuf};
     /// use libnest::config::Config;
     ///
@@ -140,8 +158,7 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # extern crate failure;
-    /// # fn main() -> Result<(), failure::Error> {
+    /// # fn main() -> Result<(), libnest::errors::Error> {
     /// use std::path::{Path, PathBuf};
     /// use libnest::config::Config;
     ///
@@ -160,8 +177,7 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # extern crate failure;
-    /// # fn main() -> Result<(), failure::Error> {
+    /// # fn main() -> Result<(), libnest::errors::Error> {
     /// use std::path::{Path, PathBuf};
     /// use libnest::config::Config;
     ///
@@ -181,8 +197,7 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # extern crate failure;
-    /// # fn main() -> Result<(), failure::Error> {
+    /// # fn main() -> Result<(), libnest::errors::Error> {
     /// use std::path::{Path, PathBuf};
     /// use libnest::config::Config;
     ///
@@ -202,8 +217,7 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # extern crate failure;
-    /// # fn main() -> Result<(), failure::Error> {
+    /// # fn main() -> Result<(), libnest::errors::Error> {
     /// use std::path::{Path, PathBuf};
     /// use libnest::config::Config;
     ///
@@ -224,8 +238,7 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # extern crate failure;
-    /// # fn main() -> Result<(), failure::Error> {
+    /// # fn main() -> Result<(), libnest::errors::Error> {
     /// use std::path::{Path, PathBuf};
     /// use libnest::config::Config;
     ///
@@ -245,8 +258,7 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # extern crate failure;
-    /// # fn main() -> Result<(), failure::Error> {
+    /// # fn main() -> Result<(), libnest::errors::Error> {
     /// use std::path::{Path, PathBuf};
     /// use libnest::config::Config;
     ///

@@ -1,6 +1,6 @@
 //! Nest configuration parsing and handle.
 //!
-//! There are two way sto configure operations using the Nest package manager:
+//! There are two ways to configure operations using the Nest package manager:
 //! globally (using the configuration file), or locally (through command line arguments).
 //!
 //! Within the `libnest`, many functions take a `&Config` as argument.
@@ -17,13 +17,13 @@ mod repository;
 
 pub use self::paths::ConfigPaths;
 pub use self::repository::RepositoryConfig;
+pub use crate::errors::*;
 
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use failure::{Error, ResultExt};
 use lazy_static::lazy_static;
 use serde_derive::{Deserialize, Serialize};
 use toml;
@@ -72,7 +72,7 @@ impl Config {
     /// # Ok(()) }
     /// ```
     #[inline]
-    pub fn load() -> Result<Config, Error> {
+    pub fn load() -> Result<Config> {
         Config::load_from(*NEST_PATH_CONFIG)
     }
 
@@ -90,9 +90,9 @@ impl Config {
     /// # Ok(()) }
     /// ```
     #[inline]
-    pub fn load_from<P: AsRef<Path>>(path: P) -> Result<Config, Error> {
+    pub fn load_from<P: AsRef<Path>>(path: P) -> Result<Config> {
         let path = path.as_ref();
-        let mut file = File::open(path).with_context(|_| path.display().to_string())?;
+        let mut file = File::open(path).chain_err(|| ErrorKind::ConfigLoad(path.to_path_buf()))?;
 
         // Allocate a string long enough to hold the entire file
         let mut s = file
@@ -100,8 +100,9 @@ impl Config {
             .map(|m| String::with_capacity(m.len() as usize))
             .unwrap_or_default();
 
-        file.read_to_string(&mut s)?;
-        Ok(toml::from_str(&s).with_context(|_| path.display().to_string())?)
+        file.read_to_string(&mut s)
+            .chain_err(|| ErrorKind::ConfigLoad(path.to_path_buf()))?;
+        Ok(toml::from_str(&s).chain_err(|| ErrorKind::ConfigLoad(path.to_path_buf()))?)
     }
 
     /// Returns a reference to an intermediate structure holding all important paths that are used by `libnest`.

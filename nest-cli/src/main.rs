@@ -1,8 +1,8 @@
 #![feature(try_blocks)]
 
 use clap::{crate_authors, crate_name, crate_version, App, AppSettings, Arg, SubCommand};
-use failure::Error;
 use libnest::config;
+use libnest::errors;
 
 pub mod commands;
 
@@ -60,11 +60,11 @@ fn main() {
         )
         .get_matches();
 
-    let result: Result<_, Error> = try {
+    let result: errors::Result<()> = try {
         let mut config = config::Config::load()?;
 
         if let Some(chroot_path) = matches.value_of("chroot") {
-            config.paths_mut().chroot(chroot_path);
+            *config.paths_mut() = config.paths().chroot(chroot_path);
         }
 
         match matches.subcommand() {
@@ -76,10 +76,13 @@ fn main() {
         }?;
     };
 
-    if let Err(_) = result {
+    if let Err(e) = result {
         use std::process::exit;
 
-        eprintln!("Whoopsie");
+        eprintln!("error: {}", e);
+        for e in e.iter().skip(1) {
+            eprintln!("caused by: {}", e);
+        }
         exit(1);
     }
 }

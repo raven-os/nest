@@ -7,4 +7,5 @@
 
 pub mod chroot;
 pub mod config;
+pub mod errors;
 pub mod package;
