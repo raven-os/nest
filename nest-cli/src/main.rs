@@ -2,7 +2,6 @@
 
 use clap::{crate_authors, crate_name, crate_version, App, AppSettings, Arg, SubCommand};
 use libnest::config;
-use libnest::errors;
 
 pub mod commands;
 
@@ -60,7 +59,7 @@ fn main() {
         )
         .get_matches();
 
-    let result: errors::Result<()> = try {
+    let result: Result<(), failure::Error> = try {
         let mut config = config::Config::load()?;
 
         if let Some(chroot_path) = matches.value_of("chroot") {
@@ -79,9 +78,11 @@ fn main() {
     if let Err(e) = result {
         use std::process::exit;
 
-        eprintln!("error: {}", e);
-        for e in e.iter().skip(1) {
-            eprintln!("caused by: {}", e);
+        let mut fail: &failure::Fail = e.as_fail();
+        eprintln!("error: {}", fail);
+        while let Some(cause) = fail.cause() {
+            eprintln!("caused by: {}", cause);
+            fail = cause;
         }
         exit(1);
     }

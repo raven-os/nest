@@ -12,13 +12,15 @@
 //!
 //! It also provides a way to load a `Config` from a TOML file.
 
+pub mod errors;
 mod paths;
 mod repository;
 
+pub use self::errors::*;
 pub use self::paths::ConfigPaths;
 pub use self::repository::RepositoryConfig;
-pub use crate::errors::*;
 
+use failure::*;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
@@ -72,7 +74,7 @@ impl Config {
     /// # Ok(()) }
     /// ```
     #[inline]
-    pub fn load() -> Result<Config> {
+    pub fn load() -> Result<Config, ConfigError> {
         Config::load_from(*NEST_PATH_CONFIG)
     }
 
@@ -90,9 +92,9 @@ impl Config {
     /// # Ok(()) }
     /// ```
     #[inline]
-    pub fn load_from<P: AsRef<Path>>(path: P) -> Result<Config> {
+    pub fn load_from<P: AsRef<Path>>(path: P) -> Result<Config, ConfigError> {
         let path = path.as_ref();
-        let mut file = File::open(path).chain_err(|| ErrorKind::ConfigLoad(path.to_path_buf()))?;
+        let mut file = File::open(path).context(ConfigErrorKind::ConfigLoadError)?;
 
         // Allocate a string long enough to hold the entire file
         let mut s = file
@@ -101,8 +103,9 @@ impl Config {
             .unwrap_or_default();
 
         file.read_to_string(&mut s)
-            .chain_err(|| ErrorKind::ConfigLoad(path.to_path_buf()))?;
-        Ok(toml::from_str(&s).chain_err(|| ErrorKind::ConfigLoad(path.to_path_buf()))?)
+            .context(ConfigErrorKind::ConfigLoadError)?;
+
+        Ok(toml::from_str(&s).context(ConfigErrorKind::ConfigParseError)?)
     }
 
     /// Returns a reference to an intermediate structure holding all important paths that are used by `libnest`.

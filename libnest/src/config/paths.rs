@@ -42,7 +42,7 @@ impl ConfigPaths {
     ///
     /// ```
     /// # extern crate libnest;
-    /// fn main() -> Result<(), libnest::errors::Error> {
+    /// fn main() -> Result<(), failure::Error> {
     /// use libnest::config::ConfigPaths;
     /// use std::path::Path;
     ///
@@ -76,12 +76,13 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # fn main() -> Result<(), libnest::errors::Error> {
-    /// use std::path::{Path, PathBuf};
-    /// use libnest::config::Config;
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
+    /// use std::path::Path;
+    /// use libnest::config::ConfigPaths;
     ///
-    /// let mut config = Config::load()?;
-    /// assert_eq!(config.paths().root(), Path::new("/"));
+    /// let paths = ConfigPaths::default();
+    /// assert_eq!(paths.root(), Path::new("/"));
     /// # Ok(())
     /// # }
     /// ```
@@ -96,13 +97,14 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # fn main() -> Result<(), libnest::errors::Error> {
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
     /// use std::path::{Path, PathBuf};
-    /// use libnest::config::Config;
+    /// use libnest::config::ConfigPaths;
     ///
-    /// let mut config = Config::load()?;
-    /// *config.paths_mut().root_mut() = PathBuf::from("/mnt");
-    /// assert_eq!(config.paths().root(), Path::new("/mnt"));
+    /// let mut paths = ConfigPaths::default();
+    /// *paths.root_mut() = PathBuf::from("/mnt");
+    /// assert_eq!(paths.root(), Path::new("/mnt"));
     /// # Ok(())
     /// # }
     /// ```
@@ -117,12 +119,13 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # fn main() -> Result<(), libnest::errors::Error> {
-    /// use std::path::{Path, PathBuf};
-    /// use libnest::config::Config;
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
+    /// use std::path::Path;
+    /// use libnest::config::ConfigPaths;
     ///
-    /// let mut config = Config::load()?;
-    /// assert_eq!(config.paths().available(), Path::new("/var/nest/available"));
+    /// let paths = ConfigPaths::default();
+    /// assert_eq!(paths.available(), Path::new("/var/nest/available"));
     /// # Ok(())
     /// # }
     /// ```
@@ -137,13 +140,14 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # fn main() -> Result<(), libnest::errors::Error> {
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
     /// use std::path::{Path, PathBuf};
-    /// use libnest::config::Config;
+    /// use libnest::config::ConfigPaths;
     ///
-    /// let mut config = Config::load()?;
-    /// *config.paths_mut().available_mut() = PathBuf::from("/tmp/available");
-    /// assert_eq!(config.paths().available(), Path::new("/tmp/available"));
+    /// let mut paths = ConfigPaths::default();
+    /// *paths.available_mut() = PathBuf::from("/tmp/available");
+    /// assert_eq!(paths.available(), Path::new("/tmp/available"));
     /// # Ok(())
     /// # }
     /// ```
@@ -158,12 +162,13 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # fn main() -> Result<(), libnest::errors::Error> {
-    /// use std::path::{Path, PathBuf};
-    /// use libnest::config::Config;
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
+    /// use std::path::Path;
+    /// use libnest::config::ConfigPaths;
     ///
-    /// let mut config = Config::load()?;
-    /// assert_eq!(config.paths().downloaded(), Path::new("/var/nest/downloaded"));
+    /// let paths = ConfigPaths::default();
+    /// assert_eq!(paths.downloaded(), Path::new("/var/nest/downloaded"));
     /// # Ok(())
     /// # }
     /// ```
@@ -177,13 +182,14 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # fn main() -> Result<(), libnest::errors::Error> {
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
     /// use std::path::{Path, PathBuf};
-    /// use libnest::config::Config;
+    /// use libnest::config::ConfigPaths;
     ///
-    /// let mut config = Config::load()?;
-    /// *config.paths_mut().downloaded_mut() = PathBuf::from("/tmp/downloaded");
-    /// assert_eq!(config.paths().downloaded(), Path::new("/tmp/downloaded"));
+    /// let mut paths = ConfigPaths::default();
+    /// *paths.downloaded_mut() = PathBuf::from("/tmp/downloaded");
+    /// assert_eq!(paths.downloaded(), Path::new("/tmp/downloaded"));
     /// # Ok(())
     /// # }
     /// ```
@@ -197,12 +203,13 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # fn main() -> Result<(), libnest::errors::Error> {
-    /// use std::path::{Path, PathBuf};
-    /// use libnest::config::Config;
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
+    /// use std::path::Path;
+    /// use libnest::config::ConfigPaths;
     ///
-    /// let mut config = Config::load()?;
-    /// assert_eq!(config.paths().installed(), Path::new("/var/nest/installed"));
+    /// let paths = ConfigPaths::default();
+    /// assert_eq!(paths.installed(), Path::new("/var/nest/installed"));
     /// # Ok(())
     /// # }
     /// ```
@@ -217,13 +224,14 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # fn main() -> Result<(), libnest::errors::Error> {
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
     /// use std::path::{Path, PathBuf};
-    /// use libnest::config::Config;
+    /// use libnest::config::ConfigPaths;
     ///
-    /// let mut config = Config::load()?;
-    /// *config.paths_mut().installed_mut() = PathBuf::from("/tmp/installed");
-    /// assert_eq!(config.paths().installed(), Path::new("/tmp/installed"));
+    /// let mut paths = ConfigPaths::default();
+    /// *paths.installed_mut() = PathBuf::from("/tmp/installed");
+    /// assert_eq!(paths.installed(), Path::new("/tmp/installed"));
     /// # Ok(())
     /// # }
     /// ```
@@ -238,12 +246,13 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # fn main() -> Result<(), libnest::errors::Error> {
-    /// use std::path::{Path, PathBuf};
-    /// use libnest::config::Config;
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
+    /// use std::path::Path;
+    /// use libnest::config::ConfigPaths;
     ///
-    /// let mut config = Config::load()?;
-    /// assert_eq!(config.paths().depgraph(), Path::new("/var/nest/depgraph"));
+    /// let paths = ConfigPaths::default();
+    /// assert_eq!(paths.depgraph(), Path::new("/var/nest/depgraph"));
     /// # Ok(())
     /// # }
     /// ```
@@ -258,13 +267,14 @@ impl ConfigPaths {
     ///
     /// ```no_run
     /// # extern crate libnest;
-    /// # fn main() -> Result<(), libnest::errors::Error> {
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
     /// use std::path::{Path, PathBuf};
-    /// use libnest::config::Config;
+    /// use libnest::config::ConfigPaths;
     ///
-    /// let mut config = Config::load()?;
-    /// *config.paths_mut().depgraph_mut() = PathBuf::from("/tmp/depgraph");
-    /// assert_eq!(config.paths().depgraph(), Path::new("/tmp/depgraph"));
+    /// let mut paths = ConfigPaths::default();
+    /// *paths.depgraph_mut() = PathBuf::from("/tmp/depgraph");
+    /// assert_eq!(paths.depgraph(), Path::new("/tmp/depgraph"));
     /// # Ok(())
     /// # }
     /// ```
