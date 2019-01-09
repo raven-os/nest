@@ -94,7 +94,9 @@ impl Config {
     #[inline]
     pub fn load_from<P: AsRef<Path>>(path: P) -> Result<Config, ConfigError> {
         let path = path.as_ref();
-        let mut file = File::open(path).context(ConfigErrorKind::ConfigLoadError)?;
+        let mut file = File::open(path)
+            .context(path.display().to_string())
+            .context(ConfigErrorKind::ConfigLoadError)?;
 
         // Allocate a string long enough to hold the entire file
         let mut s = file
@@ -103,9 +105,12 @@ impl Config {
             .unwrap_or_default();
 
         file.read_to_string(&mut s)
+            .context(path.display().to_string())
             .context(ConfigErrorKind::ConfigLoadError)?;
 
-        Ok(toml::from_str(&s).context(ConfigErrorKind::ConfigParseError)?)
+        Ok(toml::from_str(&s)
+            .context(path.display().to_string())
+            .context(ConfigErrorKind::ConfigParseError)?)
     }
 
     /// Returns a reference to an intermediate structure holding all important paths that are used by `libnest`.

@@ -78,12 +78,13 @@ fn main() {
     if let Err(e) = result {
         use std::process::exit;
 
-        let mut fail: &failure::Fail = e.as_fail();
-        eprintln!("error: {}", fail);
-        while let Some(cause) = fail.cause() {
-            eprintln!("caused by: {}", cause);
-            fail = cause;
+        let fail: &failure::Fail = e.as_fail();
+        eprint!("error: {}", fail);
+        for cause in fail.iter_causes() {
+            eprint!(": {}", cause);
         }
+        eprintln!();
+
         exit(1);
     }
 }
