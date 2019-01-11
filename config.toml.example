@@ -1,0 +1,21 @@
+# Default configuration file for nest
+
+# Paths used by nest. Default paths will be used if this entry is omitted.
+[paths]
+root = "/"
+available = "/var/nest/available/"
+downloaded = "/var/nest/downloaded/"
+installed = "/var/nest/installed/"
+depgraph = "/var/nest/depgraph"
+
+# Stable repository
+[repositories.stable]
+mirrors = ["https://stable.raven-os.org"]
+
+# Beta repository (uncomment to enable)
+# [repositories.beta]
+# mirrors = ["https://beta.raven-os.org"]
+
+# Nightly repository (uncomment to enable)
+# [repositories.nightly]
+# mirrors = ["https://nightly.raven-os.org"]
