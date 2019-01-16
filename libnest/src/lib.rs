@@ -11,3 +11,4 @@ mod errors;
 pub mod chroot;
 pub mod config;
 pub mod package;
+pub mod repository;

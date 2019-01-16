@@ -30,6 +30,8 @@ use lazy_static::lazy_static;
 use serde_derive::{Deserialize, Serialize};
 use toml;
 
+use crate::repository::Repository;
+
 lazy_static! {
     static ref NEST_PATH_CONFIG: &'static Path = Path::new("/etc/nest/config.toml");
 }
@@ -135,5 +137,14 @@ impl Config {
     #[inline]
     pub fn repositories_config_mut(&mut self) -> &mut HashMap<String, RepositoryConfig> {
         &mut self.repositories
+    }
+
+    /// Returns a vector containing a description of each [`Repository`]
+    #[inline]
+    pub fn repositories(&self) -> Vec<Repository> {
+        self.repositories
+            .iter()
+            .map(|(name, config)| Repository::from(name, config))
+            .collect()
     }
 }
