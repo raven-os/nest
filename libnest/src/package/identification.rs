@@ -1,7 +1,18 @@
 //! Package identification
 
-use crate::package::{CategoryName, PackageName, RepositoryName};
+use lazy_static::lazy_static;
+use regex::Regex;
 use semver::Version;
+use serde::de::Visitor;
+use serde::{Deserialize, Serialize};
+
+use crate::package::{CategoryName, PackageName, RepositoryName};
+
+lazy_static! {
+    static ref REGEX_PACKAGE_ID: Regex = Regex::new(
+        r"^((?P<repository>[a-z\-]+)::)?((?P<category>[a-z\-]+)/)?(?P<package>([a-z\-*]+[0-9]*))(#((?P<exact_version>[0-9.]+)|(?P<version_req>[<>=~^ ]*\s?[0-9.*]+)))?$"
+    ).unwrap();
+}
 
 /// Full name of a package, which is the combination of its repository, category and name
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -19,6 +30,25 @@ impl PackageFullName {
             repository,
             category,
             name,
+        }
+    }
+
+    /// Parses a string into a [`PackageFullName`].
+    #[inline]
+    pub fn parse(repr: &str) -> Option<PackageFullName> {
+        let matches = REGEX_PACKAGE_ID.captures(repr)?;
+
+        match (
+            matches.name("repository"),
+            matches.name("category"),
+            matches.name("package"),
+        ) {
+            (Some(repository), Some(category), Some(name)) => Some(PackageFullName::from(
+                RepositoryName::from(repository.as_str().to_string()),
+                CategoryName::from(category.as_str().to_string()),
+                PackageName::from(name.as_str().to_string()),
+            )),
+            _ => None,
         }
     }
 
@@ -68,6 +98,29 @@ impl PackageID {
         PackageID { full_name, version }
     }
 
+    /// Parses a string into a [`PackageId`]
+    #[inline]
+    pub fn parse(s: &str) -> Option<PackageID> {
+        let matches = REGEX_PACKAGE_ID.captures(s)?;
+
+        match (
+            matches.name("repository"),
+            matches.name("category"),
+            matches.name("package"),
+            matches.name("exact_version"),
+        ) {
+            (Some(repository), Some(category), Some(name), Some(ver)) => Some(PackageID::from(
+                PackageFullName::from(
+                    RepositoryName::from(repository.as_str().to_string()),
+                    CategoryName::from(category.as_str().to_string()),
+                    PackageName::from(name.as_str().to_string()),
+                ),
+                Version::parse(ver.as_str()).ok()?,
+            )),
+            _ => None,
+        }
+    }
+
     /// Returns a reference over the package's full name
     #[inline]
     pub fn full_name(&self) -> &PackageFullName {
@@ -78,5 +131,96 @@ impl PackageID {
     #[inline]
     pub fn version(&self) -> &Version {
         &self.version
+    }
+}
+
+impl std::fmt::Display for PackageID {
+    #[inline]
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}#{}", self.full_name, self.version)
+    }
+}
+
+struct PackageFullNameVisitor;
+
+impl<'de> Visitor<'de> for PackageFullNameVisitor {
+    type Value = PackageFullName;
+
+    #[inline]
+    fn expecting(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        fmt.write_str("a fully-qualified package name")
+    }
+
+    fn visit_str<E>(self, repr: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        PackageFullName::parse(repr).ok_or_else(|| {
+            E::custom(
+                "the package's full name doesn't follow the convention `repository::category/name`"
+                    .to_string(),
+            )
+        })
+    }
+}
+
+impl Serialize for PackageFullName {
+    #[inline]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.to_string().serialize(serializer)
+    }
+}
+
+impl<'a> Deserialize<'a> for PackageFullName {
+    #[inline]
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'a>,
+    {
+        deserializer.deserialize_str(PackageFullNameVisitor)
+    }
+}
+
+struct PackageIDVisitor;
+
+impl<'de> Visitor<'de> for PackageIDVisitor {
+    type Value = PackageID;
+
+    #[inline]
+    fn expecting(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        fmt.write_str("a package identifier")
+    }
+
+    #[inline]
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        PackageID::parse(value).ok_or_else(|| {
+            E::custom("the package's full name doesn't follow the convention `repository::category/name#version`".to_string())
+        })
+    }
+}
+
+impl Serialize for PackageID {
+    #[inline]
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        self.to_string().serialize(serializer)
+    }
+}
+
+impl<'a> Deserialize<'a> for PackageID {
+    #[inline]
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'a>,
+    {
+        deserializer.deserialize_str(PackageIDVisitor)
     }
 }
