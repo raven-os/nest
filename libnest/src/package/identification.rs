@@ -10,7 +10,7 @@ use crate::package::{CategoryName, PackageName, RepositoryName};
 
 lazy_static! {
     static ref REGEX_PACKAGE_ID: Regex = Regex::new(
-        r"^((?P<repository>[a-z\-]+)::)?((?P<category>[a-z\-]+)/)?(?P<package>([a-z\-*]+[0-9]*))(#((?P<exact_version>[0-9.]+)|(?P<version_req>[<>=~^ ]*\s?[0-9.*]+)))?$"
+        r"^((?P<repository>[a-z\-]+)::)?((?P<category>[a-z\-]+)/)?(?P<package>([a-z0-9\-*]+))(#(?P<version>(.+)))?$"
     ).unwrap();
 }
 
@@ -107,7 +107,7 @@ impl PackageID {
             matches.name("repository"),
             matches.name("category"),
             matches.name("package"),
-            matches.name("exact_version"),
+            matches.name("version"),
         ) {
             (Some(repository), Some(category), Some(name), Some(ver)) => Some(PackageID::from(
                 PackageFullName::from(
