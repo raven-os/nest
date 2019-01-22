@@ -20,6 +20,7 @@ pub struct AvailablePackages<'a> {
 }
 
 impl<'a> AvailablePackages<'a> {
+    #[allow(dead_code)] // TODO: Remove this when the function is used
     pub(crate) fn from(cache_root: &'a Path) -> Self {
         AvailablePackages { cache_root }
     }
