@@ -1,13 +1,26 @@
 //! Provides types and functions to interact with all kinds of packages: available ones, installed ones etc.
 
+mod errors;
 mod identification;
 mod manifest;
+mod requirement;
 
+pub use self::errors::*;
 pub use self::identification::{PackageFullName, PackageID};
 pub use self::manifest::{Manifest, Metadata};
+pub use self::requirement::PackageRequirement;
 
+use lazy_static::lazy_static;
+use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 use std::path::Path;
+
+/// A regular expression to match and parse a package's string representation
+lazy_static! {
+    static ref REGEX_PACKAGE_ID: Regex = Regex::new(
+        r"^((?P<repository>[a-z\-]+)::)?((?P<category>[a-z\-]+)/)?(?P<package>([a-z0-9\-*]+))(#(?P<version>(.+)))?$"
+    ).unwrap();
+}
 
 /// A package's kind.
 ///
@@ -172,7 +185,7 @@ pub struct Package {
 impl Package {
     /// Creates a new package from a [`Repository`] and a [`Manifest`]
     #[inline]
-    pub fn new(repository: RepositoryName, manifest: Manifest) -> Self {
+    pub fn from(repository: RepositoryName, manifest: Manifest) -> Self {
         Package {
             repository,
             manifest,

@@ -1,18 +1,10 @@
 //! Package identification
 
-use lazy_static::lazy_static;
-use regex::Regex;
 use semver::Version;
 use serde::de::Visitor;
 use serde::{Deserialize, Serialize};
 
-use crate::package::{CategoryName, PackageName, RepositoryName};
-
-lazy_static! {
-    static ref REGEX_PACKAGE_ID: Regex = Regex::new(
-        r"^((?P<repository>[a-z\-]+)::)?((?P<category>[a-z\-]+)/)?(?P<package>([a-z0-9\-*]+))(#(?P<version>(.+)))?$"
-    ).unwrap();
-}
+use super::{CategoryName, PackageName, RepositoryName, REGEX_PACKAGE_ID};
 
 /// Full name of a package, which is the combination of its repository, category and name
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]

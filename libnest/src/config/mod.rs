@@ -30,6 +30,7 @@ use lazy_static::lazy_static;
 use serde_derive::{Deserialize, Serialize};
 use toml;
 
+use crate::cache::available::AvailablePackages;
 use crate::repository::Repository;
 
 lazy_static! {
@@ -146,5 +147,10 @@ impl Config {
             .iter()
             .map(|(name, config)| Repository::from(name, config))
             .collect()
+    }
+
+    /// Returns a handle over the cache containing available packages
+    pub fn available_packages_cache(&self) -> AvailablePackages {
+        AvailablePackages::from(self.paths().available())
     }
 }
