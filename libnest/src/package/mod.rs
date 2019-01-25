@@ -10,9 +10,13 @@ pub use self::identification::{PackageFullName, PackageID};
 pub use self::manifest::{Manifest, Metadata};
 pub use self::requirement::PackageRequirement;
 
+use std::fs::File;
+
+use failure::{Error, ResultExt};
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
+use serde_json;
 use std::path::Path;
 
 /// A regular expression to match and parse a package's string representation
@@ -190,6 +194,21 @@ impl Package {
             repository,
             manifest,
         }
+    }
+
+    #[inline]
+    pub(crate) fn load_from_cache<P: AsRef<Path>>(
+        repository: RepositoryName,
+        cache_path: P,
+    ) -> Result<Package, Error> {
+        let file =
+            File::open(cache_path.as_ref()).context(cache_path.as_ref().display().to_string())?;
+
+        Ok(Package {
+            repository,
+            manifest: serde_json::from_reader(&file)
+                .context(cache_path.as_ref().display().to_string())?,
+        })
     }
 
     /// Returns the name of the repository this package belongs to
