@@ -1,6 +1,9 @@
 //! Module to query and manipulate the cache of available packages
 //! This cache is populated and updated by pull operations.
 
+mod query;
+pub use self::query::{AvailablePackagesCacheQuery, AvailablePackagesCacheQueryStrategy};
+
 use super::errors::*;
 
 use std::fs::{self, File};
@@ -10,7 +13,7 @@ use std::path::Path;
 use failure::{Error, ResultExt};
 use serde_json;
 
-use crate::package::Package;
+use crate::package::{Package, PackageRequirement};
 use crate::repository::Repository;
 
 /// Structure representing the cache of available packages
@@ -70,5 +73,14 @@ impl<'a> AvailablePackages<'a> {
         res.context(cache_path.display().to_string())
             .context(CacheErrorKind::CacheWriteError)?;
         Ok(())
+    }
+
+    /// Returns an [`AvailablePackagesCacheQuery`] allowing to browse the cache according to the given [`PackageRequirement`]
+    #[inline]
+    pub fn query<'b>(
+        &self,
+        requirement: &'b PackageRequirement,
+    ) -> AvailablePackagesCacheQuery<'a, 'b> {
+        AvailablePackagesCacheQuery::from(&self.cache_root, requirement)
     }
 }
