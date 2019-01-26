@@ -18,7 +18,7 @@ mod repository;
 
 pub use self::errors::*;
 pub use self::paths::ConfigPaths;
-pub use self::repository::RepositoryConfig;
+pub use self::repository::{MirrorUrl, RepositoryConfig};
 
 use failure::*;
 use std::collections::HashMap;
