@@ -13,10 +13,26 @@ pub fn pull(config: &Config) -> Result<(), Error> {
         .map(|repository| Transaction::Pull(PullTransaction::from(repository)))
         .collect();
 
+    if transactions.is_empty() {
+        println!("No repository to pull, quitting.");
+        return Ok(());
+    }
+
     print_transactions(&transactions);
 
-    if !ask_confirmation("Would you like to apply these transactions ?", true)? {
-        println!("Transactions cancelled");
+    if !ask_confirmation(
+        format!(
+            "Would you like to apply th{} transaction{} ?",
+            if transactions.len() <= 1 { "is" } else { "ese" },
+            if transactions.len() <= 1 { "" } else { "s" },
+        )
+        .as_str(),
+        true,
+    )? {
+        println!(
+            "Transaction{} cancelled.",
+            if transactions.len() <= 1 { "" } else { "s" }
+        );
         return Ok(());
     }
 

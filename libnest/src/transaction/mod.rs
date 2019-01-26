@@ -15,9 +15,7 @@ pub use self::install::InstallTransaction;
 pub use self::pull::PullTransaction;
 pub use self::remove::RemoveTransaction;
 
-/// The kind of a transaction
-///
-/// Every transaction belongs to a kind
+/// The different possible variants of transactions
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Transaction<'a, 'b> {
     /// The transaction is a "pull" transaction

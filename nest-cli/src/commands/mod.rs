@@ -39,7 +39,7 @@ pub fn ask_confirmation(question: &str, default: bool) -> Result<bool, Error> {
     let hint = if default {
         format!("{}/{}", "Yes".green().bold(), "no".red().bold())
     } else {
-        format!("{}/{}", "yes".green(), "No".red())
+        format!("{}/{}", "yes".green().bold(), "No".red().bold())
     };
 
     print!("\n{} [{}] ", question.bold(), hint);
@@ -51,8 +51,8 @@ pub fn ask_confirmation(question: &str, default: bool) -> Result<bool, Error> {
 
         match input.trim().to_lowercase().as_ref() {
             "" => return Ok(default),
-            "y" | "yes" | "Yes" => return Ok(true),
-            "n" | "no" | "No" => return Ok(false),
+            "y" | "yes" => return Ok(true),
+            "n" | "no" => return Ok(false),
             _ => print!("Please type \"yes\" or \"no\". [{}] ", hint),
         }
     }
