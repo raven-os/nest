@@ -14,3 +14,4 @@ pub mod chroot;
 pub mod config;
 pub mod package;
 pub mod repository;
+pub mod transaction;

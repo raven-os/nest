@@ -5,6 +5,9 @@ authors = ["Benjamin Grange <benjamin.grange@epitech.eu>"]
 edition = "2018"
 
 [dependencies]
+curl = "0.4.19"
 libnest = { path = "../libnest" }
 failure = "0.1.1"
 clap = "2.32.0"
+colored = "1.7"
+indicatif = "0.11.0"
