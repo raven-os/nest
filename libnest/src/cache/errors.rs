@@ -29,3 +29,19 @@ pub enum CacheErrorKind {
 }
 
 use_as_error!(CacheError, CacheErrorKind);
+
+/// Error type for errors related to group names
+#[derive(Debug)]
+pub struct GroupNameError {
+    inner: Context<GroupNameErrorKind>,
+}
+
+/// Error kind describing a kind of error related to group names
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
+pub enum GroupNameErrorKind {
+    /// A group name could not be parsed from a given string
+    #[fail(display = "invalid group name")]
+    InvalidGroupName,
+}
+
+use_as_error!(GroupNameError, GroupNameErrorKind);

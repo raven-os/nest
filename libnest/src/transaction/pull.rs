@@ -5,7 +5,7 @@ use std::str;
 use failure::{Error, ResultExt};
 use serde_json;
 
-use crate::cache::errors::*;
+use crate::cache::CacheErrorKind;
 use crate::package::{Manifest, Package, RepositoryName};
 use crate::repository::Repository;
 
