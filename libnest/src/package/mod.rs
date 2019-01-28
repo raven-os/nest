@@ -8,7 +8,7 @@ mod requirement;
 pub use self::errors::*;
 pub use self::identification::{PackageFullName, PackageID};
 pub use self::manifest::{Manifest, Metadata};
-pub use self::requirement::PackageRequirement;
+pub use self::requirement::{HardPackageRequirement, PackageRequirement};
 
 use std::fs::File;
 
@@ -233,6 +233,16 @@ impl Package {
                 self.manifest.metadata().name().clone(),
             ),
             self.manifest.metadata().version().clone(),
+        )
+    }
+
+    /// Returns the full name of the package
+    #[inline]
+    pub fn full_name(&self) -> PackageFullName {
+        PackageFullName::from(
+            self.repository.clone(),
+            self.manifest.metadata().category().clone(),
+            self.manifest.metadata().name().clone(),
         )
     }
 }

@@ -223,3 +223,28 @@ impl Default for PackageRequirement {
         PackageRequirement::new()
     }
 }
+
+/// A structure represenging a hard package requirement.
+/// This type of requirement is said to be "hard", because only the version has yet to be selected.
+/// The other parts of the package information (repository, category and name) are already known.
+#[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct HardPackageRequirement {
+    full_name: PackageFullName,
+    version_requirement: VersionReq,
+}
+
+impl HardPackageRequirement {
+    /// Creates a [`HardPackageRequirement`] from a [`PackageFullName`] and a [`VersionReq`]
+    pub fn from(full_name: PackageFullName, version_requirement: VersionReq) -> Self {
+        HardPackageRequirement {
+            full_name,
+            version_requirement,
+        }
+    }
+}
+
+impl std::fmt::Display for HardPackageRequirement {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}#{}", self.full_name, self.version_requirement)
+    }
+}
