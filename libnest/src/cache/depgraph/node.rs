@@ -123,7 +123,7 @@ impl Node {
 impl std::fmt::Display for Node {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match &self.kind {
-            NodeKind::Group { name, .. } => write!(f, "@{}", name.as_str()),
+            NodeKind::Group { name, .. } => write!(f, "{}", name.as_str()),
             NodeKind::Package { id, .. } => write!(f, "{}", id),
         }
     }

@@ -2,7 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::package::PackageRequirement;
 
-use super::NodeID;
+use super::{NodeID, GroupName};
 
 /// Type representing unique identifiers of a requirement in the dependency graph
 pub type RequirementID = usize;
@@ -15,7 +15,7 @@ pub enum RequirementKind {
     /// The node requires a group
     Group {
         /// The name of the required group
-        name: String,
+        name: GroupName,
     },
     /// The node requires a package
     Package {
@@ -27,7 +27,7 @@ pub enum RequirementKind {
 impl std::fmt::Display for RequirementKind {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            RequirementKind::Group { name, .. } => write!(f, "@{}", name),
+            RequirementKind::Group { name, .. } => write!(f, "{}", name.as_str()),
             RequirementKind::Package { package_req, .. } => write!(f, "{}", package_req),
         }
     }
