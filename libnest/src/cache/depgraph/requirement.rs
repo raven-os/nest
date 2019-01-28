@@ -2,7 +2,7 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::package::PackageRequirement;
 
-use super::{NodeID, GroupName};
+use super::{GroupName, NodeID};
 
 /// Type representing unique identifiers of a requirement in the dependency graph
 pub type RequirementID = usize;
