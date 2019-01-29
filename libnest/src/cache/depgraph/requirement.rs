@@ -1,6 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 
-use crate::package::PackageRequirement;
+use crate::package::HardPackageRequirement;
 
 use super::{GroupName, NodeID};
 
@@ -20,7 +20,7 @@ pub enum RequirementKind {
     /// The node requires a package
     Package {
         /// The [`PackageRequirement`] that the package must match.
-        package_req: PackageRequirement,
+        package_req: HardPackageRequirement,
     },
 }
 
@@ -38,8 +38,9 @@ impl std::fmt::Display for RequirementKind {
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Requirement {
     kind: RequirementKind,
-    fulfilling: Option<NodeID>,
+    management_method: RequirementManagementMethod,
     fulfilled: NodeID,
+    fulfilling: Option<NodeID>,
 }
 
 impl Requirement {
@@ -47,31 +48,54 @@ impl Requirement {
     #[inline]
     pub(crate) fn from(
         kind: RequirementKind,
-        fulfilling: Option<NodeID>,
+        management_method: RequirementManagementMethod,
         fulfilled: NodeID,
     ) -> Requirement {
         Requirement {
             kind,
-            fulfilling,
+            management_method,
             fulfilled,
+            fulfilling: None,
         }
     }
 
-    /// Returns a reference to the kind of this requirement.
+    /// Returns a reference to the kind of this requirement
     #[inline]
     pub fn kind(&self) -> &RequirementKind {
         &self.kind
     }
 
-    /// Returns the [`NodeID`] of the [`Node`] that fulfills this requirement.
+    /// Returns the requirement method for this requirement
     #[inline]
-    pub fn fulfilling_node(&self) -> Option<NodeID> {
-        self.fulfilling
+    pub fn management_method(&self) -> RequirementManagementMethod {
+        self.management_method
     }
 
-    /// Returns the [`NodeID`] of the [`Node`] that is fulfilled by this requirement.
+    /// Returns a reference to the [`NodeID`] of the [`Node`] that fulfills this requirement
     #[inline]
-    pub fn fulfilled_node(&self) -> NodeID {
+    pub fn fulfilling_node_id(&self) -> &Option<NodeID> {
+        &self.fulfilling
+    }
+
+    /// Returns a mutable reference to the [`NodeID`] of the [`Node`] that fulfills this requirement
+    #[inline]
+    pub fn fulfilling_node_id_mut(&mut self) -> &mut Option<NodeID> {
+        &mut self.fulfilling
+    }
+
+    /// Returns the [`NodeID`] of the [`Node`] that is fulfilled by this requirement
+    #[inline]
+    pub fn fulfilled_node_id(&self) -> NodeID {
         self.fulfilled
     }
+}
+
+/// The method used to manage a requirement
+#[derive(Serialize, Deserialize, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum RequirementManagementMethod {
+    /// Auto
+    Auto,
+
+    /// Static
+    Static,
 }

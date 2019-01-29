@@ -31,6 +31,7 @@ use serde_derive::{Deserialize, Serialize};
 use toml;
 
 use crate::cache::available::AvailablePackages;
+use crate::cache::depgraph::DependencyGraph;
 use crate::repository::Repository;
 
 lazy_static! {
@@ -152,5 +153,10 @@ impl Config {
     /// Returns a handle over the cache containing available packages
     pub fn available_packages_cache(&self) -> AvailablePackages {
         AvailablePackages::from(self.paths().available())
+    }
+
+    /// Returns a handle over the dependency graph, or an error if it could not be loaded
+    pub fn dependency_graph(&self) -> Result<DependencyGraph, Error> {
+        DependencyGraph::load_from_cache(self.paths().depgraph())
     }
 }
