@@ -223,3 +223,53 @@ impl Default for PackageRequirement {
         PackageRequirement::new()
     }
 }
+
+/// A structure represenging a hard package requirement.
+/// This type of requirement is said to be "hard", because only the version has yet to be selected.
+/// The other parts of the package information (repository, category and name) are already known.
+#[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct HardPackageRequirement {
+    full_name: PackageFullName,
+    version_requirement: VersionReq,
+}
+
+impl HardPackageRequirement {
+    /// Creates a [`HardPackageRequirement`] from a [`PackageFullName`] and a [`VersionReq`]
+    pub fn from(full_name: PackageFullName, version_requirement: VersionReq) -> Self {
+        HardPackageRequirement {
+            full_name,
+            version_requirement,
+        }
+    }
+
+    /// Returns a reference to the [`PackageFullName`] fixed by this requirement
+    #[inline]
+    pub fn full_name(&self) -> &PackageFullName {
+        &self.full_name
+    }
+
+    /// Changes the version requirement to match any version
+    #[inline]
+    pub fn any_version(mut self) -> Self {
+        self.version_requirement = VersionReq::any();
+        self
+    }
+
+    /// Returns whether the given [`PackageID`] matches this requirement
+    #[inline]
+    pub fn matches(&self, id: &PackageID) -> bool {
+        self.version_requirement.matches(id.version())
+    }
+}
+
+impl std::fmt::Display for HardPackageRequirement {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}#{}", self.full_name, self.version_requirement)
+    }
+}
+
+impl std::convert::Into<PackageRequirement> for HardPackageRequirement {
+    fn into(self) -> PackageRequirement {
+        PackageRequirement::from(&self.full_name, self.version_requirement)
+    }
+}

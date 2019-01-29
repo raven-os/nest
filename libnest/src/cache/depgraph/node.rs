@@ -39,7 +39,7 @@ impl std::ops::Deref for GroupName {
 }
 
 lazy_static! {
-    static ref REGEX_GROUP_NAME: Regex = Regex::new(r"^@[a-z0-9]$").unwrap();
+    static ref REGEX_GROUP_NAME: Regex = Regex::new(r"^@[a-z0-9]+$").unwrap();
 }
 
 impl FromStr for GroupName {
@@ -86,6 +86,7 @@ pub struct Node {
 }
 
 impl Node {
+    /// Creates a node from a given kind, with no dependents and no requirements
     #[inline]
     pub fn from(kind: NodeKind) -> Node {
         Node {
@@ -95,24 +96,35 @@ impl Node {
         }
     }
 
+    /// Returns a reference to the kind of this node
+    #[allow(dead_code)] // TODO: Remove this when the function is used
+    #[inline]
+    pub fn kind(&self) -> &NodeKind {
+        &self.kind
+    }
+
+    /// Returns a reference to the set of [`RequirementID`]s needed by this node
     #[allow(dead_code)] // TODO: Remove this when the function is used
     #[inline]
     pub fn requirements(&self) -> &HashSet<RequirementID> {
         &self.requirements
     }
 
+    /// Returns a mutable reference to the set of [`RequirementID`]s needed by this node
     #[allow(dead_code)] // TODO: Remove this when the function is used
     #[inline]
     pub fn requirements_mut(&mut self) -> &mut HashSet<RequirementID> {
         &mut self.requirements
     }
 
+    /// Returns a reference to the set of [`RequirementID`]s held on this node
     #[allow(dead_code)] // TODO: Remove this when the function is used
     #[inline]
     pub fn dependents(&self) -> &HashSet<RequirementID> {
         &self.dependents
     }
 
+    /// Returns a mutable reference to the set of [`RequirementID`]s held on this node
     #[allow(dead_code)] // TODO: Remove this when the function is used
     #[inline]
     pub fn dependents_mut(&mut self) -> &mut HashSet<RequirementID> {
