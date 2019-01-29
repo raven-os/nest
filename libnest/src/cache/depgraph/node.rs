@@ -103,6 +103,12 @@ impl Node {
         &self.kind
     }
 
+    /// Returns a mutable reference to the kind of this node
+    #[inline]
+    pub fn kind_mut(&mut self) -> &mut NodeKind {
+        &mut self.kind
+    }
+
     /// Returns a reference to the set of [`RequirementID`]s needed by this node
     #[allow(dead_code)] // TODO: Remove this when the function is used
     #[inline]

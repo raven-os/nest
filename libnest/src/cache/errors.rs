@@ -45,3 +45,35 @@ pub enum GroupNameErrorKind {
 }
 
 use_as_error!(GroupNameError, GroupNameErrorKind);
+
+/// Error type for errors related to dependency graph
+#[derive(Debug)]
+pub struct DependencyGraphError {
+    inner: Context<DependencyGraphErrorKind>,
+}
+
+/// Error kind describing a kind of error related to the dependency graph
+#[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
+pub enum DependencyGraphErrorKind {
+    /// The requested package is unknown and cannot be found
+    #[fail(display = "unknown package")]
+    UnknownPackage,
+
+    /// The given package already exists in the dependency graph
+    #[fail(display = "package already exists")]
+    PackageAlreadyExists,
+
+    /// The given group already exists in the dependency graph
+    #[fail(display = "group already exists")]
+    GroupAlreadyExists,
+
+    /// The given requirement cannot be solved
+    #[fail(display = "the requirement cannot be solved")]
+    RequirementSolvingError,
+
+    /// The given group cannot be found
+    #[fail(display = "group not found")]
+    GroupNotFound,
+}
+
+use_as_error!(DependencyGraphError, DependencyGraphErrorKind);
