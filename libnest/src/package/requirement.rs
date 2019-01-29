@@ -241,10 +241,35 @@ impl HardPackageRequirement {
             version_requirement,
         }
     }
+
+    /// Returns a reference to the [`PackageFullName`] fixed by this requirement
+    #[inline]
+    pub fn full_name(&self) -> &PackageFullName {
+        &self.full_name
+    }
+
+    /// Changes the version requirement to match any version
+    #[inline]
+    pub fn any_version(mut self) -> Self {
+        self.version_requirement = VersionReq::any();
+        self
+    }
+
+    /// Returns whether the given [`PackageID`] matches this requirement
+    #[inline]
+    pub fn matches(&self, id: &PackageID) -> bool {
+        self.version_requirement.matches(id.version())
+    }
 }
 
 impl std::fmt::Display for HardPackageRequirement {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}#{}", self.full_name, self.version_requirement)
+    }
+}
+
+impl std::convert::Into<PackageRequirement> for HardPackageRequirement {
+    fn into(self) -> PackageRequirement {
+        PackageRequirement::from(&self.full_name, self.version_requirement)
     }
 }
