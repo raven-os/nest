@@ -576,6 +576,7 @@ impl DependencyGraph {
         Ok(())
     }
 
+    /// Updates the graph by removing automatic requirements, and solving again
     pub fn update(&mut self, config: &Config) -> Result<(), Error> {
         // First, remove auto requirements. Static requirements against packages are set as unsolved.
         let mut marks = HashSet::new();

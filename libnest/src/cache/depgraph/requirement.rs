@@ -19,7 +19,7 @@ pub enum RequirementKind {
     },
     /// The node requires a package
     Package {
-        /// The [`PackageRequirement`] that the package must match.
+        /// The [`HardPackageRequirement`] that the package must match.
         package_req: HardPackageRequirement,
     },
 }
@@ -33,7 +33,7 @@ impl std::fmt::Display for RequirementKind {
     }
 }
 
-/// A node's requirement. It wraps a [`NodeRequirementKind`] and the [`NodeID`] of the
+/// A node's requirement. It wraps a [`RequirementKind`] and the [`NodeID`] of the
 /// [`Node`] that fulfills this requirement.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Requirement {
