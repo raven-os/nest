@@ -28,8 +28,9 @@ pub fn print_transactions(transactions: &[Transaction]) {
                 Transaction::Pull(p) => {
                     format!("{} {}", "pull".cyan(), p.target_repository().name()).bold()
                 }
-                Transaction::Install(_) => format!("{}", "install".green()).bold(),
-                Transaction::Remove(_) => format!("{}", "remove".red()).bold(),
+                Transaction::Install(_) => "install".green().bold(),
+                Transaction::Remove(_) => "remove".red().bold(),
+                Transaction::Upgrade(_) => "upgrade".yellow().bold(),
             }
         );
     }
