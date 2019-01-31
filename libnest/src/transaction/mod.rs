@@ -5,13 +5,16 @@
 //! - Pull
 //! - Installation
 //! - Removal
+//! - Upgrade
 //!
 
+mod errors;
 mod install;
 mod pull;
 mod remove;
 mod upgrade;
 
+pub use self::errors::*;
 pub use self::install::InstallTransaction;
 pub use self::pull::PullTransaction;
 pub use self::remove::RemoveTransaction;
