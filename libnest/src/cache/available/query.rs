@@ -111,7 +111,39 @@ impl<'a, 'b> AvailablePackagesCacheQuery<'a, 'b> {
                                 results.push(Package::load_from_cache(repo.clone(), &path)?);
                             }
                         }
-                        _ => unimplemented!(),
+                        AvailablePackagesCacheQueryStrategy::AllMatchesSorted => {
+                            versions.sort_unstable_by(|a, b| b.cmp(a));
+                            results.append(
+                                &mut versions
+                                    .iter()
+                                    .filter(|version| {
+                                        self.requirement.version_requirement().matches(&version)
+                                    })
+                                    .map(|version| {
+                                        Package::load_from_cache(
+                                            repo.clone(),
+                                            &package_cache_path.join(version.to_string()),
+                                        )
+                                    })
+                                    .collect::<Result<Vec<_>, _>>()?,
+                            );
+                        }
+                        AvailablePackagesCacheQueryStrategy::AllMatchesUnsorted => {
+                            results.append(
+                                &mut versions
+                                    .iter()
+                                    .filter(|version| {
+                                        self.requirement.version_requirement().matches(&version)
+                                    })
+                                    .map(|version| {
+                                        Package::load_from_cache(
+                                            repo.clone(),
+                                            &package_cache_path.join(version.to_string()),
+                                        )
+                                    })
+                                    .collect::<Result<Vec<_>, _>>()?,
+                            );
+                        }
                     }
                 }
             }
