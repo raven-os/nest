@@ -54,21 +54,10 @@ impl RemoveTransaction {
             let rel_path = config.paths().root().with_content(&entry_path);
 
             if let Ok(metadata) = fs::symlink_metadata(&rel_path) {
-                if metadata.is_dir() {
-                    let _ = fs::remove_dir(&rel_path); // Ignore errors on a non-empty directory
-                } else {
+                if !metadata.is_dir() {
                     fs::remove_file(&rel_path)
                         .with_context(|_| abs_path.display().to_string())
                         .with_context(|_| RemoveErrorKind::FileRemoveError)?;
-
-                    // Try to remove the parent directories if they are empty
-                    for parent_dir in rel_path.ancestors() {
-                        // If we reached root, stop
-                        if parent_dir == config.paths().root() {
-                            break;
-                        }
-                        let _ = fs::remove_dir(&parent_dir); // Ignore errors on a non-empty directory
-                    }
                 }
             }
         }
