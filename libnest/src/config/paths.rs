@@ -9,6 +9,7 @@ lazy_static! {
     static ref NEST_PATH_DOWNLOADED: &'static Path = Path::new("/var/nest/downloaded/");
     static ref NEST_PATH_INSTALLED: &'static Path = Path::new("/var/nest/installed/");
     static ref NEST_PATH_DEPGRAPH: &'static Path = Path::new("/var/nest/depgraph");
+    static ref NEST_PATH_SCRATCH_DEPGRAPH: &'static Path = Path::new("/var/nest/scratch_depgraph");
 }
 
 /// A structure holding all important paths for libnest. It's a sub member of [`Config`][1].
@@ -22,6 +23,7 @@ pub struct ConfigPaths {
     downloaded: PathBuf,
     installed: PathBuf,
     depgraph: PathBuf,
+    scratch_depgraph: PathBuf,
 }
 
 impl ConfigPaths {
@@ -33,6 +35,7 @@ impl ConfigPaths {
             downloaded: PathBuf::from(*NEST_PATH_DOWNLOADED),
             installed: PathBuf::from(*NEST_PATH_INSTALLED),
             depgraph: PathBuf::from(*NEST_PATH_DEPGRAPH),
+            scratch_depgraph: PathBuf::from(*NEST_PATH_SCRATCH_DEPGRAPH),
         }
     }
 
@@ -67,6 +70,7 @@ impl ConfigPaths {
             downloaded: self.downloaded.with_root(root.as_ref()),
             installed: self.installed.with_root(root.as_ref()),
             depgraph: self.depgraph.with_root(root.as_ref()),
+            scratch_depgraph: self.scratch_depgraph.with_root(root.as_ref()),
         }
     }
 
@@ -281,6 +285,49 @@ impl ConfigPaths {
     #[inline]
     pub fn depgraph_mut(&mut self) -> &mut PathBuf {
         &mut self.depgraph
+    }
+
+    /// Returns a reference to the file's path where the scratch dependency graph is stored
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # extern crate libnest;
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
+    /// use std::path::Path;
+    /// use libnest::config::ConfigPaths;
+    ///
+    /// let paths = ConfigPaths::default();
+    /// assert_eq!(paths.scratch_depgraph(), Path::new("/var/nest/scratch_depgraph"));
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[inline]
+    pub fn scratch_depgraph(&self) -> &Path {
+        &self.scratch_depgraph
+    }
+
+    /// Returns a mutable reference to the file's path where the scratch dependency graph is stored
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # extern crate libnest;
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
+    /// use std::path::{Path, PathBuf};
+    /// use libnest::config::ConfigPaths;
+    ///
+    /// let mut paths = ConfigPaths::default();
+    /// *paths.scratch_depgraph_mut() = PathBuf::from("/tmp/scratch_depgraph");
+    /// assert_eq!(paths.scratch_depgraph(), Path::new("/tmp/scratch_depgraph"));
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[inline]
+    pub fn scratch_depgraph_mut(&mut self) -> &mut PathBuf {
+        &mut self.scratch_depgraph
     }
 }
 
