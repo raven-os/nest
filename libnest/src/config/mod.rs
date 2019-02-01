@@ -159,4 +159,9 @@ impl Config {
     pub fn dependency_graph(&self) -> Result<DependencyGraph, Error> {
         DependencyGraph::load_from_cache(self.paths().depgraph())
     }
+
+    /// Returns a handle over the scratch dependency graph, or an error if it could not be loaded
+    pub fn scratch_dependency_graph(&self) -> Result<DependencyGraph, Error> {
+        DependencyGraph::load_from_cache(self.paths().scratch_depgraph())
+    }
 }
