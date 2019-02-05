@@ -133,11 +133,11 @@ impl DependencyGraph {
     /// Returns the [`NodeID`] of a given package
     /// If no such ID is found, a [`DependencyGraphError`] is returned
     pub fn get_package_node_id(&self, name: &PackageFullName) -> Result<NodeID, Error> {
-        self.packages.get(&name).cloned().ok_or(
+        self.packages.get(&name).cloned().ok_or_else(|| {
             format_err!("{}", name)
                 .context(DependencyGraphErrorKind::UnknownPackage)
-                .into(),
-        )
+                .into()
+        })
     }
 
     /// Returns a reference to the [`Node`] of a given package
@@ -211,7 +211,7 @@ impl DependencyGraph {
 
                 *kind == requirement_kind
             })
-            .map(|x| *x)
+            .cloned()
             .collect::<Vec<_>>();
 
         for requirement_id in requirement_ids {
@@ -491,10 +491,10 @@ impl DependencyGraph {
             Ok(None)
         };
 
-        let package = find_matching_packages()?.ok_or(
+        let package = find_matching_packages()?.ok_or_else(|| {
             format_err!("{}", requirement)
-                .context(DependencyGraphErrorKind::RequirementSolvingError),
-        )?;
+                .context(DependencyGraphErrorKind::RequirementSolvingError)
+        })?;
 
         // If the new version is different from the old one, remove the old one
         if let Some(node_id) = self.packages.get(requirement.full_name()).cloned() {
@@ -537,10 +537,10 @@ impl DependencyGraph {
                     self.solve_package_requirement(config, package_req.clone())?
                 }
                 RequirementKind::Group { name } => {
-                    let group_id = self.groups.get(&name).ok_or(
+                    let group_id = self.groups.get(&name).ok_or_else(|| {
                         format_err!("{}", name.as_str())
-                            .context(DependencyGraphErrorKind::GroupNotFound),
-                    )?;
+                            .context(DependencyGraphErrorKind::GroupNotFound)
+                    })?;
                     *group_id
                 }
             };
