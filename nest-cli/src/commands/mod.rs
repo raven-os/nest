@@ -1,4 +1,4 @@
-mod download;
+pub mod operations;
 mod pull;
 
 pub use self::pull::pull;

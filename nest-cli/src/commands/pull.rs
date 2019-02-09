@@ -3,7 +3,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use libnest::config::Config;
 use libnest::transaction::{PullTransaction, Transaction};
 
-use super::download::Download;
+use super::operations::download::Download;
 use super::{ask_confirmation, print_transactions};
 
 pub fn pull(config: &Config) -> Result<(), Error> {
