@@ -1,6 +1,8 @@
+mod install;
 pub mod operations;
 mod pull;
 
+pub use self::install::install;
 pub use self::pull::pull;
 
 use colored::*;
@@ -26,11 +28,13 @@ pub fn print_transactions(transactions: &[Transaction]) {
             "{}",
             match transaction {
                 Transaction::Pull(p) => {
-                    format!("{} {}", "pull".cyan(), p.target_repository().name()).bold()
+                    format!("{:>8.8} {}", "pull".cyan(), p.target_repository().name()).bold()
                 }
-                Transaction::Install(_) => "install".green().bold(),
-                Transaction::Remove(_) => "remove".red().bold(),
-                Transaction::Upgrade(_) => "upgrade".yellow().bold(),
+                Transaction::Install(i) => {
+                    format!("{:>8.8} {}", "install".green(), i.target()).bold()
+                }
+                Transaction::Remove(r) => format!("{:>8.8} {}", "remove".red(), r.target()).bold(),
+                Transaction::Upgrade(_) => format!("{:>8.8}", "upgrade".yellow()).bold(),
             }
         );
     }
@@ -57,10 +61,6 @@ pub fn ask_confirmation(question: &str, default: bool) -> Result<bool, Error> {
             _ => print!("Please type \"yes\" or \"no\". [{}] ", hint),
         }
     }
-}
-
-pub fn install(_config: &Config) -> Result<(), Error> {
-    Ok(())
 }
 
 pub fn uninstall(_config: &Config) -> Result<(), Error> {
