@@ -22,7 +22,7 @@ use std::path::Path;
 /// A regular expression to match and parse a package's string representation
 lazy_static! {
     static ref REGEX_PACKAGE_ID: Regex = Regex::new(
-        r"^((?P<repository>[a-z\-]+)::)?((?P<category>[a-z\-]+)/)?(?P<package>([a-z0-9\-*]+))(#(?P<version>(.+)))?$"
+        r"^((?P<repository>[a-z\-]+)::)?((?P<category>[a-z\-]+)/)?(?P<package>([a-z0-9\-]+))(#(?P<version>(.+)))?$"
     ).unwrap();
 }
 
