@@ -70,7 +70,7 @@ fn main() {
             ("pull", _) => commands::pull(&config),
             ("install", Some(matches)) => commands::install(&config, &matches),
             ("upgrade", _) => commands::upgrade(&config),
-            ("uninstall", _) => commands::uninstall(&config),
+            ("uninstall", Some(matches)) => commands::uninstall(&config, matches),
             _ => unimplemented!(),
         }?;
     };

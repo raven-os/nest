@@ -1,9 +1,11 @@
 mod install;
 pub mod operations;
 mod pull;
+mod uninstall;
 
 pub use self::install::install;
 pub use self::pull::pull;
+pub use self::uninstall::uninstall;
 
 use colored::*;
 use failure::{Error, ResultExt};
@@ -61,10 +63,6 @@ pub fn ask_confirmation(question: &str, default: bool) -> Result<bool, Error> {
             _ => print!("Please type \"yes\" or \"no\". [{}] ", hint),
         }
     }
-}
-
-pub fn uninstall(_config: &Config) -> Result<(), Error> {
-    Ok(())
 }
 
 pub fn upgrade(_config: &Config) -> Result<(), Error> {
