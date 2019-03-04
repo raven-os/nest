@@ -68,13 +68,14 @@ fn main() {
                             Arg::with_name("GROUP")
                                 .help("Groups to create")
                                 .multiple(true)
-                                .required(true),
+                                .required(true)
                         )
                         .arg(
                             Arg::with_name("PARENT")
                                 .long("parent")
                                 .help("Parent group of the groups to create")
                                 .takes_value(true)
+                                .default_value("@root")
                         )
                 )
                 .subcommand(
@@ -110,6 +111,7 @@ fn main() {
                                 .long("parent")
                                 .help("Parent group of the requirements to add")
                                 .takes_value(true)
+                                .default_value("@root")
                         )
                 )
                 .subcommand(
@@ -126,6 +128,7 @@ fn main() {
                                 .long("parent")
                                 .help("Parent group of the requirements to add")
                                 .takes_value(true)
+                                .default_value("@root")
                         )
                 )
         )
@@ -150,7 +153,7 @@ fn main() {
             ("group", Some(sub_matches)) => match sub_matches.subcommand() {
                 ("add", Some(cmd_matches)) => commands::group_add(
                     &config,
-                    cmd_matches.value_of("PARENT").unwrap_or("@root"),
+                    cmd_matches.value_of("PARENT").unwrap(),
                     &cmd_matches,
                 ),
                 ("remove", Some(cmd_matches)) => commands::group_remove(&config, &cmd_matches),
@@ -160,12 +163,12 @@ fn main() {
             ("requirement", Some(sub_matches)) => match sub_matches.subcommand() {
                 ("add", Some(cmd_matches)) => commands::requirement_add(
                     &config,
-                    cmd_matches.value_of("PARENT").unwrap_or("@root"),
+                    cmd_matches.value_of("PARENT").unwrap(),
                     &cmd_matches,
                 ),
                 ("remove", Some(cmd_matches)) => commands::requirement_remove(
                     &config,
-                    cmd_matches.value_of("PARENT").unwrap_or("@root"),
+                    cmd_matches.value_of("PARENT").unwrap(),
                     &cmd_matches,
                 ),
                 _ => unimplemented!(),
