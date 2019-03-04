@@ -57,6 +57,85 @@ fn main() {
                         .required(true),
                 )
         )
+        .subcommand(
+            SubCommand::with_name("group")
+                .setting(AppSettings::SubcommandRequiredElseHelp)
+                .about("Operate on groups")
+                .subcommand(
+                    SubCommand::with_name("add")
+                        .about("Create new groups")
+                        .arg(
+                            Arg::with_name("GROUP")
+                                .help("Groups to create")
+                                .multiple(true)
+                                .required(true)
+                        )
+                        .arg(
+                            Arg::with_name("PARENT")
+                                .long("parent")
+                                .help("Parent group of the groups to create")
+                                .takes_value(true)
+                                .default_value("@root")
+                        )
+                )
+                .subcommand(
+                    SubCommand::with_name("remove")
+                        .about("Remove existing groups")
+                        .arg(
+                            Arg::with_name("GROUP")
+                                .help("Groups to remove")
+                                .multiple(true)
+                                .required(true),
+                        )
+                )
+                .subcommand(
+                    SubCommand::with_name("list")
+                        .about("List existing groups")
+                )
+        )
+        .subcommand(
+            SubCommand::with_name("requirement")
+                .setting(AppSettings::SubcommandRequiredElseHelp)
+                .about("Operate on requirements")
+                .subcommand(
+                    SubCommand::with_name("add")
+                        .about("Add new requirements")
+                        .arg(
+                            Arg::with_name("PACKAGE")
+                                .help("Requirements to add")
+                                .multiple(true)
+                                .required(true),
+                        )
+                        .arg(
+                            Arg::with_name("PARENT")
+                                .long("parent")
+                                .help("Parent group of the requirements to add")
+                                .takes_value(true)
+                                .default_value("@root")
+                        )
+                )
+                .subcommand(
+                    SubCommand::with_name("remove")
+                        .about("Remove existing requirements")
+                        .arg(
+                            Arg::with_name("PACKAGE")
+                                .help("Requirements to remove")
+                                .multiple(true)
+                                .required(true),
+                        )
+                        .arg(
+                            Arg::with_name("PARENT")
+                                .long("parent")
+                                .help("Parent group of the requirements to add")
+                                .takes_value(true)
+                                .default_value("@root")
+                        )
+                )
+        )
+        .subcommand(
+            SubCommand::with_name("merge")
+                .about("Merge the scratch dependency graph with the regular dependency graph")
+        )
         .get_matches();
 
     let result: Result<(), failure::Error> = try {
@@ -70,7 +149,31 @@ fn main() {
             ("pull", _) => commands::pull(&config),
             ("install", Some(matches)) => commands::install(&config, &matches),
             ("upgrade", _) => commands::upgrade(&config),
-            ("uninstall", Some(matches)) => commands::uninstall(&config, matches),
+            ("uninstall", Some(matches)) => commands::uninstall(&config, &matches),
+            ("group", Some(sub_matches)) => match sub_matches.subcommand() {
+                ("add", Some(cmd_matches)) => commands::group_add(
+                    &config,
+                    cmd_matches.value_of("PARENT").unwrap(),
+                    &cmd_matches,
+                ),
+                ("remove", Some(cmd_matches)) => commands::group_remove(&config, &cmd_matches),
+                ("list", _) => commands::group_list(&config),
+                _ => unimplemented!(),
+            },
+            ("requirement", Some(sub_matches)) => match sub_matches.subcommand() {
+                ("add", Some(cmd_matches)) => commands::requirement_add(
+                    &config,
+                    cmd_matches.value_of("PARENT").unwrap(),
+                    &cmd_matches,
+                ),
+                ("remove", Some(cmd_matches)) => commands::requirement_remove(
+                    &config,
+                    cmd_matches.value_of("PARENT").unwrap(),
+                    &cmd_matches,
+                ),
+                _ => unimplemented!(),
+            },
+            ("merge", _) => commands::merge(&config),
             _ => unimplemented!(),
         }?;
     };

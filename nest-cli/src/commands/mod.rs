@@ -1,10 +1,16 @@
+mod group;
 mod install;
+mod merge;
 pub mod operations;
 mod pull;
+mod requirement;
 mod uninstall;
 
+pub use self::group::{group_add, group_list, group_remove};
 pub use self::install::install;
+pub use self::merge::merge;
 pub use self::pull::pull;
+pub use self::requirement::{requirement_add, requirement_remove};
 pub use self::uninstall::uninstall;
 
 use colored::*;
