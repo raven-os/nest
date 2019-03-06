@@ -8,7 +8,7 @@ pub mod commands;
 fn main() {
     let matches = App::new(crate_name!())
         .template("{usage}\n\n{about}\n\nOPTIONS\n{flags}\n\nSUBCOMMANDS\n{subcommands}")
-        .usage("nest [OPTION]... SUBCOMMAND [SUBCOMMAND OPTIONS]...")
+        .usage("finest [OPTION]... SUBCOMMAND [SUBCOMMAND OPTIONS]...")
         .about("Raven-OS's package manager.")
         .version(crate_version!())
         .author(crate_authors!())
@@ -29,33 +29,6 @@ fn main() {
         )
         .subcommand(
             SubCommand::with_name("pull").about("Pull repositories and update the local cache"),
-        )
-        .subcommand(
-            SubCommand::with_name("install")
-                .alias("add")
-                .about("Download and install the given packages [alias: add]")
-                .arg(
-                    Arg::with_name("PACKAGE")
-                        .help("Packages to install")
-                        .multiple(true)
-                        .required(true),
-                )
-        )
-        .subcommand(
-            SubCommand::with_name("upgrade")
-                .alias("update")
-                .about("Upgrade all installed packages [alias: update]")
-        )
-        .subcommand(
-            SubCommand::with_name("uninstall")
-                .alias("remove")
-                .about("Uninstall the given packages [alias: remove]")
-                .arg(
-                    Arg::with_name("PACKAGE")
-                        .help("Packages to uninstall")
-                        .multiple(true)
-                        .required(true),
-                )
         )
         .subcommand(
             SubCommand::with_name("group")
@@ -147,9 +120,6 @@ fn main() {
 
         match matches.subcommand() {
             ("pull", _) => commands::pull(&config),
-            ("install", Some(matches)) => commands::install(&config, &matches),
-            ("upgrade", _) => commands::upgrade(&config),
-            ("uninstall", Some(matches)) => commands::uninstall(&config, &matches),
             ("group", Some(sub_matches)) => match sub_matches.subcommand() {
                 ("add", Some(cmd_matches)) => commands::group_add(
                     &config,
