@@ -6,6 +6,7 @@ use failure::{Error, ResultExt};
 use serde_json;
 
 use crate::cache::CacheErrorKind;
+use crate::lock_file::LockFileOwnership;
 use crate::package::{Manifest, Package, RepositoryName};
 use crate::repository::Repository;
 
@@ -36,7 +37,11 @@ impl<'a, 'b> PullTransaction<'a, 'b> {
     }
 
     /// Save the stored data to the available packages cache
-    pub fn save_to_cache(&self, config: &crate::config::Config) -> Result<(), Error> {
+    pub fn save_to_cache(
+        &self,
+        config: &crate::config::Config,
+        _: &LockFileOwnership,
+    ) -> Result<(), Error> {
         let res: Result<Vec<Manifest>, Error> = try {
             let utf8 = str::from_utf8(&self.data)?;
             serde_json::from_str(utf8)?

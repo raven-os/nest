@@ -42,18 +42,22 @@ pub fn pull(config: &Config) -> Result<(), Error> {
     let mut transactions = transactions;
     let download = Download::from("pull");
 
-    for pull in transactions.iter_mut() {
-        if let Transaction::Pull(pull) = pull {
-            let repo = *pull.target_repository();
+    {
+        let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
 
-            progress_bar.println(format!("Pulling {}...", repo.name()).as_str());
+        for pull in transactions.iter_mut() {
+            if let Transaction::Pull(pull) = pull {
+                let repo = *pull.target_repository();
 
-            download
-                .perform_with_mirrors(&mut pull.writer(), repo.config().mirrors())
-                .context(format_err!("unable to pull repository '{}'", repo.name()))?;
-            pull.save_to_cache(config)?;
+                progress_bar.println(format!("Pulling {}...", repo.name()).as_str());
 
-            progress_bar.inc(1);
+                download
+                    .perform_with_mirrors(&mut pull.writer(), repo.config().mirrors())
+                    .context(format_err!("unable to pull repository '{}'", repo.name()))?;
+                pull.save_to_cache(config, &lock_file_ownership)?;
+
+                progress_bar.inc(1);
+            }
         }
     }
     progress_bar.finish_and_clear();
