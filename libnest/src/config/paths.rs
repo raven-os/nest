@@ -10,7 +10,7 @@ lazy_static! {
     static ref NEST_PATH_INSTALLED: &'static Path = Path::new("/var/nest/installed/");
     static ref NEST_PATH_DEPGRAPH: &'static Path = Path::new("/var/nest/depgraph");
     static ref NEST_PATH_SCRATCH_DEPGRAPH: &'static Path = Path::new("/var/nest/scratch_depgraph");
-    static ref NEST_PATH_LOCKFILE: &'static Path = Path::new("/var/nest/nest.lock");
+    static ref NEST_PATH_LOCKFILE: &'static Path = Path::new("/var/lock/nest.lock");
 }
 
 /// A structure holding all important paths for libnest. It's a sub member of [`Config`][1].
@@ -60,7 +60,7 @@ impl ConfigPaths {
     /// assert_eq!(paths.downloaded(), Path::new("/chroot/var/nest/downloaded"));
     /// assert_eq!(paths.installed(), Path::new("/chroot/var/nest/installed"));
     /// assert_eq!(paths.depgraph(), Path::new("/chroot/var/nest/depgraph"));
-    /// assert_eq!(paths.lock_file(), Path::new("/chroot/var/nest/nest.lock"));
+    /// assert_eq!(paths.lock_file(), Path::new("/chroot/var/lock/nest.lock"));
     /// # Ok(())
     /// # }
     /// ```
@@ -347,7 +347,7 @@ impl ConfigPaths {
     /// use libnest::config::ConfigPaths;
     ///
     /// let paths = ConfigPaths::default();
-    /// assert_eq!(paths.lock_file(), Path::new("/var/nest/nest.lock"));
+    /// assert_eq!(paths.lock_file(), Path::new("/var/lock/nest.lock"));
     /// # Ok(())
     /// # }
     /// ```

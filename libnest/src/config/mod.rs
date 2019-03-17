@@ -171,6 +171,9 @@ impl Config {
         &self,
         should_wait: bool,
     ) -> Result<LockFileOwnership, Error> {
-        LockFileOwnership::acquire(self.paths.lock_file(), should_wait)
+        Ok(
+            LockFileOwnership::acquire(self.paths.lock_file(), should_wait)
+                .with_context(|_| format_err!("unable to acquire lock file"))?,
+        )
     }
 }

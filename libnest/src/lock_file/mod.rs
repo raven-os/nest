@@ -1,10 +1,10 @@
 //! Simple file-based locking to prevent race conditions when running multiple instances of Nest
 
-use std::fs::File;
+use std::fs::{self, File};
 use std::ops::Drop;
 use std::path::Path;
 
-use failure::Error;
+use failure::{Error, ResultExt};
 use fs2::FileExt;
 
 /// A handle representing ownership over Nest's lock file
@@ -15,6 +15,9 @@ pub struct LockFileOwnership {
 
 impl LockFileOwnership {
     pub(crate) fn acquire(path: &Path, should_wait: bool) -> Result<Self, Error> {
+        if let Some(parent_path) = path.parent() {
+            fs::create_dir_all(&parent_path).with_context(|_| parent_path.display().to_string())?;
+        }
         let f = File::create(path)?;
 
         if should_wait {
