@@ -32,6 +32,7 @@ use toml;
 
 use crate::cache::available::AvailablePackages;
 use crate::cache::depgraph::DependencyGraph;
+use crate::lock_file::LockFileOwnership;
 use crate::repository::Repository;
 
 lazy_static! {
@@ -163,5 +164,16 @@ impl Config {
     /// Returns a handle over the scratch dependency graph, or an error if it could not be loaded
     pub fn scratch_dependency_graph(&self) -> Result<DependencyGraph, Error> {
         DependencyGraph::load_from_cache(self.paths().scratch_depgraph())
+    }
+
+    /// Acquire the ownership over Nest's lock file
+    pub fn acquire_lock_file_ownership(
+        &self,
+        should_wait: bool,
+    ) -> Result<LockFileOwnership, Error> {
+        Ok(
+            LockFileOwnership::acquire(self.paths.lock_file(), should_wait)
+                .with_context(|_| format_err!("unable to acquire lock file"))?,
+        )
     }
 }

@@ -10,6 +10,7 @@ lazy_static! {
     static ref NEST_PATH_INSTALLED: &'static Path = Path::new("/var/nest/installed/");
     static ref NEST_PATH_DEPGRAPH: &'static Path = Path::new("/var/nest/depgraph");
     static ref NEST_PATH_SCRATCH_DEPGRAPH: &'static Path = Path::new("/var/nest/scratch_depgraph");
+    static ref NEST_PATH_LOCKFILE: &'static Path = Path::new("/var/lock/nest.lock");
 }
 
 /// A structure holding all important paths for libnest. It's a sub member of [`Config`][1].
@@ -24,6 +25,7 @@ pub struct ConfigPaths {
     installed: PathBuf,
     depgraph: PathBuf,
     scratch_depgraph: PathBuf,
+    lockfile_path: PathBuf,
 }
 
 impl ConfigPaths {
@@ -36,6 +38,7 @@ impl ConfigPaths {
             installed: PathBuf::from(*NEST_PATH_INSTALLED),
             depgraph: PathBuf::from(*NEST_PATH_DEPGRAPH),
             scratch_depgraph: PathBuf::from(*NEST_PATH_SCRATCH_DEPGRAPH),
+            lockfile_path: PathBuf::from(*NEST_PATH_LOCKFILE),
         }
     }
 
@@ -57,6 +60,7 @@ impl ConfigPaths {
     /// assert_eq!(paths.downloaded(), Path::new("/chroot/var/nest/downloaded"));
     /// assert_eq!(paths.installed(), Path::new("/chroot/var/nest/installed"));
     /// assert_eq!(paths.depgraph(), Path::new("/chroot/var/nest/depgraph"));
+    /// assert_eq!(paths.lock_file(), Path::new("/chroot/var/lock/nest.lock"));
     /// # Ok(())
     /// # }
     /// ```
@@ -71,6 +75,7 @@ impl ConfigPaths {
             installed: self.installed.with_root(root.as_ref()),
             depgraph: self.depgraph.with_root(root.as_ref()),
             scratch_depgraph: self.scratch_depgraph.with_root(root.as_ref()),
+            lockfile_path: self.lockfile_path.with_root(root.as_ref()),
         }
     }
 
@@ -328,6 +333,49 @@ impl ConfigPaths {
     #[inline]
     pub fn scratch_depgraph_mut(&mut self) -> &mut PathBuf {
         &mut self.scratch_depgraph
+    }
+
+    /// Returns a reference to the file's path where the lock file is stored
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # extern crate libnest;
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
+    /// use std::path::Path;
+    /// use libnest::config::ConfigPaths;
+    ///
+    /// let paths = ConfigPaths::default();
+    /// assert_eq!(paths.lock_file(), Path::new("/var/lock/nest.lock"));
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[inline]
+    pub fn lock_file(&self) -> &Path {
+        &self.lockfile_path
+    }
+
+    /// Returns a mutable reference to the file's path where the lock file is stored
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # extern crate libnest;
+    /// # extern crate failure;
+    /// # fn main() -> Result<(), failure::Error> {
+    /// use std::path::{Path, PathBuf};
+    /// use libnest::config::ConfigPaths;
+    ///
+    /// let mut paths = ConfigPaths::default();
+    /// *paths.lock_file_mut() = PathBuf::from("/tmp/nest.lock");
+    /// assert_eq!(paths.lock_file(), Path::new("/tmp/nest.lock"));
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[inline]
+    pub fn lock_file_mut(&mut self) -> &mut PathBuf {
+        &mut self.lockfile_path
     }
 }
 

@@ -19,8 +19,8 @@ use serde_derive::{Deserialize, Serialize};
 use serde_json;
 use std::path::Path;
 
-/// A regular expression to match and parse a package's string representation
 lazy_static! {
+    /// A regular expression to match and parse a package's string representation
     static ref REGEX_PACKAGE_ID: Regex = Regex::new(
         r"^((?P<repository>[a-z\-]+)::)?((?P<category>[a-z\-]+)/)?(?P<package>([a-z0-9\-]+))(#(?P<version>(.+)))?$"
     ).unwrap();
