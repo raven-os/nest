@@ -38,15 +38,23 @@ pub fn merge(config: &Config) -> Result<(), Error> {
         return Ok(());
     }
 
-    for mut transaction in &mut transactions.iter_mut() {
-        match &mut transaction {
-            Transaction::Install(install) => install_package(config, install)?,
-            Transaction::Remove(remove) => uninstall_package(config, remove)?,
-            _ => unimplemented!(),
-        };
-    }
+    {
+        let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
 
-    graph.save_to_cache(config.paths().depgraph())?;
+        for mut transaction in &mut transactions.iter_mut() {
+            match &mut transaction {
+                Transaction::Install(install) => {
+                    install_package(config, install, &lock_file_ownership)?
+                }
+                Transaction::Remove(remove) => {
+                    uninstall_package(config, remove, &lock_file_ownership)?
+                }
+                _ => unimplemented!(),
+            };
+        }
+
+        graph.save_to_cache(config.paths().depgraph(), &lock_file_ownership)?;
+    }
 
     Ok(())
 }

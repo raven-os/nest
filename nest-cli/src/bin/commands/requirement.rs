@@ -59,7 +59,11 @@ pub fn requirement_add(
 
     scratch_graph.solve(&config)?;
 
-    scratch_graph.save_to_cache(config.paths().scratch_depgraph())?;
+    {
+        let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
+
+        scratch_graph.save_to_cache(config.paths().scratch_depgraph(), &lock_file_ownership)?;
+    }
 
     Ok(())
 }
@@ -121,7 +125,11 @@ pub fn requirement_remove(
 
     graph.solve(&config)?;
 
-    graph.save_to_cache(config.paths().scratch_depgraph())?;
+    {
+        let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
+
+        graph.save_to_cache(config.paths().scratch_depgraph(), &lock_file_ownership)?;
+    }
 
     Ok(())
 }

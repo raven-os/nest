@@ -30,7 +30,11 @@ pub fn group_add(config: &Config, parent_group: &str, matches: &ArgMatches) -> R
 
     graph.solve(config)?;
 
-    graph.save_to_cache(config.paths().scratch_depgraph())?;
+    {
+        let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
+
+        graph.save_to_cache(config.paths().scratch_depgraph(), &lock_file_ownership)?;
+    }
 
     println!("Successfully added all the specified groups.");
 
@@ -48,7 +52,11 @@ pub fn group_remove(config: &Config, matches: &ArgMatches) -> Result<(), Error> 
 
     graph.solve(config)?;
 
-    graph.save_to_cache(config.paths().scratch_depgraph())?;
+    {
+        let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
+
+        graph.save_to_cache(config.paths().scratch_depgraph(), &lock_file_ownership)?;
+    }
 
     println!("Successfully removed all the specified groups.");
 

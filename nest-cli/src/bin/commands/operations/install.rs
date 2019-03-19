@@ -1,11 +1,16 @@
 use failure::{format_err, Error, ResultExt};
 use indicatif::{ProgressBar, ProgressStyle};
 use libnest::config::Config;
+use libnest::lock_file::LockFileOwnership;
 use libnest::transaction::InstallTransaction;
 
 use super::download::Download;
 
-pub fn install_package(config: &Config, trans: &mut InstallTransaction) -> Result<(), Error> {
+pub fn install_package(
+    config: &Config,
+    trans: &mut InstallTransaction,
+    ownership: &LockFileOwnership,
+) -> Result<(), Error> {
     // Find the repository hosting the package
     let repo = config
         .repositories()
@@ -45,7 +50,7 @@ pub fn install_package(config: &Config, trans: &mut InstallTransaction) -> Resul
     // Extract and install the package
     progress_bar.println(format!("Extracting {}...", trans.target()));
     trans
-        .extract(&config)
+        .extract(&config, ownership)
         .context(format_err!("unable to extract package"))?;
 
     progress_bar.finish_and_clear();

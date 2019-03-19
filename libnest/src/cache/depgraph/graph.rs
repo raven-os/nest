@@ -9,6 +9,7 @@ use serde_json;
 
 use crate::cache::available::AvailablePackagesCacheQueryStrategy;
 use crate::config::Config;
+use crate::lock_file::LockFileOwnership;
 use crate::package::{HardPackageRequirement, Package, PackageFullName};
 
 use super::super::errors::DependencyGraphErrorKind;
@@ -69,9 +70,12 @@ impl DependencyGraph {
     }
 
     /// Saves the dependency graph back to the cache
-    #[allow(dead_code)] // TODO: Remove this when the function is used
     #[inline]
-    pub fn save_to_cache<P: AsRef<Path>>(&self, path: P) -> Result<(), Error> {
+    pub fn save_to_cache<P: AsRef<Path>>(
+        &self,
+        path: P,
+        _: &LockFileOwnership,
+    ) -> Result<(), Error> {
         let path = path.as_ref();
 
         if let Some(parent) = path.parent() {

@@ -73,14 +73,20 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
         return Ok(());
     }
 
-    for mut transaction in &mut transactions.iter_mut() {
-        match &mut transaction {
-            Transaction::Install(install) => install_package(config, install)?,
-            _ => unimplemented!(),
-        };
-    }
+    {
+        let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
 
-    graph.save_to_cache(config.paths().depgraph())?;
+        for mut transaction in &mut transactions.iter_mut() {
+            match &mut transaction {
+                Transaction::Install(install) => {
+                    install_package(config, install, &lock_file_ownership)?
+                }
+                _ => unimplemented!(),
+            };
+        }
+
+        graph.save_to_cache(config.paths().depgraph(), &lock_file_ownership)?;
+    }
 
     Ok(())
 }

@@ -8,6 +8,7 @@ use tar::Archive;
 
 use crate::chroot::Chroot;
 use crate::config::Config;
+use crate::lock_file::LockFileOwnership;
 use crate::package::PackageID;
 
 use super::InstallErrorKind;
@@ -50,7 +51,7 @@ impl InstallTransaction {
     }
 
     /// Extracts the downloaded file and performs the installation
-    pub fn extract(&self, config: &Config) -> Result<(), Error> {
+    pub fn extract(&self, config: &Config, _: &LockFileOwnership) -> Result<(), Error> {
         let tarball_path = config
             .paths()
             .downloaded()

@@ -6,6 +6,7 @@ use failure::{Error, ResultExt};
 
 use crate::chroot::Chroot;
 use crate::config::Config;
+use crate::lock_file::LockFileOwnership;
 use crate::package::PackageID;
 
 use super::RemoveErrorKind;
@@ -28,7 +29,7 @@ impl RemoveTransaction {
     }
 
     /// Performs the removal of the package
-    pub fn perform(&self, config: &Config) -> Result<(), Error> {
+    pub fn perform(&self, config: &Config, _: &LockFileOwnership) -> Result<(), Error> {
         // Get the log file of the target package
         let log_path = config
             .paths()
