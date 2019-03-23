@@ -7,7 +7,10 @@ use libnest::config::Config;
 
 pub fn group_add(config: &Config, parent_group: &str, matches: &ArgMatches) -> Result<(), Error> {
     let parent_group = GroupName::from_str(parent_group)?;
-    let mut graph = config.scratch_dependency_graph()?;
+
+    let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
+
+    let mut graph = config.scratch_dependency_graph(&lock_file_ownership)?;
 
     let parent_group_id = *graph
         .groups()
@@ -30,7 +33,7 @@ pub fn group_add(config: &Config, parent_group: &str, matches: &ArgMatches) -> R
 
     graph.solve(config)?;
 
-    graph.save_to_cache(config.paths().scratch_depgraph())?;
+    graph.save_to_cache(config.paths().scratch_depgraph(), &lock_file_ownership)?;
 
     println!("Successfully added all the specified groups.");
 
@@ -38,7 +41,9 @@ pub fn group_add(config: &Config, parent_group: &str, matches: &ArgMatches) -> R
 }
 
 pub fn group_remove(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
-    let mut graph = config.scratch_dependency_graph()?;
+    let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
+
+    let mut graph = config.scratch_dependency_graph(&lock_file_ownership)?;
 
     for group in matches.values_of_lossy("GROUP").unwrap() {
         let group_name = GroupName::from_str(group.as_str())?;
@@ -48,7 +53,7 @@ pub fn group_remove(config: &Config, matches: &ArgMatches) -> Result<(), Error> 
 
     graph.solve(config)?;
 
-    graph.save_to_cache(config.paths().scratch_depgraph())?;
+    graph.save_to_cache(config.paths().scratch_depgraph(), &lock_file_ownership)?;
 
     println!("Successfully removed all the specified groups.");
 
@@ -56,7 +61,9 @@ pub fn group_remove(config: &Config, matches: &ArgMatches) -> Result<(), Error> 
 }
 
 pub fn group_list(config: &Config) -> Result<(), Error> {
-    let graph = config.scratch_dependency_graph()?;
+    let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
+
+    let graph = config.scratch_dependency_graph(&lock_file_ownership)?;
 
     for group_name in graph.groups().keys() {
         println!("{}", **group_name);

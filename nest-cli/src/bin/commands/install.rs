@@ -10,11 +10,13 @@ use super::operations::install::install_package;
 use super::{ask_confirmation, print_transactions};
 
 pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
-    let mut graph = config.dependency_graph()?;
+    let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
+
+    let mut graph = config.dependency_graph(&lock_file_ownership)?;
     let original_graph = graph.clone();
 
     {
-        let packages_cache = config.available_packages_cache();
+        let packages_cache = config.available_packages_cache(&lock_file_ownership);
 
         for target in &matches.values_of_lossy("PACKAGE").unwrap() {
             let requirement = PackageRequirement::parse(&target)?;
@@ -75,12 +77,14 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
 
     for mut transaction in &mut transactions.iter_mut() {
         match &mut transaction {
-            Transaction::Install(install) => install_package(config, install)?,
+            Transaction::Install(install) => {
+                install_package(config, install, &lock_file_ownership)?
+            }
             _ => unimplemented!(),
         };
     }
 
-    graph.save_to_cache(config.paths().depgraph())?;
+    graph.save_to_cache(config.paths().depgraph(), &lock_file_ownership)?;
 
     Ok(())
 }

@@ -40,7 +40,7 @@ impl<'a, 'b> PullTransaction<'a, 'b> {
     pub fn save_to_cache(
         &self,
         config: &crate::config::Config,
-        _: &LockFileOwnership,
+        ownership: &LockFileOwnership,
     ) -> Result<(), Error> {
         let res: Result<Vec<Manifest>, Error> = try {
             let utf8 = str::from_utf8(&self.data)?;
@@ -48,7 +48,7 @@ impl<'a, 'b> PullTransaction<'a, 'b> {
         };
 
         let manifests = res.context(CacheErrorKind::CacheWriteError)?;
-        let cache = config.available_packages_cache();
+        let cache = config.available_packages_cache(ownership);
 
         cache.erase_repository(&self.target_repository)?;
 
