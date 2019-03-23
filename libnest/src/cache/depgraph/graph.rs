@@ -22,7 +22,7 @@ use super::requirement::{
 /// The unsolved dependency graph: a serializable collection of [`Node`]s,
 /// linked together with [`Requirement`]s.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
-pub struct DependencyGraph<'a> {
+pub struct DependencyGraph<'lock_file> {
     next_node_id: NodeID,
     next_requirement_id: RequirementID,
     nodes: HashMap<NodeID, Node>,
@@ -30,11 +30,13 @@ pub struct DependencyGraph<'a> {
     packages: HashMap<PackageFullName, NodeID>,
     groups: HashMap<GroupName, NodeID>,
     #[serde(skip)]
-    phantom: PhantomData<&'a LockFileOwnership>,
+    phantom: PhantomData<&'lock_file LockFileOwnership>,
 }
 
-impl<'a> DependencyGraph<'a> {
-    pub(crate) fn new(phantom: PhantomData<&'a LockFileOwnership>) -> DependencyGraph<'a> {
+impl<'lock_file> DependencyGraph<'lock_file> {
+    pub(crate) fn new(
+        phantom: PhantomData<&'lock_file LockFileOwnership>,
+    ) -> DependencyGraph<'lock_file> {
         let mut nodes = HashMap::new();
         let mut groups = HashMap::new();
 
@@ -61,8 +63,8 @@ impl<'a> DependencyGraph<'a> {
     #[inline]
     pub(crate) fn load_from_cache<P: AsRef<Path>>(
         path: P,
-        phantom: PhantomData<&'a LockFileOwnership>,
-    ) -> Result<DependencyGraph<'a>, Error> {
+        phantom: PhantomData<&'lock_file LockFileOwnership>,
+    ) -> Result<DependencyGraph<'lock_file>, Error> {
         let path = path.as_ref();
 
         if path.exists() {
