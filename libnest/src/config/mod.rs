@@ -24,6 +24,7 @@ use failure::*;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
+use std::marker::PhantomData;
 use std::path::Path;
 
 use lazy_static::lazy_static;
@@ -151,19 +152,49 @@ impl Config {
             .collect()
     }
 
+    pub(crate) fn available_packages_cache_internal<'a, 'b>(
+        &'b self,
+        phantom: PhantomData<&'a LockFileOwnership>,
+    ) -> AvailablePackages<'b, 'a> {
+        AvailablePackages::from(self.paths().available(), phantom)
+    }
+
     /// Returns a handle over the cache containing available packages
-    pub fn available_packages_cache(&self) -> AvailablePackages {
-        AvailablePackages::from(self.paths().available())
+    pub fn available_packages_cache<'a, 'b>(
+        &'b self,
+        _: &'a LockFileOwnership,
+    ) -> AvailablePackages<'b, 'a> {
+        let phantom: PhantomData<&'a LockFileOwnership> = PhantomData;
+
+        self.available_packages_cache_internal(phantom)
+    }
+
+    fn dependency_graph_internal<'a>(
+        &self,
+        path: &Path,
+        phantom: PhantomData<&'a LockFileOwnership>,
+    ) -> Result<DependencyGraph<'a>, Error> {
+        DependencyGraph::load_from_cache(path, phantom)
     }
 
     /// Returns a handle over the dependency graph, or an error if it could not be loaded
-    pub fn dependency_graph(&self) -> Result<DependencyGraph, Error> {
-        DependencyGraph::load_from_cache(self.paths().depgraph())
+    pub fn dependency_graph<'a>(
+        &self,
+        _: &'a LockFileOwnership,
+    ) -> Result<DependencyGraph<'a>, Error> {
+        let phantom: PhantomData<&'a LockFileOwnership> = PhantomData;
+
+        self.dependency_graph_internal(self.paths.depgraph(), phantom)
     }
 
     /// Returns a handle over the scratch dependency graph, or an error if it could not be loaded
-    pub fn scratch_dependency_graph(&self) -> Result<DependencyGraph, Error> {
-        DependencyGraph::load_from_cache(self.paths().scratch_depgraph())
+    pub fn scratch_dependency_graph<'a>(
+        &self,
+        _: &'a LockFileOwnership,
+    ) -> Result<DependencyGraph<'a>, Error> {
+        let phantom: PhantomData<&'a LockFileOwnership> = PhantomData;
+
+        self.dependency_graph_internal(self.paths.scratch_depgraph(), phantom)
     }
 
     /// Acquire the ownership over Nest's lock file

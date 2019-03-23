@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::fs::{self, File};
 use std::io::Write;
+use std::marker::PhantomData;
 use std::path::Path;
 
 use failure::{format_err, Error, ResultExt};
@@ -21,18 +22,19 @@ use super::requirement::{
 /// The unsolved dependency graph: a serializable collection of [`Node`]s,
 /// linked together with [`Requirement`]s.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
-pub struct DependencyGraph {
+pub struct DependencyGraph<'a> {
     next_node_id: NodeID,
     next_requirement_id: RequirementID,
     nodes: HashMap<NodeID, Node>,
     requirements: HashMap<RequirementID, Requirement>,
     packages: HashMap<PackageFullName, NodeID>,
     groups: HashMap<GroupName, NodeID>,
+    #[serde(skip)]
+    phantom: PhantomData<&'a LockFileOwnership>,
 }
 
-impl DependencyGraph {
-    #[allow(dead_code)] // TODO: Remove this when the function is used
-    pub(crate) fn new() -> DependencyGraph {
+impl<'a> DependencyGraph<'a> {
+    pub(crate) fn new(phantom: PhantomData<&'a LockFileOwnership>) -> DependencyGraph<'a> {
         let mut nodes = HashMap::new();
         let mut groups = HashMap::new();
 
@@ -52,11 +54,15 @@ impl DependencyGraph {
             requirements: HashMap::new(),
             groups,
             packages: HashMap::new(),
+            phantom,
         }
     }
 
     #[inline]
-    pub(crate) fn load_from_cache<P: AsRef<Path>>(path: P) -> Result<DependencyGraph, Error> {
+    pub(crate) fn load_from_cache<P: AsRef<Path>>(
+        path: P,
+        phantom: PhantomData<&'a LockFileOwnership>,
+    ) -> Result<DependencyGraph<'a>, Error> {
         let path = path.as_ref();
 
         if path.exists() {
@@ -65,7 +71,7 @@ impl DependencyGraph {
                 serde_json::from_reader(&file).with_context(|_| path.display().to_string())?;
             Ok(graph)
         } else {
-            Ok(DependencyGraph::new())
+            Ok(DependencyGraph::new(phantom))
         }
     }
 
@@ -479,7 +485,7 @@ impl DependencyGraph {
         // Look for the newest version matching all the requirements
         let find_matching_packages = || -> Result<Option<Package>, Error> {
             let available_packages = config
-                .available_packages_cache()
+                .available_packages_cache_internal(self.phantom)
                 .query(&requirement.clone().any_version().into())
                 .set_strategy(AvailablePackagesCacheQueryStrategy::AllMatchesSorted)
                 .perform();

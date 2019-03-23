@@ -2,30 +2,39 @@
 //! This cache is populated and updated by pull operations.
 
 mod query;
+
 pub use self::query::{AvailablePackagesCacheQuery, AvailablePackagesCacheQueryStrategy};
 
 use super::errors::*;
 
 use std::fs::{self, File};
 use std::io::Write;
+use std::marker::PhantomData;
 use std::path::Path;
 
 use failure::{Error, ResultExt};
 use serde_json;
 
+use crate::lock_file::LockFileOwnership;
 use crate::package::{Package, PackageRequirement};
 use crate::repository::Repository;
 
 /// Structure representing the cache of available packages
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct AvailablePackages<'a> {
-    cache_root: &'a Path,
+pub struct AvailablePackages<'cache_root, 'lock_file> {
+    cache_root: &'cache_root Path,
+    phantom: PhantomData<&'lock_file LockFileOwnership>,
 }
 
-impl<'a> AvailablePackages<'a> {
-    #[allow(dead_code)] // TODO: Remove this when the function is used
-    pub(crate) fn from(cache_root: &'a Path) -> Self {
-        AvailablePackages { cache_root }
+impl<'cache_root, 'lock_file> AvailablePackages<'cache_root, 'lock_file> {
+    pub(crate) fn from(
+        cache_root: &'cache_root Path,
+        phantom: PhantomData<&'lock_file LockFileOwnership>,
+    ) -> Self {
+        AvailablePackages {
+            cache_root,
+            phantom,
+        }
     }
 
     /// Erases the whole cache
@@ -77,10 +86,10 @@ impl<'a> AvailablePackages<'a> {
 
     /// Returns an [`AvailablePackagesCacheQuery`] allowing to browse the cache according to the given [`PackageRequirement`]
     #[inline]
-    pub fn query<'b>(
+    pub fn query<'pkg_req>(
         &self,
-        requirement: &'b PackageRequirement,
-    ) -> AvailablePackagesCacheQuery<'a, 'b> {
+        requirement: &'pkg_req PackageRequirement,
+    ) -> AvailablePackagesCacheQuery<'cache_root, 'pkg_req> {
         AvailablePackagesCacheQuery::from(&self.cache_root, requirement)
     }
 }

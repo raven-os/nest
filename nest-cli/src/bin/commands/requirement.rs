@@ -14,17 +14,19 @@ pub fn requirement_add(
 ) -> Result<(), Error> {
     let group = GroupName::from_str(target_group)?;
 
+    let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
+
     let mut scratch_graph = if config.paths().scratch_depgraph().exists() {
-        config.scratch_dependency_graph()?
+        config.scratch_dependency_graph(&lock_file_ownership)?
     } else {
-        config.dependency_graph()?
+        config.dependency_graph(&lock_file_ownership)?
     };
 
     let group_id = *scratch_graph
         .groups()
         .get(&group)
         .ok_or_else(|| format_err!("Unknown group"))?;
-    let packages_cache = config.available_packages_cache();
+    let packages_cache = config.available_packages_cache(&lock_file_ownership);
 
     for target in &matches.values_of_lossy("PACKAGE").unwrap() {
         let requirement = PackageRequirement::parse(&target)?;
@@ -59,11 +61,7 @@ pub fn requirement_add(
 
     scratch_graph.solve(&config)?;
 
-    {
-        let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
-
-        scratch_graph.save_to_cache(config.paths().scratch_depgraph(), &lock_file_ownership)?;
-    }
+    scratch_graph.save_to_cache(config.paths().scratch_depgraph(), &lock_file_ownership)?;
 
     Ok(())
 }
@@ -75,10 +73,12 @@ pub fn requirement_remove(
 ) -> Result<(), Error> {
     let group = GroupName::from_str(target_group)?;
 
+    let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
+
     let mut graph = if config.paths().scratch_depgraph().exists() {
-        config.scratch_dependency_graph()?
+        config.scratch_dependency_graph(&lock_file_ownership)?
     } else {
-        config.dependency_graph()?
+        config.dependency_graph(&lock_file_ownership)?
     };
     let original_graph = graph.clone();
 
@@ -88,7 +88,7 @@ pub fn requirement_remove(
         .ok_or_else(|| format_err!("Unknown group"))?;
 
     {
-        let packages_cache = config.available_packages_cache();
+        let packages_cache = config.available_packages_cache(&lock_file_ownership);
 
         for target in &matches.values_of_lossy("PACKAGE").unwrap() {
             let requirement = PackageRequirement::parse(&target)?;
@@ -125,11 +125,7 @@ pub fn requirement_remove(
 
     graph.solve(&config)?;
 
-    {
-        let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
-
-        graph.save_to_cache(config.paths().scratch_depgraph(), &lock_file_ownership)?;
-    }
+    graph.save_to_cache(config.paths().scratch_depgraph(), &lock_file_ownership)?;
 
     Ok(())
 }
