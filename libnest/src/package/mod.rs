@@ -24,12 +24,6 @@ lazy_static! {
     static ref REGEX_PACKAGE_ID: Regex = Regex::new(
         r"^((?P<repository>[a-z\-]+)::)?((?P<category>[a-z\-]+)/)?(?P<package>([a-z0-9\-]+))(#(?P<version>(.+)))?$"
     ).unwrap();
-
-    static ref REGEX_PACKAGE_NAME: Regex = Regex::new(r"^[a-z0-9\-]+$").unwrap();
-
-    static ref REGEX_CATEGORY_NAME: Regex = Regex::new(r"^[a-z\-]+$").unwrap();
-
-    static ref REGEX_REPOSITORY_NAME: Regex = Regex::new(r"^[a-z\-]+$").unwrap();
 }
 
 /// A package's kind.
@@ -53,15 +47,8 @@ impl Default for Kind {
     }
 }
 
-/// A package's name.
-///
-/// A `PackageName` can be casted to an `&str` and ensures, when created, that the underlying string matches
-/// the expectations of what a package's name should look like.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
-pub struct PackageName(String);
-
 macro_rules! strong_name_impl {
-    ($NameType:ident, $RegexValidator:ident) => {
+    ($NameType:ident, $RegexValidator:expr) => {
         impl $NameType {
             /// Create a $NameType from a String
             #[inline]
@@ -75,7 +62,11 @@ macro_rules! strong_name_impl {
 
             #[inline]
             fn try_from(value: &str) -> Result<Self, Self::Error> {
-                if $RegexValidator.is_match(value) {
+                lazy_static! {
+                    static ref REGEX: Regex = Regex::new($RegexValidator).unwrap();
+                }
+
+                if REGEX.is_match(value) {
                     Ok(Self::from(String::from(value)))
                 } else {
                     Err(format_err!("'{}' is not a valid name", value))
@@ -108,7 +99,14 @@ macro_rules! strong_name_impl {
     };
 }
 
-strong_name_impl!(PackageName, REGEX_PACKAGE_NAME);
+/// A package's name.
+///
+/// A `PackageName` can be casted to an `&str` and ensures, when created, that the underlying string matches
+/// the expectations of what a package's name should look like.
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
+pub struct PackageName(String);
+
+strong_name_impl!(PackageName, r"^[a-z0-9\-]+$");
 
 /// A category's name.
 ///
@@ -117,7 +115,7 @@ strong_name_impl!(PackageName, REGEX_PACKAGE_NAME);
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub struct CategoryName(String);
 
-strong_name_impl!(CategoryName, REGEX_CATEGORY_NAME);
+strong_name_impl!(CategoryName, r"^[a-z\-]+$");
 
 /// A repository's name.
 ///
@@ -126,7 +124,7 @@ strong_name_impl!(CategoryName, REGEX_CATEGORY_NAME);
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub struct RepositoryName(String);
 
-strong_name_impl!(RepositoryName, REGEX_REPOSITORY_NAME);
+strong_name_impl!(RepositoryName, r"^[a-z\-]+$");
 
 /// One of the possibly many package's tag.
 ///
