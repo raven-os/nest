@@ -12,7 +12,7 @@ pub use self::requirement::{HardPackageRequirement, PackageRequirement};
 
 use std::fs::File;
 
-use failure::{Error, ResultExt};
+use failure::{format_err, Error, ResultExt};
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
@@ -24,6 +24,12 @@ lazy_static! {
     static ref REGEX_PACKAGE_ID: Regex = Regex::new(
         r"^((?P<repository>[a-z\-]+)::)?((?P<category>[a-z\-]+)/)?(?P<package>([a-z0-9\-]+))(#(?P<version>(.+)))?$"
     ).unwrap();
+
+    static ref REGEX_PACKAGE_NAME: Regex = Regex::new(r"^[a-z0-9\-]+$").unwrap();
+
+    static ref REGEX_CATEGORY_NAME: Regex = Regex::new(r"^[a-z\-]+$").unwrap();
+
+    static ref REGEX_REPOSITORY_NAME: Regex = Regex::new(r"^[a-z\-]+$").unwrap();
 }
 
 /// A package's kind.
@@ -54,35 +60,55 @@ impl Default for Kind {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub struct PackageName(String);
 
-impl PackageName {
-    /// Create a [`PackageName`] from a String
-    pub fn from(name: String) -> Self {
-        PackageName(name)
-    }
+macro_rules! strong_name_impl {
+    ($NameType:ident, $RegexValidator:ident) => {
+        impl $NameType {
+            /// Create a $NameType from a String
+            #[inline]
+            pub fn from(name: String) -> Self {
+                $NameType(name)
+            }
+        }
+
+        impl std::convert::TryFrom<&str> for $NameType {
+            type Error = Error;
+
+            #[inline]
+            fn try_from(value: &str) -> Result<Self, Self::Error> {
+                if $RegexValidator.is_match(value) {
+                    Ok(Self::from(String::from(value)))
+                } else {
+                    Err(format_err!("'{}' is not a valid name", value))
+                }
+            }
+        }
+
+        impl std::ops::Deref for $NameType {
+            type Target = String;
+
+            #[inline]
+            fn deref(&self) -> &String {
+                &self.0
+            }
+        }
+
+        impl std::convert::AsRef<Path> for $NameType {
+            #[inline]
+            fn as_ref(&self) -> &std::path::Path {
+                self.0.as_ref()
+            }
+        }
+
+        impl std::fmt::Display for $NameType {
+            #[inline]
+            fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+                write!(fmt, "{}", self.0)
+            }
+        }
+    };
 }
 
-impl std::ops::Deref for PackageName {
-    type Target = String;
-
-    #[inline]
-    fn deref(&self) -> &String {
-        &self.0
-    }
-}
-
-impl std::convert::AsRef<Path> for PackageName {
-    #[inline]
-    fn as_ref(&self) -> &std::path::Path {
-        self.0.as_ref()
-    }
-}
-
-impl std::fmt::Display for PackageName {
-    #[inline]
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(fmt, "{}", self.0)
-    }
-}
+strong_name_impl!(PackageName, REGEX_PACKAGE_NAME);
 
 /// A category's name.
 ///
@@ -91,35 +117,7 @@ impl std::fmt::Display for PackageName {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub struct CategoryName(String);
 
-impl CategoryName {
-    /// Create a [`CategoryName`] from a String
-    pub fn from(name: String) -> Self {
-        CategoryName(name)
-    }
-}
-
-impl std::ops::Deref for CategoryName {
-    type Target = String;
-
-    #[inline]
-    fn deref(&self) -> &String {
-        &self.0
-    }
-}
-
-impl std::convert::AsRef<Path> for CategoryName {
-    #[inline]
-    fn as_ref(&self) -> &std::path::Path {
-        self.0.as_ref()
-    }
-}
-
-impl std::fmt::Display for CategoryName {
-    #[inline]
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(fmt, "{}", self.0)
-    }
-}
+strong_name_impl!(CategoryName, REGEX_CATEGORY_NAME);
 
 /// A repository's name.
 ///
@@ -128,35 +126,7 @@ impl std::fmt::Display for CategoryName {
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default, Serialize, Deserialize)]
 pub struct RepositoryName(String);
 
-impl RepositoryName {
-    /// Create a [`RepositoryName`] from a String
-    pub fn from(name: String) -> Self {
-        RepositoryName(name)
-    }
-}
-
-impl std::ops::Deref for RepositoryName {
-    type Target = String;
-
-    #[inline]
-    fn deref(&self) -> &String {
-        &self.0
-    }
-}
-
-impl std::convert::AsRef<Path> for RepositoryName {
-    #[inline]
-    fn as_ref(&self) -> &std::path::Path {
-        self.0.as_ref()
-    }
-}
-
-impl std::fmt::Display for RepositoryName {
-    #[inline]
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(fmt, "{}", self.0)
-    }
-}
+strong_name_impl!(RepositoryName, REGEX_REPOSITORY_NAME);
 
 /// One of the possibly many package's tag.
 ///
