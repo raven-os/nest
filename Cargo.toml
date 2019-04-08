@@ -1,2 +1,3 @@
 [workspace]
-members = ["nest-cli", "libnest"]
+members = ["libnest"]
+#members = ["nest-cli", "libnest"]

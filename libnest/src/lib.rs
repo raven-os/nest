@@ -9,10 +9,10 @@
 #[macro_use]
 mod errors;
 
-pub mod cache;
-pub mod chroot;
-pub mod config;
-pub mod lock_file;
+//pub mod cache;
+//pub mod chroot;
+//pub mod config;
+//pub mod lock_file;
 pub mod package;
-pub mod repository;
-pub mod transaction;
+//pub mod repository;
+//pub mod transaction;
