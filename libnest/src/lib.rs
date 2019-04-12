@@ -7,7 +7,7 @@
 #![feature(try_blocks)]
 
 #[macro_use]
-mod errors;
+mod error;
 
 //pub mod cache;
 //pub mod chroot;

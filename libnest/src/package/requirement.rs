@@ -6,13 +6,14 @@ use serde_derive::{Deserialize, Serialize};
 
 use super::errors::*;
 use super::identification::{PackageFullName, PackageID};
-use super::{CategoryName, PackageName, RepositoryName, REGEX_PACKAGE_ID};
+use super::{CategoryName, PackageName, RepositoryName};
 
 /// A structure representing a package requirement: parts of a package name and a
 /// version requirement.
 ///
 /// Each part may be optional except the package name (you can match, for exemple, any
 /// package named 'gcc' in any category in any repository)
+///
 /// The version requirement follows SemVer v2
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct PackageRequirement {
