@@ -14,7 +14,6 @@ pub struct PackageManifest {
     category: CategoryName,
     repository: RepositoryName,
     metadata: Metadata,
-    kind: Kind,
     versions: HashMap<Version, VersionData>,
 }
 
@@ -34,7 +33,6 @@ impl PackageManifest {
             category,
             repository,
             metadata,
-            kind: Kind::default(),
             versions: HashMap::new(),
         }
     }
@@ -87,18 +85,6 @@ impl PackageManifest {
         &mut self.metadata
     }
 
-    /// Returns the kind of the package
-    #[inline]
-    pub fn kind(&self) -> Kind {
-        self.kind
-    }
-
-    /// Returns a mutable reference over the kind of the package
-    #[inline]
-    pub fn kind_mut(&mut self) -> &mut Kind {
-        &mut self.kind
-    }
-
     /// Returns a reference over a [`HashMap`] containing the different versions available for this package, and some
     /// version-dependent data like a list of dependencies.
     #[inline]
@@ -120,6 +106,7 @@ pub struct Manifest {
     name: PackageName,
     category: CategoryName,
     version: Version,
+    kind: Kind,
     metadata: Metadata,
     wrap_date: DateTime<Utc>,
     dependencies: HashMap<PackageFullName, VersionReq>,
@@ -134,12 +121,14 @@ impl Manifest {
         name: PackageName,
         category: CategoryName,
         version: Version,
+        kind: Kind,
         metadata: Metadata,
     ) -> Self {
         Self {
             name,
             category,
             version,
+            kind,
             metadata,
             wrap_date: Utc::now(),
             dependencies: HashMap::new(),
@@ -182,6 +171,18 @@ impl Manifest {
         &mut self.version
     }
 
+    /// Returns the kind of the package
+    #[inline]
+    pub fn kind(&self) -> Kind {
+        self.kind
+    }
+
+    /// Returns a mutable reference over the kind of the package
+    #[inline]
+    pub fn kind_mut(&mut self) -> &mut Kind {
+        &mut self.kind
+    }
+
     /// Returns a reference over the metadata of the package
     #[inline]
     pub fn metadata(&self) -> &Metadata {
@@ -222,6 +223,7 @@ impl Manifest {
 /// A container holding that differs from one version to another of the same package.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct VersionData {
+    kind: Kind,
     wrap_date: DateTime<Utc>,
     dependencies: HashMap<PackageFullName, VersionReq>,
 }
@@ -230,13 +232,27 @@ impl VersionData {
     /// Creates a new [`VersionData`] from a wrap date and a list of dependencies.
     #[inline]
     pub fn from(
+        kind: Kind,
         wrap_date: DateTime<Utc>,
         dependencies: HashMap<PackageFullName, VersionReq>,
     ) -> Self {
         Self {
+            kind,
             wrap_date,
             dependencies,
         }
+    }
+
+    /// Returns the kind of the package
+    #[inline]
+    pub fn kind(&self) -> Kind {
+        self.kind
+    }
+
+    /// Returns a mutable reference over the kind of the package
+    #[inline]
+    pub fn kind_mut(&mut self) -> &mut Kind {
+        &mut self.kind
     }
 
     /// Returns a reference over the wrap date of the package
