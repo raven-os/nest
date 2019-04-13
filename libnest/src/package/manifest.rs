@@ -318,8 +318,12 @@ impl VersionData {
 /// The `Kind` enum is used to differentiate those packages and speed up their installation process.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum Kind {
+
+    #[serde(rename = "effective")]
     /// The package contains some installable data.
     Effective,
+
+    #[serde(rename = "virtual")]
     /// The package doesn't contain any data.
     Virtual,
 }

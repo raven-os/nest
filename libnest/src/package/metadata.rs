@@ -158,26 +158,47 @@ impl_serde_visitor!(Tag, TagVisitor);
 #[allow(non_camel_case_types)]
 #[derive(Serialize, Deserialize, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum License {
+    #[serde(rename = "agpl_v3")]
     /// Affero Gnu Public License v3
     AGPL_v3,
+
+    #[serde(rename = "apache")]
     /// Apache License
     Apache,
+
+    #[serde(rename = "bsd")]
     /// BSD License
     BSD,
+
+    #[serde(rename = "custom")]
     /// Custom license
     Custom,
+
+    #[serde(rename = "gpl_v1")]
     /// GNU General Public License v1
     GPL_v1,
+
+    #[serde(rename = "gpl_v2")]
     /// GNU General Public License v2
     GPL_v2,
+
+    #[serde(rename = "gpl_v3")]
     /// GNU General Public License v3
     GPL_v3,
+
+    #[serde(rename = "lgpl_v3")]
     /// Lesser General Public License v3
     LGPL_v3,
+
+    #[serde(rename = "mit")]
     /// MIT License
     MIT,
+
+    #[serde(rename = "mozilla")]
     /// Mozilla License
     Mozilla,
+
+    #[serde(rename = "public_domain")]
     /// Public Domain
     PublicDomain,
 }
