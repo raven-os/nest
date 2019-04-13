@@ -5,7 +5,7 @@ use semver::{Version, VersionReq};
 use serde_derive::{Deserialize, Serialize};
 
 use super::Metadata;
-use super::{CategoryName, PackageFullName, PackageName, RepositoryName};
+use super::{CategoryName, PackageFullName, PackageName, RepositoryName, PackageID};
 
 /// A manifest that aggregates all versions of a package in one, compact structure.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
@@ -96,6 +96,16 @@ impl PackageManifest {
     #[inline]
     pub fn versions_mut(&mut self) -> &mut HashMap<Version, VersionData> {
         &mut self.versions
+    }
+
+    /// Generates the [`PackageFullname`], the common part in the [`PackageID`] of all packages included in this manifest.
+    #[inline]
+    pub fn full_name(&self) -> PackageFullName {
+        PackageFullName::from(
+            self.repository().clone(),
+            self.category().clone(),
+            self.name().clone(),
+        )
     }
 }
 
@@ -216,6 +226,25 @@ impl Manifest {
     #[inline]
     pub fn dependencies_mut(&mut self) -> &mut HashMap<PackageFullName, VersionReq> {
         &mut self.dependencies
+    }
+
+    /// Generates the [`PackageID`] of this package given its missing piece: the [`RepositoryName`].
+    #[inline]
+    pub fn id(&self, repository_name: RepositoryName) -> PackageID {
+        PackageID::from(
+            self.full_name(repository_name),
+            self.version().clone(),
+        )
+    }
+
+    /// Generates the [`PackageFullName`] of this package given its missing piece: the [`RepositoryName`].
+    #[inline]
+    pub fn full_name(&self, repository_name: RepositoryName) -> PackageFullName {
+        PackageFullName::from(
+            repository_name,
+            self.category().clone(),
+            self.name().clone(),
+        )
     }
 }
 
