@@ -22,7 +22,6 @@ impl PackageManifest {
     ///
     /// Other fields hold their default value.
     pub fn new(
-        &self,
         name: PackageName,
         category: CategoryName,
         repository: RepositoryName,
