@@ -14,24 +14,71 @@ use super::error::{
 };
 use super::REGEX_PACKAGE_ID;
 
-/// Identitier of a package, which is the combination of its full name and its version
+/// Identitier of a package, which is the combination of a repository name, a category name,
+/// a package name and a version.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct PackageID {
-    full_name: PackageFullName,
+    repository: RepositoryName,
+    category: CategoryName,
+    name: PackageName,
     version: Version,
 }
 
 impl PackageID {
-    /// Creates a [`PackageID`] from a [`PackageFullName`] and a [`Version`]
+    /// Creates a [`PackageID`] from all its components.
     #[inline]
-    pub fn from(full_name: PackageFullName, version: Version) -> Self {
-        Self { full_name, version }
+    pub fn from(repository: RepositoryName, category: CategoryName, name: PackageName, version: Version) -> Self {
+        Self {
+            repository,
+            category,
+            name,
+            version,
+        }
     }
 
-    /// Returns a reference over the package's full name
+    /// Creates a [`PackageID`] from a [`PackageFullName`] and a [`Version`].
     #[inline]
-    pub fn full_name(&self) -> &PackageFullName {
-        &self.full_name
+    pub fn from_full_name(full_name: PackageFullName, version: Version) -> Self {
+        Self {
+            repository: full_name.repository,
+            category: full_name.category,
+            name: full_name.name,
+            version,
+        }
+    }
+
+    /// Creates a [`PackageID`] from a [`PackageShortName`], a [`RepositoryName`] and a [`Version`]
+    #[inline]
+    pub fn from_short_name(short_name: PackageShortName, repository: RepositoryName, version: Version) -> Self {
+        Self {
+            repository,
+            category: short_name.category,
+            name: short_name.name,
+            version,
+        }
+    }
+
+    /// Parses the string representation of a [`PackageID`].
+    pub fn parse(repr: &str) -> Result<Self, PackageIDParseError> {
+        Self::try_from(repr)
+    }
+
+    /// Returns a reference over the repository name
+    #[inline]
+    pub fn repository(&self) -> &RepositoryName {
+        &self.repository
+    }
+
+    /// Returns a reference over the category name
+    #[inline]
+    pub fn category(&self) -> &CategoryName {
+        &self.category
+    }
+
+    /// Returns a reference over the package name
+    #[inline]
+    pub fn name(&self) -> &PackageName {
+        &self.name
     }
 
     /// Returns a reference over the package's version
@@ -78,7 +125,9 @@ impl TryFrom<&str> for PackageID {
                     .or(Err(PackageIDParseErrorKind::InvalidVersion))?;
 
                 Ok(PackageID::from(
-                    PackageFullName::from(repository, category, name),
+                    repository,
+                    category,
+                    name,
                     version,
                 ))
             }
@@ -92,7 +141,26 @@ impl TryFrom<&str> for PackageID {
 impl Display for PackageID {
     #[inline]
     fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
-        write!(fmt, "{}#{}", self.full_name, self.version,)
+        write!(fmt, "{}::{}/{}#{}", self.repository, self.category, self.name, self.version,)
+    }
+}
+
+impl Into<PackageFullName> for PackageID {
+    fn into(self) -> PackageFullName {
+        PackageFullName::from(
+            self.repository,
+            self.category,
+            self.name,
+        )
+    }
+}
+
+impl Into<PackageShortName> for PackageID {
+    fn into(self) -> PackageShortName {
+        PackageShortName::from(
+            self.category,
+            self.name,
+        )
     }
 }
 
@@ -119,7 +187,7 @@ impl<'de> Visitor<'de> for PackageIDVisitor {
 
 impl_serde_visitor!(PackageID, PackageIDVisitor);
 
-/// Full name of a package, which is the combination of its repository, category and name
+/// Full name of a package, which is the combination of a repository name, a category name and a package name
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct PackageFullName {
     repository: RepositoryName,
@@ -136,6 +204,21 @@ impl PackageFullName {
             category,
             name,
         }
+    }
+
+    /// Creates a [`PackageFullName`] from a [`PackageShortName`] and a [`RepositoryName`]
+    #[inline]
+    pub fn from_short_name(short_name: PackageShortName, repository: RepositoryName) -> Self {
+        Self {
+            repository,
+            category: short_name.category,
+            name: short_name.name,
+        }
+    }
+
+    /// Parses the string representation of a [`PackageFullName`].
+    pub fn parse(repr: &str) -> Result<Self, PackageFullNameParseError> {
+        Self::try_from(repr)
     }
 
     /// Returns a reference over the repository name
@@ -209,6 +292,15 @@ impl Display for PackageFullName {
     }
 }
 
+impl Into<PackageShortName> for PackageFullName {
+    fn into(self) -> PackageShortName {
+        PackageShortName::from(
+            self.category,
+            self.name,
+        )
+    }
+}
+
 struct PackageFullNameVisitor;
 
 impl<'de> Visitor<'de> for PackageFullNameVisitor {
@@ -234,7 +326,7 @@ impl<'de> Visitor<'de> for PackageFullNameVisitor {
 
 impl_serde_visitor!(PackageFullName, PackageFullNameVisitor);
 
-/// Short name of a package, which is the combination of its category and name
+/// Short name of a package, which is the combination of a category name and a package name
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct PackageShortName {
     category: CategoryName,
@@ -246,6 +338,11 @@ impl PackageShortName {
     #[inline]
     pub fn from(category: CategoryName, name: PackageName) -> Self {
         PackageShortName { category, name }
+    }
+
+    /// Parses the string representation of a [`PackageShortName`].
+    pub fn parse(repr: &str) -> Result<Self, PackageShortNameParseError> {
+        Self::try_from(repr)
     }
 
     /// Returns a reference over the category name
