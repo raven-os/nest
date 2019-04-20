@@ -197,6 +197,18 @@ impl Manifest {
         &mut self.version
     }
 
+    /// Returns a reference over the slot of the package
+    #[inline]
+    pub fn slot(&self) -> &Slot {
+        &self.slot
+    }
+
+    /// Returns a mutable reference over the slot of the package
+    #[inline]
+    pub fn slot_mut(&mut self) -> &mut Slot {
+        &mut self.slot
+    }
+
     /// Returns the kind of the package
     #[inline]
     pub fn kind(&self) -> Kind {
