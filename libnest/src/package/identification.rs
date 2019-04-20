@@ -112,19 +112,19 @@ impl TryFrom<&str> for PackageID {
             matches.name("version"),
         ) {
             (Some(repository), Some(category), Some(name), Some(version)) => {
-                let repository = RepositoryName::try_from(name.as_str()).or(Err(
+                let repository = RepositoryName::parse(repository.as_str()).or(Err(
                     PackageIDParseErrorKind::InvalidRepository(RepositoryNameParseError(
                         repository.as_str().to_string(),
                     )),
                 ))?;
 
-                let category = CategoryName::try_from(name.as_str()).or(Err(
+                let category = CategoryName::parse(category.as_str()).or(Err(
                     PackageIDParseErrorKind::InvalidCategory(CategoryNameParseError(
                         category.as_str().to_string(),
                     )),
                 ))?;
 
-                let name = PackageName::try_from(name.as_str()).or(Err(
+                let name = PackageName::parse(name.as_str()).or(Err(
                     PackageIDParseErrorKind::InvalidName(PackageNameParseError(
                         name.as_str().to_string(),
                     )),
@@ -259,19 +259,19 @@ impl TryFrom<&str> for PackageFullName {
             matches.name("version"),
         ) {
             (Some(repository), Some(category), Some(name), None) => {
-                let repository = RepositoryName::try_from(name.as_str()).or(Err(
+                let repository = RepositoryName::parse(repository.as_str()).or(Err(
                     PackageFullNameParseErrorKind::InvalidRepository(RepositoryNameParseError(
                         repository.as_str().to_string(),
                     )),
                 ))?;
 
-                let category = CategoryName::try_from(name.as_str()).or(Err(
+                let category = CategoryName::parse(category.as_str()).or(Err(
                     PackageFullNameParseErrorKind::InvalidCategory(CategoryNameParseError(
                         category.as_str().to_string(),
                     )),
                 ))?;
 
-                let name = PackageName::try_from(name.as_str()).or(Err(
+                let name = PackageName::parse(name.as_str()).or(Err(
                     PackageFullNameParseErrorKind::InvalidName(PackageNameParseError(
                         name.as_str().to_string(),
                     )),
@@ -371,13 +371,13 @@ impl TryFrom<&str> for PackageShortName {
             matches.name("version"),
         ) {
             (None, Some(category), Some(name), None) => {
-                let category = CategoryName::try_from(name.as_str()).or(Err(
+                let category = CategoryName::parse(category.as_str()).or(Err(
                     PackageShortNameParseErrorKind::InvalidCategory(CategoryNameParseError(
                         category.as_str().to_string(),
                     )),
                 ))?;
 
-                let name = PackageName::try_from(name.as_str()).or(Err(
+                let name = PackageName::parse(name.as_str()).or(Err(
                     PackageShortNameParseErrorKind::InvalidName(PackageNameParseError(
                         name.as_str().to_string(),
                     )),
