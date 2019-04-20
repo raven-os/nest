@@ -429,6 +429,13 @@ impl_serde_visitor!(PackageShortName, PackageShortNameVisitor);
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct PackageName(String);
 
+impl PackageName {
+    /// Parses the string representation of a [`PackageName`].
+    pub fn parse(repr: &str) -> Result<Self, PackageNameParseError> {
+        Self::try_from(repr)
+    }
+}
+
 impl Display for PackageName {
     #[inline]
     fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
@@ -498,6 +505,13 @@ impl_serde_visitor!(PackageName, PackageNameVisitor);
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct CategoryName(String);
 
+impl CategoryName {
+    /// Parses the string representation of a [`CategoryName`].
+    pub fn parse(repr: &str) -> Result<Self, CategoryNameParseError> {
+        Self::try_from(repr)
+    }
+}
+
 impl Display for CategoryName {
     #[inline]
     fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
@@ -566,6 +580,13 @@ impl_serde_visitor!(CategoryName, CategoryNameVisitor);
 /// A [`&RepositoryName`] can be casted to an `&str` and ensures, when created, that the underlying string matches
 /// the expectations of what a repository's name should look like.
 pub struct RepositoryName(String);
+
+impl RepositoryName {
+    /// Parses the string representation of a [`RepositoryName`].
+    pub fn parse(repr: &str) -> Result<Self, RepositoryNameParseError> {
+        Self::try_from(repr)
+    }
+}
 
 impl Display for RepositoryName {
     #[inline]
