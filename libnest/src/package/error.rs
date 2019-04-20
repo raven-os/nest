@@ -48,6 +48,26 @@ pub enum PackageFullNameParseErrorKind {
 
 use_as_error!(PackageFullNameParseError, PackageFullNameParseErrorKind);
 
+#[derive(Debug)]
+pub struct PackageShortNameParseError {
+    inner: Context<PackageShortNameParseErrorKind>,
+}
+
+#[derive(Clone, Eq, PartialEq, Debug, Fail)]
+pub enum PackageShortNameParseErrorKind {
+    #[fail(
+        display = "\"{}\" doesn't follow the `category/name` format",
+        _0
+    )]
+    InvalidFormat(String),
+    #[fail(display = "{}", _0)]
+    InvalidName(#[cause] PackageNameParseError),
+    #[fail(display = "{}", _0)]
+    InvalidCategory(#[cause] CategoryNameParseError),
+}
+
+use_as_error!(PackageShortNameParseError, PackageShortNameParseErrorKind);
+
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Fail)]
 #[fail(display = "{}: invalid package name", 0)]
 pub struct PackageNameParseError(pub String);

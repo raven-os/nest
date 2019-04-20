@@ -8,8 +8,10 @@ use semver::Version;
 use serde::de::Visitor;
 
 use super::error::{
-    CategoryNameParseError, PackageFullNameParseError, PackageFullNameParseErrorKind,
-    PackageIDParseError, PackageIDParseErrorKind, PackageNameParseError, RepositoryNameParseError,
+    PackageIDParseError, PackageIDParseErrorKind,
+    PackageFullNameParseError, PackageFullNameParseErrorKind,
+    PackageShortNameParseError, PackageShortNameParseErrorKind,
+    PackageNameParseError, CategoryNameParseError, RepositoryNameParseError,
 };
 use super::REGEX_PACKAGE_ID;
 
@@ -232,6 +234,107 @@ impl<'de> Visitor<'de> for PackageFullNameVisitor {
 }
 
 impl_serde_visitor!(PackageFullName, PackageFullNameVisitor);
+
+/// Short name of a package, which is the combination of its category and name
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct PackageShortName {
+    category: CategoryName,
+    name: PackageName,
+}
+
+impl PackageShortName {
+    /// Creates a [`PackageShortName`] from a [`CategoryName`] and a [`PackageName`]
+    #[inline]
+    pub fn from(category: CategoryName, name: PackageName) -> Self {
+        PackageShortName {
+            category,
+            name,
+        }
+    }
+
+    /// Returns a reference over the category name
+    #[inline]
+    pub fn category(&self) -> &CategoryName {
+        &self.category
+    }
+
+    /// Returns a reference over the package name
+    #[inline]
+    pub fn name(&self) -> &PackageName {
+        &self.name
+    }
+}
+
+impl TryFrom<&str> for PackageShortName {
+    type Error = PackageShortNameParseError;
+
+    fn try_from(repr: &str) -> Result<Self, Self::Error> {
+        let matches =
+            REGEX_PACKAGE_ID
+                .captures(repr)
+                .ok_or(PackageShortNameParseErrorKind::InvalidFormat(
+                    repr.to_string(),
+                ))?;
+
+        match (
+            matches.name("repository"),
+            matches.name("category"),
+            matches.name("package"),
+            matches.name("version"),
+        ) {
+            (None, Some(category), Some(name), None) => {
+                let category = CategoryName::try_from(name.as_str()).or(Err(
+                    PackageShortNameParseErrorKind::InvalidCategory(CategoryNameParseError(
+                        category.as_str().to_string(),
+                    )),
+                ))?;
+
+                let name = PackageName::try_from(name.as_str()).or(Err(
+                    PackageShortNameParseErrorKind::InvalidName(PackageNameParseError(
+                        name.as_str().to_string(),
+                    )),
+                ))?;
+
+                Ok(PackageShortName::from(category, name))
+            }
+            _ => Err(From::from(PackageShortNameParseErrorKind::InvalidFormat(
+                repr.to_string(),
+            ))),
+        }
+    }
+}
+
+impl Display for PackageShortName {
+    #[inline]
+    fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
+        write!(fmt, "{}/{}", self.category, self.name,)
+    }
+}
+
+struct PackageShortNameVisitor;
+
+impl<'de> Visitor<'de> for PackageShortNameVisitor {
+    type Value = PackageShortName;
+
+    #[inline]
+    fn expecting(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        fmt.write_str("a package short name")
+    }
+
+    #[inline]
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        PackageShortName::try_from(value).map_err(|_| {
+            E::custom(
+                "the package's short name doesn't follow the convention `category/name`",
+            )
+        })
+    }
+}
+
+impl_serde_visitor!(PackageShortName, PackageShortNameVisitor);
 
 /// A package's name.
 ///
