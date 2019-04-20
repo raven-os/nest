@@ -129,7 +129,9 @@ pub struct Manifest {
     name: PackageName,
     category: CategoryName,
     version: Version,
+    #[serde(default)]
     slot: Slot,
+    #[serde(default)]
     kind: Kind,
     metadata: Metadata,
     wrap_date: DateTime<Utc>,
@@ -287,7 +289,9 @@ impl Manifest {
 /// A container holding that differs from one version to another of the same package.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct VersionData {
+    #[serde(default)]
     slot: Slot,
+    #[serde(default)]
     kind: Kind,
     wrap_date: DateTime<Utc>,
     dependencies: HashMap<PackageFullName, VersionReq>,
@@ -434,7 +438,7 @@ impl TryFrom<&str> for Slot {
     #[inline]
     fn try_from(repr: &str) -> Result<Self, Self::Error> {
         lazy_static! {
-            static ref SLOT_REGEX: Regex = Regex::new(r"^[a-z0-9\.\-]+$").unwrap();
+            static ref SLOT_REGEX: Regex = Regex::new(r"^[a-z0-9\.\-]*$").unwrap();
         }
 
         if SLOT_REGEX.is_match(repr) {
