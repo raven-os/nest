@@ -5,7 +5,7 @@ use semver::{Version, VersionReq};
 use serde_derive::{Deserialize, Serialize};
 
 use super::Metadata;
-use super::{CategoryName, PackageFullName, PackageName, RepositoryName, PackageID};
+use super::{CategoryName, PackageFullName, PackageID, PackageName, RepositoryName};
 
 /// A manifest that aggregates all versions of a package in one, compact structure.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
@@ -231,10 +231,7 @@ impl Manifest {
     /// Generates the [`PackageID`] of this package given its missing piece: the [`RepositoryName`].
     #[inline]
     pub fn id(&self, repository_name: RepositoryName) -> PackageID {
-        PackageID::from(
-            self.full_name(repository_name),
-            self.version().clone(),
-        )
+        PackageID::from(self.full_name(repository_name), self.version().clone())
     }
 
     /// Generates the [`PackageFullName`] of this package given its missing piece: the [`RepositoryName`].
@@ -318,7 +315,6 @@ impl VersionData {
 /// The `Kind` enum is used to differentiate those packages and speed up their installation process.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Serialize, Deserialize)]
 pub enum Kind {
-
     #[serde(rename = "effective")]
     /// The package contains some installable data.
     Effective,

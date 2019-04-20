@@ -55,10 +55,7 @@ pub struct PackageShortNameParseError {
 
 #[derive(Clone, Eq, PartialEq, Debug, Fail)]
 pub enum PackageShortNameParseErrorKind {
-    #[fail(
-        display = "\"{}\" doesn't follow the `category/name` format",
-        _0
-    )]
+    #[fail(display = "\"{}\" doesn't follow the `category/name` format", _0)]
     InvalidFormat(String),
     #[fail(display = "{}", _0)]
     InvalidName(#[cause] PackageNameParseError),

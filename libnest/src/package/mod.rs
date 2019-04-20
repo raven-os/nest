@@ -30,7 +30,9 @@ mod manifest;
 mod metadata;
 //mod requirement;
 
-pub use identification::{PackageShortName, PackageFullName, PackageID, PackageName, CategoryName, RepositoryName};
+pub use identification::{
+    CategoryName, PackageFullName, PackageID, PackageName, PackageShortName, RepositoryName,
+};
 pub use manifest::{Kind, Manifest, PackageManifest, VersionData};
 pub use metadata::{License, Maintainer, Metadata, Tag, UpstreamURL};
 

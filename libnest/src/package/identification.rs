@@ -8,10 +8,9 @@ use semver::Version;
 use serde::de::Visitor;
 
 use super::error::{
-    PackageIDParseError, PackageIDParseErrorKind,
-    PackageFullNameParseError, PackageFullNameParseErrorKind,
-    PackageShortNameParseError, PackageShortNameParseErrorKind,
-    PackageNameParseError, CategoryNameParseError, RepositoryNameParseError,
+    CategoryNameParseError, PackageFullNameParseError, PackageFullNameParseErrorKind,
+    PackageIDParseError, PackageIDParseErrorKind, PackageNameParseError,
+    PackageShortNameParseError, PackageShortNameParseErrorKind, RepositoryNameParseError,
 };
 use super::REGEX_PACKAGE_ID;
 
@@ -246,10 +245,7 @@ impl PackageShortName {
     /// Creates a [`PackageShortName`] from a [`CategoryName`] and a [`PackageName`]
     #[inline]
     pub fn from(category: CategoryName, name: PackageName) -> Self {
-        PackageShortName {
-            category,
-            name,
-        }
+        PackageShortName { category, name }
     }
 
     /// Returns a reference over the category name
@@ -269,12 +265,9 @@ impl TryFrom<&str> for PackageShortName {
     type Error = PackageShortNameParseError;
 
     fn try_from(repr: &str) -> Result<Self, Self::Error> {
-        let matches =
-            REGEX_PACKAGE_ID
-                .captures(repr)
-                .ok_or(PackageShortNameParseErrorKind::InvalidFormat(
-                    repr.to_string(),
-                ))?;
+        let matches = REGEX_PACKAGE_ID.captures(repr).ok_or(
+            PackageShortNameParseErrorKind::InvalidFormat(repr.to_string()),
+        )?;
 
         match (
             matches.name("repository"),
@@ -327,9 +320,7 @@ impl<'de> Visitor<'de> for PackageShortNameVisitor {
         E: serde::de::Error,
     {
         PackageShortName::try_from(value).map_err(|_| {
-            E::custom(
-                "the package's short name doesn't follow the convention `category/name`",
-            )
+            E::custom("the package's short name doesn't follow the convention `category/name`")
         })
     }
 }
