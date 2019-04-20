@@ -80,3 +80,7 @@ pub struct RepositoryNameParseError(pub String);
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Fail)]
 #[fail(display = "{}: invalid tag", 0)]
 pub struct TagParseError(pub String);
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Fail)]
+#[fail(display = "{}: invalid slot", 0)]
+pub struct SlotParseError(pub String);

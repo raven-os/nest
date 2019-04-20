@@ -1,13 +1,20 @@
+use std::fmt::{self, Display, Formatter};
 use std::collections::HashMap;
+use std::convert::TryFrom;
+use std::ops::Deref;
 
+use lazy_static::lazy_static;
+use regex::Regex;
 use chrono::{DateTime, Utc};
 use semver::{Version, VersionReq};
 use serde_derive::{Deserialize, Serialize};
+use serde::de::Visitor;
 
 use super::Metadata;
 use super::{
     CategoryName, PackageFullName, PackageID, PackageName, PackageShortName, RepositoryName,
 };
+use super::error::SlotParseError;
 
 /// A manifest that aggregates all versions of a package in one, compact structure.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
@@ -122,6 +129,7 @@ pub struct Manifest {
     name: PackageName,
     category: CategoryName,
     version: Version,
+    slot: Slot,
     kind: Kind,
     metadata: Metadata,
     wrap_date: DateTime<Utc>,
@@ -137,6 +145,7 @@ impl Manifest {
         name: PackageName,
         category: CategoryName,
         version: Version,
+        slot: Slot,
         kind: Kind,
         metadata: Metadata,
     ) -> Self {
@@ -144,6 +153,7 @@ impl Manifest {
             name,
             category,
             version,
+            slot,
             kind,
             metadata,
             wrap_date: Utc::now(),
@@ -265,6 +275,7 @@ impl Manifest {
 /// A container holding that differs from one version to another of the same package.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct VersionData {
+    slot: Slot,
     kind: Kind,
     wrap_date: DateTime<Utc>,
     dependencies: HashMap<PackageFullName, VersionReq>,
@@ -274,15 +285,29 @@ impl VersionData {
     /// Creates a new [`VersionData`] from a wrap date and a list of dependencies.
     #[inline]
     pub fn from(
+        slot: Slot,
         kind: Kind,
         wrap_date: DateTime<Utc>,
         dependencies: HashMap<PackageFullName, VersionReq>,
     ) -> Self {
         Self {
+            slot,
             kind,
             wrap_date,
             dependencies,
         }
+    }
+
+    /// Returns a reference over the slot of the package
+    #[inline]
+    pub fn slot(&self) -> &Slot {
+        &self.slot
+    }
+
+    /// Returns a mutable reference over the slot of the package
+    #[inline]
+    pub fn slot_mut(&mut self) -> &mut Slot {
+        &mut self.slot
     }
 
     /// Returns the kind of the package
@@ -346,3 +371,86 @@ impl Default for Kind {
         Kind::Effective
     }
 }
+
+/// A version's slot.
+///
+/// A slot is an identifier shared by multiple versions to show that they are not compatible with
+/// each other. On the other hand, two versions of the same package with a different slot are compatible
+/// and can be installed at the same time.
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct Slot(String);
+
+impl Slot {
+    /// Parses the string representation of a [`Slot`].
+    pub fn parse(repr: &str) -> Result<Self, SlotParseError> {
+        Self::try_from(repr)
+    }
+}
+
+impl Display for Slot {
+    #[inline]
+    fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
+        write!(fmt, "{}", self.0)
+    }
+}
+
+impl Deref for Slot {
+    type Target = str;
+
+    #[inline]
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl AsRef<str> for Slot {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl Default for Slot {
+    fn default() -> Self {
+        Self(String::new())
+    }
+}
+
+impl TryFrom<&str> for Slot {
+    type Error = SlotParseError;
+
+    #[inline]
+    fn try_from(repr: &str) -> Result<Self, Self::Error> {
+        lazy_static! {
+            static ref SLOT_REGEX: Regex = Regex::new(r"^[a-z0-9\.\-]+$").unwrap();
+        }
+
+        if SLOT_REGEX.is_match(repr) {
+            Ok(Self(String::from(repr)))
+        } else {
+            Err(SlotParseError(repr.to_string()))
+        }
+    }
+}
+
+struct SlotVisitor;
+
+impl<'de> Visitor<'de> for SlotVisitor {
+    type Value = Slot;
+
+    #[inline]
+    fn expecting(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        fmt.write_str("a slot")
+    }
+
+    #[inline]
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Slot::try_from(value)
+            .map_err(|_| E::custom("the slot value isn't valid"))
+    }
+}
+
+impl_serde_visitor!(Slot, SlotVisitor);

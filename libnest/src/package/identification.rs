@@ -574,11 +574,11 @@ impl<'de> Visitor<'de> for CategoryNameVisitor {
 
 impl_serde_visitor!(CategoryName, CategoryNameVisitor);
 
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 /// A repository's name.
 ///
 /// A [`&RepositoryName`] can be casted to an `&str` and ensures, when created, that the underlying string matches
 /// the expectations of what a repository's name should look like.
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct RepositoryName(String);
 
 impl RepositoryName {
