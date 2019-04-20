@@ -1,20 +1,20 @@
-use std::fmt::{self, Display, Formatter};
 use std::collections::HashMap;
 use std::convert::TryFrom;
+use std::fmt::{self, Display, Formatter};
 use std::ops::Deref;
 
+use chrono::{DateTime, Utc};
 use lazy_static::lazy_static;
 use regex::Regex;
-use chrono::{DateTime, Utc};
 use semver::{Version, VersionReq};
-use serde_derive::{Deserialize, Serialize};
 use serde::de::Visitor;
+use serde_derive::{Deserialize, Serialize};
 
+use super::error::SlotParseError;
 use super::Metadata;
 use super::{
     CategoryName, PackageFullName, PackageID, PackageName, PackageShortName, RepositoryName,
 };
-use super::error::SlotParseError;
 
 /// A manifest that aggregates all versions of a package in one, compact structure.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
@@ -460,8 +460,7 @@ impl<'de> Visitor<'de> for SlotVisitor {
     where
         E: serde::de::Error,
     {
-        Slot::try_from(value)
-            .map_err(|_| E::custom("the slot value isn't valid"))
+        Slot::try_from(value).map_err(|_| E::custom("the slot value isn't valid"))
     }
 }
 
