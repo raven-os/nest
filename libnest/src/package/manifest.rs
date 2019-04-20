@@ -5,7 +5,9 @@ use semver::{Version, VersionReq};
 use serde_derive::{Deserialize, Serialize};
 
 use super::Metadata;
-use super::{PackageID, PackageShortName, PackageFullName, PackageName, CategoryName, RepositoryName};
+use super::{
+    CategoryName, PackageFullName, PackageID, PackageName, PackageShortName, RepositoryName,
+};
 
 /// A manifest that aggregates all versions of a package in one, compact structure.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]

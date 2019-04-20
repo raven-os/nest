@@ -27,7 +27,12 @@ pub struct PackageID {
 impl PackageID {
     /// Creates a [`PackageID`] from all its components.
     #[inline]
-    pub fn from(repository: RepositoryName, category: CategoryName, name: PackageName, version: Version) -> Self {
+    pub fn from(
+        repository: RepositoryName,
+        category: CategoryName,
+        name: PackageName,
+        version: Version,
+    ) -> Self {
         Self {
             repository,
             category,
@@ -49,7 +54,11 @@ impl PackageID {
 
     /// Creates a [`PackageID`] from a [`PackageShortName`], a [`RepositoryName`] and a [`Version`]
     #[inline]
-    pub fn from_short_name(short_name: PackageShortName, repository: RepositoryName, version: Version) -> Self {
+    pub fn from_short_name(
+        short_name: PackageShortName,
+        repository: RepositoryName,
+        version: Version,
+    ) -> Self {
         Self {
             repository,
             category: short_name.category,
@@ -124,12 +133,7 @@ impl TryFrom<&str> for PackageID {
                 let version = Version::parse(version.as_str())
                     .or(Err(PackageIDParseErrorKind::InvalidVersion))?;
 
-                Ok(PackageID::from(
-                    repository,
-                    category,
-                    name,
-                    version,
-                ))
+                Ok(PackageID::from(repository, category, name, version))
             }
             _ => Err(From::from(PackageIDParseErrorKind::InvalidFormat(
                 repr.to_string(),
@@ -141,26 +145,23 @@ impl TryFrom<&str> for PackageID {
 impl Display for PackageID {
     #[inline]
     fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
-        write!(fmt, "{}::{}/{}#{}", self.repository, self.category, self.name, self.version,)
+        write!(
+            fmt,
+            "{}::{}/{}#{}",
+            self.repository, self.category, self.name, self.version,
+        )
     }
 }
 
 impl Into<PackageFullName> for PackageID {
     fn into(self) -> PackageFullName {
-        PackageFullName::from(
-            self.repository,
-            self.category,
-            self.name,
-        )
+        PackageFullName::from(self.repository, self.category, self.name)
     }
 }
 
 impl Into<PackageShortName> for PackageID {
     fn into(self) -> PackageShortName {
-        PackageShortName::from(
-            self.category,
-            self.name,
-        )
+        PackageShortName::from(self.category, self.name)
     }
 }
 
@@ -294,10 +295,7 @@ impl Display for PackageFullName {
 
 impl Into<PackageShortName> for PackageFullName {
     fn into(self) -> PackageShortName {
-        PackageShortName::from(
-            self.category,
-            self.name,
-        )
+        PackageShortName::from(self.category, self.name)
     }
 }
 
