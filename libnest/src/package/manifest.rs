@@ -121,7 +121,21 @@ impl PackageManifest {
             self.name().clone(),
         )
     }
+
+    /// Regenerates the [`Manifest`] of this [`PackageManifest`] for the given [`Version`].
+    pub fn into_manifest(&self, version: Version) -> Option<Manifest> {
+        self.versions.get(&version).map(|version_data| {
+            Manifest::new(
+                self.name.clone(),
+                self.category.clone(),
+                version,
+                self.metadata.clone(),
+                version_data.clone(),
+            )
+        })
+    }
 }
+
 
 /// A manifest that represent a unique package and its medata.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
@@ -129,37 +143,32 @@ pub struct Manifest {
     name: PackageName,
     category: CategoryName,
     version: Version,
-    #[serde(default)]
-    slot: Slot,
-    #[serde(default)]
-    kind: Kind,
     metadata: Metadata,
+    slot: Slot,
+    kind: Kind,
     wrap_date: DateTime<Utc>,
     dependencies: HashMap<PackageFullName, VersionReq>,
 }
 
 impl Manifest {
-    /// Creates a new, empty [`Manifest`] from a package, category and version name.
-    ///
-    /// Other fields hold their default value.
+    /// Creates a new, empty [`Manifest`] from a package name, category name, version and [`VersionData`].
     #[inline]
     pub fn new(
         name: PackageName,
         category: CategoryName,
         version: Version,
-        slot: Slot,
-        kind: Kind,
         metadata: Metadata,
+        version_data: VersionData,
     ) -> Self {
         Self {
             name,
             category,
             version,
-            slot,
-            kind,
             metadata,
-            wrap_date: Utc::now(),
-            dependencies: HashMap::new(),
+            slot: version_data.slot,
+            kind: version_data.kind,
+            wrap_date: version_data.wrap_date,
+            dependencies: version_data.dependencies,
         }
     }
 
