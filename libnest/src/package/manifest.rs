@@ -136,7 +136,6 @@ impl PackageManifest {
     }
 }
 
-
 /// A manifest that represent a unique package and its medata.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct Manifest {
@@ -144,7 +143,9 @@ pub struct Manifest {
     category: CategoryName,
     version: Version,
     metadata: Metadata,
+    #[serde(default)]
     slot: Slot,
+    #[serde(default)]
     kind: Kind,
     wrap_date: DateTime<Utc>,
     dependencies: HashMap<PackageFullName, VersionReq>,
