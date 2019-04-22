@@ -11,7 +11,7 @@ use url_serde::SerdeUrl;
 use super::error::TagParseError;
 
 /// A package's metadata, like its description, tags, maintainer etc.
-#[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Hash, Debug)]
+#[derive(Default, Serialize, Deserialize, Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Metadata {
     description: String,
     tags: Vec<Tag>,
@@ -21,17 +21,6 @@ pub struct Metadata {
 }
 
 impl Metadata {
-    /// Creates a new, empty [`Metadata`].
-    pub fn new() -> Self {
-        Self {
-            description: String::new(),
-            tags: Vec::new(),
-            maintainer: Maintainer::new(),
-            licenses: Vec::new(),
-            upstream_url: None,
-        }
-    }
-
     /// Returns a reference over the description of the package
     pub fn description(&self) -> &str {
         &self.description
