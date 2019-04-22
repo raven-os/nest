@@ -103,7 +103,7 @@ impl FromStr for PackageID {
     fn from_str(repr: &str) -> Result<Self, Self::Err> {
         let matches = REGEX_PACKAGE_ID
             .captures(repr)
-            .ok_or(PackageIDParseErrorKind::InvalidFormat(repr.to_string()))?;
+            .ok_or_else(|| PackageIDParseErrorKind::InvalidFormat(repr.to_string()))?;
 
         match (
             matches.name("repository"),
@@ -112,23 +112,23 @@ impl FromStr for PackageID {
             matches.name("version"),
         ) {
             (Some(repository), Some(category), Some(name), Some(version)) => {
-                let repository = RepositoryName::parse(repository.as_str()).or(Err(
-                    PackageIDParseErrorKind::InvalidRepository(RepositoryNameParseError(
-                        repository.as_str().to_string(),
-                    )),
-                ))?;
+                let repository = RepositoryName::parse(repository.as_str()).or_else(|_| {
+                    Err(PackageIDParseErrorKind::InvalidRepository(
+                        RepositoryNameParseError(repository.as_str().to_string()),
+                    ))
+                })?;
 
-                let category = CategoryName::parse(category.as_str()).or(Err(
-                    PackageIDParseErrorKind::InvalidCategory(CategoryNameParseError(
-                        category.as_str().to_string(),
-                    )),
-                ))?;
+                let category = CategoryName::parse(category.as_str()).or_else(|_| {
+                    Err(PackageIDParseErrorKind::InvalidCategory(
+                        CategoryNameParseError(category.as_str().to_string()),
+                    ))
+                })?;
 
-                let name = PackageName::parse(name.as_str()).or(Err(
-                    PackageIDParseErrorKind::InvalidName(PackageNameParseError(
+                let name = PackageName::parse(name.as_str()).or_else(|_| {
+                    Err(PackageIDParseErrorKind::InvalidName(PackageNameParseError(
                         name.as_str().to_string(),
-                    )),
-                ))?;
+                    )))
+                })?;
 
                 let version = Version::parse(version.as_str())
                     .or(Err(PackageIDParseErrorKind::InvalidVersion))?;
@@ -245,12 +245,9 @@ impl FromStr for PackageFullName {
     type Err = PackageFullNameParseError;
 
     fn from_str(repr: &str) -> Result<Self, Self::Err> {
-        let matches =
-            REGEX_PACKAGE_ID
-                .captures(repr)
-                .ok_or(PackageFullNameParseErrorKind::InvalidFormat(
-                    repr.to_string(),
-                ))?;
+        let matches = REGEX_PACKAGE_ID
+            .captures(repr)
+            .ok_or_else(|| PackageFullNameParseErrorKind::InvalidFormat(repr.to_string()))?;
 
         match (
             matches.name("repository"),
@@ -259,23 +256,23 @@ impl FromStr for PackageFullName {
             matches.name("version"),
         ) {
             (Some(repository), Some(category), Some(name), None) => {
-                let repository = RepositoryName::parse(repository.as_str()).or(Err(
-                    PackageFullNameParseErrorKind::InvalidRepository(RepositoryNameParseError(
-                        repository.as_str().to_string(),
-                    )),
-                ))?;
+                let repository = RepositoryName::parse(repository.as_str()).or_else(|_| {
+                    Err(PackageFullNameParseErrorKind::InvalidRepository(
+                        RepositoryNameParseError(repository.as_str().to_string()),
+                    ))
+                })?;
 
-                let category = CategoryName::parse(category.as_str()).or(Err(
-                    PackageFullNameParseErrorKind::InvalidCategory(CategoryNameParseError(
-                        category.as_str().to_string(),
-                    )),
-                ))?;
+                let category = CategoryName::parse(category.as_str()).or_else(|_| {
+                    Err(PackageFullNameParseErrorKind::InvalidCategory(
+                        CategoryNameParseError(category.as_str().to_string()),
+                    ))
+                })?;
 
-                let name = PackageName::parse(name.as_str()).or(Err(
-                    PackageFullNameParseErrorKind::InvalidName(PackageNameParseError(
-                        name.as_str().to_string(),
-                    )),
-                ))?;
+                let name = PackageName::parse(name.as_str()).or_else(|_| {
+                    Err(PackageFullNameParseErrorKind::InvalidName(
+                        PackageNameParseError(name.as_str().to_string()),
+                    ))
+                })?;
 
                 Ok(PackageFullName::from(repository, category, name))
             }
@@ -360,9 +357,9 @@ impl FromStr for PackageShortName {
     type Err = PackageShortNameParseError;
 
     fn from_str(repr: &str) -> Result<Self, Self::Err> {
-        let matches = REGEX_PACKAGE_ID.captures(repr).ok_or(
-            PackageShortNameParseErrorKind::InvalidFormat(repr.to_string()),
-        )?;
+        let matches = REGEX_PACKAGE_ID
+            .captures(repr)
+            .ok_or_else(|| PackageShortNameParseErrorKind::InvalidFormat(repr.to_string()))?;
 
         match (
             matches.name("repository"),
@@ -371,17 +368,17 @@ impl FromStr for PackageShortName {
             matches.name("version"),
         ) {
             (None, Some(category), Some(name), None) => {
-                let category = CategoryName::parse(category.as_str()).or(Err(
-                    PackageShortNameParseErrorKind::InvalidCategory(CategoryNameParseError(
-                        category.as_str().to_string(),
-                    )),
-                ))?;
+                let category = CategoryName::parse(category.as_str()).or_else(|_| {
+                    Err(PackageShortNameParseErrorKind::InvalidCategory(
+                        CategoryNameParseError(category.as_str().to_string()),
+                    ))
+                })?;
 
-                let name = PackageName::parse(name.as_str()).or(Err(
-                    PackageShortNameParseErrorKind::InvalidName(PackageNameParseError(
-                        name.as_str().to_string(),
-                    )),
-                ))?;
+                let name = PackageName::parse(name.as_str()).or_else(|_| {
+                    Err(PackageShortNameParseErrorKind::InvalidName(
+                        PackageNameParseError(name.as_str().to_string()),
+                    ))
+                })?;
 
                 Ok(PackageShortName::from(category, name))
             }
