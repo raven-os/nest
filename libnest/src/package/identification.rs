@@ -1,6 +1,6 @@
-use std::convert::TryFrom;
 use std::fmt::{self, Display, Formatter};
 use std::ops::Deref;
+use std::str::FromStr;
 
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -69,7 +69,7 @@ impl PackageID {
 
     /// Parses the string representation of a [`PackageID`].
     pub fn parse(repr: &str) -> Result<Self, PackageIDParseError> {
-        Self::try_from(repr)
+        Self::from_str(repr)
     }
 
     /// Returns a reference over the repository name
@@ -97,10 +97,10 @@ impl PackageID {
     }
 }
 
-impl TryFrom<&str> for PackageID {
-    type Error = PackageIDParseError;
+impl FromStr for PackageID {
+    type Err = PackageIDParseError;
 
-    fn try_from(repr: &str) -> Result<Self, Self::Error> {
+    fn from_str(repr: &str) -> Result<Self, Self::Err> {
         let matches = REGEX_PACKAGE_ID
             .captures(repr)
             .ok_or(PackageIDParseErrorKind::InvalidFormat(repr.to_string()))?;
@@ -180,7 +180,7 @@ impl<'de> Visitor<'de> for PackageIDVisitor {
     where
         E: serde::de::Error,
     {
-        PackageID::try_from(value).map_err(|_| {
+        PackageID::from_str(value).map_err(|_| {
             E::custom("the package's identifier doesn't follow the convention `repository::category/name#version`")
         })
     }
@@ -219,7 +219,7 @@ impl PackageFullName {
 
     /// Parses the string representation of a [`PackageFullName`].
     pub fn parse(repr: &str) -> Result<Self, PackageFullNameParseError> {
-        Self::try_from(repr)
+        Self::from_str(repr)
     }
 
     /// Returns a reference over the repository name
@@ -241,10 +241,10 @@ impl PackageFullName {
     }
 }
 
-impl TryFrom<&str> for PackageFullName {
-    type Error = PackageFullNameParseError;
+impl FromStr for PackageFullName {
+    type Err = PackageFullNameParseError;
 
-    fn try_from(repr: &str) -> Result<Self, Self::Error> {
+    fn from_str(repr: &str) -> Result<Self, Self::Err> {
         let matches =
             REGEX_PACKAGE_ID
                 .captures(repr)
@@ -314,7 +314,7 @@ impl<'de> Visitor<'de> for PackageFullNameVisitor {
     where
         E: serde::de::Error,
     {
-        PackageFullName::try_from(value).map_err(|_| {
+        PackageFullName::from_str(value).map_err(|_| {
             E::custom(
                 "the package's full name doesn't follow the convention `repository::category/name`",
             )
@@ -340,7 +340,7 @@ impl PackageShortName {
 
     /// Parses the string representation of a [`PackageShortName`].
     pub fn parse(repr: &str) -> Result<Self, PackageShortNameParseError> {
-        Self::try_from(repr)
+        Self::from_str(repr)
     }
 
     /// Returns a reference over the category name
@@ -356,10 +356,10 @@ impl PackageShortName {
     }
 }
 
-impl TryFrom<&str> for PackageShortName {
-    type Error = PackageShortNameParseError;
+impl FromStr for PackageShortName {
+    type Err = PackageShortNameParseError;
 
-    fn try_from(repr: &str) -> Result<Self, Self::Error> {
+    fn from_str(repr: &str) -> Result<Self, Self::Err> {
         let matches = REGEX_PACKAGE_ID.captures(repr).ok_or(
             PackageShortNameParseErrorKind::InvalidFormat(repr.to_string()),
         )?;
@@ -414,7 +414,7 @@ impl<'de> Visitor<'de> for PackageShortNameVisitor {
     where
         E: serde::de::Error,
     {
-        PackageShortName::try_from(value).map_err(|_| {
+        PackageShortName::from_str(value).map_err(|_| {
             E::custom("the package's short name doesn't follow the convention `category/name`")
         })
     }
@@ -432,7 +432,7 @@ pub struct PackageName(String);
 impl PackageName {
     /// Parses the string representation of a [`PackageName`].
     pub fn parse(repr: &str) -> Result<Self, PackageNameParseError> {
-        Self::try_from(repr)
+        Self::from_str(repr)
     }
 }
 
@@ -459,11 +459,11 @@ impl AsRef<str> for PackageName {
     }
 }
 
-impl TryFrom<&str> for PackageName {
-    type Error = PackageNameParseError;
+impl FromStr for PackageName {
+    type Err = PackageNameParseError;
 
     #[inline]
-    fn try_from(repr: &str) -> Result<Self, Self::Error> {
+    fn from_str(repr: &str) -> Result<Self, Self::Err> {
         lazy_static! {
             static ref PACKAGE_NAME_REGEX: Regex = Regex::new(r"^[a-z0-9\-]+$").unwrap();
         }
@@ -491,7 +491,7 @@ impl<'de> Visitor<'de> for PackageNameVisitor {
     where
         E: serde::de::Error,
     {
-        PackageName::try_from(value)
+        PackageName::from_str(value)
             .map_err(|_| E::custom("the package name doesn't follow the kebab-case"))
     }
 }
@@ -508,7 +508,7 @@ pub struct CategoryName(String);
 impl CategoryName {
     /// Parses the string representation of a [`CategoryName`].
     pub fn parse(repr: &str) -> Result<Self, CategoryNameParseError> {
-        Self::try_from(repr)
+        Self::from_str(repr)
     }
 }
 
@@ -535,11 +535,11 @@ impl AsRef<str> for CategoryName {
     }
 }
 
-impl TryFrom<&str> for CategoryName {
-    type Error = CategoryNameParseError;
+impl FromStr for CategoryName {
+    type Err = CategoryNameParseError;
 
     #[inline]
-    fn try_from(repr: &str) -> Result<Self, Self::Error> {
+    fn from_str(repr: &str) -> Result<Self, Self::Err> {
         lazy_static! {
             static ref CATEGORY_NAME_REGEX: Regex = Regex::new(r"^[a-z0-9\-]+$").unwrap();
         }
@@ -567,7 +567,7 @@ impl<'de> Visitor<'de> for CategoryNameVisitor {
     where
         E: serde::de::Error,
     {
-        CategoryName::try_from(value)
+        CategoryName::from_str(value)
             .map_err(|_| E::custom("the category name doesn't follow the kebab-case"))
     }
 }
@@ -584,7 +584,7 @@ pub struct RepositoryName(String);
 impl RepositoryName {
     /// Parses the string representation of a [`RepositoryName`].
     pub fn parse(repr: &str) -> Result<Self, RepositoryNameParseError> {
-        Self::try_from(repr)
+        Self::from_str(repr)
     }
 }
 
@@ -611,11 +611,11 @@ impl AsRef<str> for RepositoryName {
     }
 }
 
-impl TryFrom<&str> for RepositoryName {
-    type Error = RepositoryNameParseError;
+impl FromStr for RepositoryName {
+    type Err = RepositoryNameParseError;
 
     #[inline]
-    fn try_from(repr: &str) -> Result<Self, Self::Error> {
+    fn from_str(repr: &str) -> Result<Self, Self::Err> {
         lazy_static! {
             static ref REPOSITORY_NAME_REGEX: Regex = Regex::new(r"^[a-z0-9\-]+$").unwrap();
         }
@@ -643,7 +643,7 @@ impl<'de> Visitor<'de> for RepositoryNameVisitor {
     where
         E: serde::de::Error,
     {
-        RepositoryName::try_from(value)
+        RepositoryName::from_str(value)
             .map_err(|_| E::custom("the repository name doesn't follow the kebab-case"))
     }
 }
