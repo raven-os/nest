@@ -37,9 +37,9 @@ impl InstallTransaction {
         let tarball_path = config
             .paths()
             .downloaded()
-            .join(self.target().full_name().repository())
-            .join(self.target().full_name().category())
-            .join(self.target().full_name().name())
+            .join(self.target().repository().as_str())
+            .join(self.target().category().as_str())
+            .join(self.target().name().as_str())
             .join(self.target().version().to_string());
         fs::create_dir_all(&tarball_path).with_context(|_| tarball_path.display().to_string())?;
         let tarball_path = tarball_path.join("data").with_extension("tar.gz");
@@ -55,10 +55,10 @@ impl InstallTransaction {
         let tarball_path = config
             .paths()
             .downloaded()
-            .join(self.target().full_name().repository())
-            .join(self.target().full_name().category())
-            .join(self.target().full_name().name())
-            .join(self.target().version().to_string())
+            .join(self.target().repository().as_str())
+            .join(self.target().category().as_str())
+            .join(self.target().name().as_str())
+            .join(self.target().version().to_string().as_str())
             .join("data")
             .with_extension("tar.gz");
 
@@ -94,9 +94,9 @@ impl InstallTransaction {
         let log_dir = config
             .paths()
             .installed()
-            .join(self.target.full_name().repository())
-            .join(self.target.full_name().category())
-            .join(self.target.full_name().name());
+            .join(self.target().repository().as_str())
+            .join(self.target().category().as_str())
+            .join(self.target().name().as_str());
         fs::create_dir_all(&log_dir).with_context(|_| log_dir.display().to_string())?;
 
         let log_path = log_dir.join(self.target.version().to_string());

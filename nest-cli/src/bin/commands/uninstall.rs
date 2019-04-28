@@ -28,7 +28,8 @@ pub fn uninstall(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
                 root_node.requirements().iter().any(|req_id| {
                     let req = graph.requirements().get(req_id).unwrap();
                     if let RequirementKind::Package { package_req } = req.kind() {
-                        if package_req.full_name() == &pkg.full_name() {
+                        let full_name = pkg.full_name();
+                        if package_req.full_name() == &full_name {
                             graph.remove_requirement(*req_id);
                             return true;
                         }

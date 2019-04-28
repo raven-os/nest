@@ -14,12 +14,16 @@ pub enum PackageIDParseErrorKind {
         _0
     )]
     InvalidFormat(String),
+
     #[fail(display = "{}", _0)]
     InvalidName(#[cause] PackageNameParseError),
+
     #[fail(display = "{}", _0)]
     InvalidCategory(#[cause] CategoryNameParseError),
+
     #[fail(display = "{}", _0)]
     InvalidRepository(#[cause] RepositoryNameParseError),
+
     #[fail(display = "invalid version syntax")]
     InvalidVersion,
 }
@@ -38,10 +42,13 @@ pub enum PackageFullNameParseErrorKind {
         _0
     )]
     InvalidFormat(String),
+
     #[fail(display = "{}", _0)]
     InvalidName(#[cause] PackageNameParseError),
+
     #[fail(display = "{}", _0)]
     InvalidCategory(#[cause] CategoryNameParseError),
+
     #[fail(display = "{}", _0)]
     InvalidRepository(#[cause] RepositoryNameParseError),
 }
@@ -57,13 +64,46 @@ pub struct PackageShortNameParseError {
 pub enum PackageShortNameParseErrorKind {
     #[fail(display = "\"{}\" doesn't follow the `category/name` format", _0)]
     InvalidFormat(String),
+
     #[fail(display = "{}", _0)]
     InvalidName(#[cause] PackageNameParseError),
+
     #[fail(display = "{}", _0)]
     InvalidCategory(#[cause] CategoryNameParseError),
 }
 
 use_as_error!(PackageShortNameParseError, PackageShortNameParseErrorKind);
+
+#[derive(Debug)]
+pub struct PackageRequirementParseError {
+    inner: Context<PackageRequirementParseErrorKind>,
+}
+
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Fail)]
+pub enum PackageRequirementParseErrorKind {
+    #[fail(
+        display = "\"{}\" doesn't follow the `repository::category/name#version` format",
+        _0
+    )]
+    InvalidFormat(String),
+
+    #[fail(display = "{}", _0)]
+    InvalidName(#[cause] PackageNameParseError),
+
+    #[fail(display = "{}", _0)]
+    InvalidCategory(#[cause] CategoryNameParseError),
+
+    #[fail(display = "{}", _0)]
+    InvalidRepository(#[cause] RepositoryNameParseError),
+
+    #[fail(display = "invalid version syntax")]
+    InvalidVersion,
+}
+
+use_as_error!(
+    PackageRequirementParseError,
+    PackageRequirementParseErrorKind
+);
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Fail)]
 #[fail(display = "{}: invalid package name", 0)]

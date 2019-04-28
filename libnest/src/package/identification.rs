@@ -1,5 +1,5 @@
+use std::convert::TryFrom;
 use std::fmt::{self, Display, Formatter};
-use std::ops::Deref;
 use std::str::FromStr;
 
 use lazy_static::lazy_static;
@@ -429,49 +429,11 @@ pub struct PackageName(String);
 impl PackageName {
     /// Parses the string representation of a [`PackageName`].
     pub fn parse(repr: &str) -> Result<Self, PackageNameParseError> {
-        Self::from_str(repr)
+        Self::try_from(repr)
     }
 }
 
-impl Display for PackageName {
-    #[inline]
-    fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
-        write!(fmt, "{}", self.0)
-    }
-}
-
-impl Deref for PackageName {
-    type Target = str;
-
-    #[inline]
-    fn deref(&self) -> &str {
-        &self.0
-    }
-}
-
-impl AsRef<str> for PackageName {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
-}
-
-impl FromStr for PackageName {
-    type Err = PackageNameParseError;
-
-    #[inline]
-    fn from_str(repr: &str) -> Result<Self, Self::Err> {
-        lazy_static! {
-            static ref PACKAGE_NAME_REGEX: Regex = Regex::new(r"^[a-z0-9\-]+$").unwrap();
-        }
-
-        if PACKAGE_NAME_REGEX.is_match(repr) {
-            Ok(Self(String::from(repr)))
-        } else {
-            Err(PackageNameParseError(repr.to_string()))
-        }
-    }
-}
+strong_name_impl!(PackageName, r"^[a-z0-9\-]+$", PackageNameParseError);
 
 struct PackageNameVisitor;
 
@@ -488,7 +450,7 @@ impl<'de> Visitor<'de> for PackageNameVisitor {
     where
         E: serde::de::Error,
     {
-        PackageName::from_str(value)
+        PackageName::parse(value)
             .map_err(|_| E::custom("the package name doesn't follow the kebab-case"))
     }
 }
@@ -505,49 +467,11 @@ pub struct CategoryName(String);
 impl CategoryName {
     /// Parses the string representation of a [`CategoryName`].
     pub fn parse(repr: &str) -> Result<Self, CategoryNameParseError> {
-        Self::from_str(repr)
+        Self::try_from(repr)
     }
 }
 
-impl Display for CategoryName {
-    #[inline]
-    fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
-        write!(fmt, "{}", self.0)
-    }
-}
-
-impl Deref for CategoryName {
-    type Target = str;
-
-    #[inline]
-    fn deref(&self) -> &str {
-        &self.0
-    }
-}
-
-impl AsRef<str> for CategoryName {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
-}
-
-impl FromStr for CategoryName {
-    type Err = CategoryNameParseError;
-
-    #[inline]
-    fn from_str(repr: &str) -> Result<Self, Self::Err> {
-        lazy_static! {
-            static ref CATEGORY_NAME_REGEX: Regex = Regex::new(r"^[a-z0-9\-]+$").unwrap();
-        }
-
-        if CATEGORY_NAME_REGEX.is_match(repr) {
-            Ok(Self(String::from(repr)))
-        } else {
-            Err(CategoryNameParseError(repr.to_string()))
-        }
-    }
-}
+strong_name_impl!(CategoryName, r"^[a-z0-9\-]+$", CategoryNameParseError);
 
 struct CategoryNameVisitor;
 
@@ -564,7 +488,7 @@ impl<'de> Visitor<'de> for CategoryNameVisitor {
     where
         E: serde::de::Error,
     {
-        CategoryName::from_str(value)
+        CategoryName::parse(value)
             .map_err(|_| E::custom("the category name doesn't follow the kebab-case"))
     }
 }
@@ -581,49 +505,11 @@ pub struct RepositoryName(String);
 impl RepositoryName {
     /// Parses the string representation of a [`RepositoryName`].
     pub fn parse(repr: &str) -> Result<Self, RepositoryNameParseError> {
-        Self::from_str(repr)
+        Self::try_from(repr)
     }
 }
 
-impl Display for RepositoryName {
-    #[inline]
-    fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
-        write!(fmt, "{}", self.0)
-    }
-}
-
-impl Deref for RepositoryName {
-    type Target = str;
-
-    #[inline]
-    fn deref(&self) -> &str {
-        &self.0
-    }
-}
-
-impl AsRef<str> for RepositoryName {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
-}
-
-impl FromStr for RepositoryName {
-    type Err = RepositoryNameParseError;
-
-    #[inline]
-    fn from_str(repr: &str) -> Result<Self, Self::Err> {
-        lazy_static! {
-            static ref REPOSITORY_NAME_REGEX: Regex = Regex::new(r"^[a-z0-9\-]+$").unwrap();
-        }
-
-        if REPOSITORY_NAME_REGEX.is_match(repr) {
-            Ok(Self(String::from(repr)))
-        } else {
-            Err(RepositoryNameParseError(repr.to_string()))
-        }
-    }
-}
+strong_name_impl!(RepositoryName, r"^[a-z0-9\-]+$", RepositoryNameParseError);
 
 struct RepositoryNameVisitor;
 
@@ -640,7 +526,7 @@ impl<'de> Visitor<'de> for RepositoryNameVisitor {
     where
         E: serde::de::Error,
     {
-        RepositoryName::from_str(value)
+        RepositoryName::parse(value)
             .map_err(|_| E::custom("the repository name doesn't follow the kebab-case"))
     }
 }

@@ -1,6 +1,4 @@
 use std::convert::TryFrom;
-use std::fmt::{self, Display, Formatter};
-use std::ops::Deref;
 
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -82,45 +80,7 @@ pub type UpstreamURL = SerdeUrl;
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Tag(String);
 
-impl Display for Tag {
-    #[inline]
-    fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
-        write!(fmt, "{}", self.0)
-    }
-}
-
-impl Deref for Tag {
-    type Target = str;
-
-    #[inline]
-    fn deref(&self) -> &str {
-        &self.0
-    }
-}
-
-impl AsRef<str> for Tag {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        &self.0
-    }
-}
-
-impl TryFrom<&str> for Tag {
-    type Error = TagParseError;
-
-    #[inline]
-    fn try_from(repr: &str) -> Result<Self, Self::Error> {
-        lazy_static! {
-            static ref TAG_REGEX: Regex = Regex::new(r"^[a-z0-9\-]+$").unwrap();
-        }
-
-        if TAG_REGEX.is_match(repr) {
-            Ok(Self(String::from(repr)))
-        } else {
-            Err(TagParseError(repr.to_string()))
-        }
-    }
-}
+strong_name_impl!(Tag, r"^[a-z0-9\-]+$", TagParseError);
 
 struct TagVisitor;
 

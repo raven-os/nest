@@ -40,7 +40,7 @@ pub fn pull(config: &Config) -> Result<(), Error> {
     progress_bar.set_style(ProgressStyle::default_bar().template("[{pos:>3}/{len:3}] {bar:80}"));
 
     let mut transactions = transactions;
-    let download = Download::from("pull");
+    let download = Download::from("api/pull");
 
     {
         let lock_file_ownership = config.acquire_lock_file_ownership(true)?;

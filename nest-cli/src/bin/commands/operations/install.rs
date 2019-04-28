@@ -15,19 +15,19 @@ pub fn install_package(
     let repo = config
         .repositories()
         .into_iter()
-        .find(|repository| repository.name() == **trans.target().full_name().repository())
+        .find(|repository| repository.name() == **trans.target().repository())
         .ok_or_else(|| {
             format_err!(
                 "unable to find repository '{}'",
-                trans.target().full_name().repository()
+                trans.target().repository()
             )
         })?;
 
     // Build the target route
     let target_url = format!(
         "/p/{}/{}/{}/download",
-        trans.target().full_name().category(),
-        trans.target().full_name().name(),
+        trans.target().category(),
+        trans.target().name(),
         trans.target().version(),
     );
 

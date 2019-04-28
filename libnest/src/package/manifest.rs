@@ -1,9 +1,12 @@
 use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::fmt::{self, Display, Formatter};
+use std::fs::File;
 use std::ops::Deref;
+use std::path::Path;
 
 use chrono::{DateTime, Utc};
+use failure::{Error, ResultExt};
 use lazy_static::lazy_static;
 use regex::Regex;
 use semver::{Version, VersionReq};
@@ -43,6 +46,14 @@ impl PackageManifest {
             metadata,
             versions: HashMap::new(),
         }
+    }
+
+    #[inline]
+    pub(crate) fn load_from_cache<P: AsRef<Path>>(cache_path: P) -> Result<Self, Error> {
+        let file =
+            File::open(cache_path.as_ref()).context(cache_path.as_ref().display().to_string())?;
+
+        Ok(serde_json::from_reader(&file).context(cache_path.as_ref().display().to_string())?)
     }
 
     /// Returns a reference over the name of the package
@@ -123,7 +134,7 @@ impl PackageManifest {
     }
 
     /// Regenerates the [`Manifest`] of this [`PackageManifest`] for the given [`Version`].
-    pub fn into_manifest(&self, version: Version) -> Option<Manifest> {
+    pub fn get_manifest_for_version(&self, version: Version) -> Option<Manifest> {
         self.versions.get(&version).map(|version_data| {
             Manifest::new(
                 self.name.clone(),
@@ -134,9 +145,22 @@ impl PackageManifest {
             )
         })
     }
+
+    /// Obtain an iterator over the [`Manifest`] of the available versions of this package
+    pub fn iter_manifests<'a>(&'a self) -> impl Iterator<Item = Manifest> + 'a {
+        self.versions.iter().map(move |(version, version_data)| {
+            Manifest::new(
+                self.name.clone(),
+                self.category.clone(),
+                version.clone(),
+                self.metadata.clone(),
+                version_data.clone(),
+            )
+        })
+    }
 }
 
-/// A manifest that represent a unique package and its medata.
+/// A manifest that represent a unique package and its metadata.
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, Debug)]
 pub struct Manifest {
     name: PackageName,
