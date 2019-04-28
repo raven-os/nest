@@ -25,7 +25,7 @@ pub fn install_package(
 
     // Build the target route
     let target_url = format!(
-        "/p/{}/{}/{}/download",
+        "api/p/{}/{}/{}/download",
         trans.target().category(),
         trans.target().name(),
         trans.target().version(),

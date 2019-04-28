@@ -72,6 +72,7 @@ mod error;
 mod identification;
 mod manifest;
 mod metadata;
+mod npf;
 mod requirement;
 
 pub use identification::{
@@ -79,6 +80,7 @@ pub use identification::{
 };
 pub use manifest::{Kind, Manifest, PackageManifest, VersionData};
 pub use metadata::{License, Maintainer, Metadata, Tag, UpstreamURL};
+pub use npf::{NPFExplorer, NPFFile};
 pub use requirement::{HardPackageRequirement, PackageRequirement};
 
 lazy_static::lazy_static! {
