@@ -75,6 +75,7 @@ mod metadata;
 mod npf;
 mod requirement;
 
+pub use error::*;
 pub use identification::{
     CategoryName, PackageFullName, PackageID, PackageName, PackageShortName, RepositoryName,
 };
