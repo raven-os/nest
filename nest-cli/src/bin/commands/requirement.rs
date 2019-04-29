@@ -37,7 +37,7 @@ pub fn requirement_add(
             .perform()?;
         if matched_packages.len() > 1 {
             for pkg in matched_packages {
-                println!("{}", &pkg);
+                println!("{}", pkg.full_name());
             }
             return Err(format_err!("unable to select a best match"));
         } else if matched_packages.is_empty() {
@@ -46,8 +46,10 @@ pub fn requirement_add(
                 &target
             ));
         }
+        let matched_package = &matched_packages[0];
+
         let package_req = HardPackageRequirement::from(
-            matched_packages[0].full_name(),
+            matched_package.full_name(),
             requirement.version_requirement().clone(),
         );
 

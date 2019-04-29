@@ -7,7 +7,7 @@ use serde_json;
 
 use crate::cache::CacheErrorKind;
 use crate::lock_file::LockFileOwnership;
-use crate::package::{Manifest, Package, RepositoryName};
+use crate::package::PackageManifest;
 use crate::repository::Repository;
 
 /// Structure representing a "pull" transaction
@@ -42,7 +42,7 @@ impl<'a, 'b> PullTransaction<'a, 'b> {
         config: &crate::config::Config,
         ownership: &LockFileOwnership,
     ) -> Result<(), Error> {
-        let res: Result<Vec<Manifest>, Error> = try {
+        let res: Result<Vec<PackageManifest>, Error> = try {
             let utf8 = str::from_utf8(&self.data)?;
             serde_json::from_str(utf8)?
         };
@@ -53,13 +53,9 @@ impl<'a, 'b> PullTransaction<'a, 'b> {
         cache.erase_repository(&self.target_repository)?;
 
         for manifest in manifests {
-            let package = Package::from(
-                RepositoryName::from(self.target_repository.name().to_string()),
-                manifest,
-            );
             cache
-                .update(&package)
-                .context(package.id().to_string())
+                .update(&manifest)
+                .with_context(|_| manifest.name().to_string())
                 .context(CacheErrorKind::CacheWriteError)?;
         }
         Ok(())

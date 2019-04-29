@@ -3,7 +3,9 @@
 
 mod query;
 
-pub use self::query::{AvailablePackagesCacheQuery, AvailablePackagesCacheQueryStrategy};
+pub use self::query::{
+    AvailablePackagesCacheQuery, AvailablePackagesCacheQueryStrategy, QueryResult,
+};
 
 use super::errors::*;
 
@@ -16,7 +18,7 @@ use failure::{Error, ResultExt};
 use serde_json;
 
 use crate::lock_file::LockFileOwnership;
-use crate::package::{Package, PackageRequirement};
+use crate::package::{PackageManifest, PackageRequirement};
 use crate::repository::Repository;
 
 /// Structure representing the cache of available packages
@@ -60,15 +62,12 @@ impl<'cache_root, 'lock_file> AvailablePackages<'cache_root, 'lock_file> {
     }
 
     /// Creates or updates the cache entry for a given [`Package`]
-    pub fn update(&self, package: &Package) -> Result<(), Error> {
-        let metadata = package.manifest().metadata();
-
+    pub fn update(&self, package: &PackageManifest) -> Result<(), Error> {
         let cache_path = self
             .cache_root
-            .join(package.repository())
-            .join(metadata.category())
-            .join(metadata.name())
-            .join(metadata.version().to_string());
+            .join(package.repository().as_str())
+            .join(package.category().as_str())
+            .join(package.name().as_str());
 
         let res: Result<_, Error> = try {
             if let Some(parent) = cache_path.parent() {
@@ -76,7 +75,7 @@ impl<'cache_root, 'lock_file> AvailablePackages<'cache_root, 'lock_file> {
             }
 
             let mut file = File::create(&cache_path)?;
-            file.write_all(serde_json::to_string_pretty(package.manifest())?.as_bytes())?;
+            file.write_all(serde_json::to_string_pretty(package)?.as_bytes())?;
             file.write_all(&[b'\n'])?;
         };
         res.context(cache_path.display().to_string())

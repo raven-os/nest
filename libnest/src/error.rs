@@ -23,8 +23,8 @@ macro_rules! use_as_error {
 
         impl $Error {
             /// Extract the error kind from the error
-            pub fn kind(&self) -> $ErrorKind {
-                *self.inner.get_context()
+            pub fn kind(&self) -> &$ErrorKind {
+                self.inner.get_context()
             }
         }
 

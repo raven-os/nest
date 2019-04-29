@@ -8,10 +8,10 @@ use failure::{format_err, Error, ResultExt};
 use serde_derive::{Deserialize, Serialize};
 use serde_json;
 
-use crate::cache::available::AvailablePackagesCacheQueryStrategy;
+use crate::cache::available::{AvailablePackagesCacheQueryStrategy, QueryResult};
 use crate::config::Config;
 use crate::lock_file::LockFileOwnership;
-use crate::package::{HardPackageRequirement, Package, PackageFullName};
+use crate::package::{HardPackageRequirement, PackageFullName};
 
 use super::super::errors::DependencyGraphErrorKind;
 use super::node::{GroupName, Node, NodeID, NodeKind, ROOT_ID};
@@ -291,8 +291,9 @@ impl<'lock_file> DependencyGraph<'lock_file> {
     }
 
     /// Creates a new node with the given package
-    pub fn add_package_node(&mut self, package: Package) -> Result<NodeID, Error> {
+    pub fn add_package_node(&mut self, package: QueryResult) -> Result<NodeID, Error> {
         let name = package.full_name();
+
         if self.packages.contains_key(&name) {
             Err(format_err!("{}", name)
                 .context(DependencyGraphErrorKind::PackageAlreadyExists)
@@ -402,7 +403,7 @@ impl<'lock_file> DependencyGraph<'lock_file> {
                 self.groups.remove(&name);
             }
             NodeKind::Package { id } => {
-                self.packages.remove(id.full_name());
+                self.packages.remove(&id.clone().into());
             }
         }
 
@@ -485,7 +486,7 @@ impl<'lock_file> DependencyGraph<'lock_file> {
         requirements.push(requirement.clone());
 
         // Look for the newest version matching all the requirements
-        let find_matching_packages = || -> Result<Option<Package>, Error> {
+        let find_matching_packages = || -> Result<Option<QueryResult>, Error> {
             let available_packages = config
                 .available_packages_cache_internal(self.phantom)
                 .query(&requirement.clone().any_version().into())
@@ -511,9 +512,10 @@ impl<'lock_file> DependencyGraph<'lock_file> {
         // If the new version is different from the old one, remove the old one
         if let Some(node_id) = self.packages.get(requirement.full_name()).cloned() {
             let node = self.nodes.get_mut(&node_id).expect("invalid node id");
+            let id = package.id();
 
-            if (*node.kind() != NodeKind::Package { id: package.id() }) {
-                *node.kind_mut() = NodeKind::Package { id: package.id() };
+            if (*node.kind() != NodeKind::Package { id: id.clone() }) {
+                *node.kind_mut() = NodeKind::Package { id };
                 node.requirements_mut().clear();
                 self.solve_node(config, node_id)?;
                 Ok(node_id)

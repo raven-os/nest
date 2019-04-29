@@ -34,9 +34,9 @@ impl RemoveTransaction {
         let log_path = config
             .paths()
             .installed()
-            .join(self.target.full_name().repository())
-            .join(self.target.full_name().category())
-            .join(self.target.full_name().name())
+            .join(self.target().repository().as_str())
+            .join(self.target().category().as_str())
+            .join(self.target().name().as_str())
             .join(self.target.version().to_string());
 
         let mut log_file = File::open(&log_path)

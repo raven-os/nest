@@ -2,9 +2,58 @@ use std::fs;
 use std::path::Path;
 
 use failure::{Error, ResultExt};
-use semver::Version;
 
-use crate::package::{CategoryName, Package, PackageRequirement, RepositoryName};
+use crate::package::{
+    CategoryName, Manifest, PackageFullName, PackageID, PackageManifest, PackageRequirement,
+    RepositoryName,
+};
+
+/// The result of a query to the packages cache
+#[derive(Clone, Eq, PartialEq, Debug)]
+pub struct QueryResult {
+    repository: RepositoryName,
+    manifest: Manifest,
+}
+
+impl QueryResult {
+    /// Creates a [`QueryResult`] from a [`RepositoryName`] and a [`Manifest`]
+    pub fn from(repository: RepositoryName, manifest: Manifest) -> Self {
+        Self {
+            repository,
+            manifest,
+        }
+    }
+
+    /// Returns a reference over the repository for this result
+    pub fn repository(&self) -> &RepositoryName {
+        &self.repository
+    }
+
+    /// Returns a mutable reference over the repository for this result
+    pub fn repository_mut(&mut self) -> &mut RepositoryName {
+        &mut self.repository
+    }
+
+    /// Returns a reference over the manifest for this result
+    pub fn manifest(&self) -> &Manifest {
+        &self.manifest
+    }
+
+    /// Returns a mutable reference over the manifest for the package associated with this result
+    pub fn manifest_mut(&mut self) -> &mut Manifest {
+        &mut self.manifest
+    }
+
+    /// Generates the [`PackageFullName`] for this result
+    pub fn full_name(&self) -> PackageFullName {
+        self.manifest().full_name(self.repository().clone())
+    }
+
+    /// Generates the [`PackageID`] for the package associated with this result
+    pub fn id(&self) -> PackageID {
+        self.manifest().id(self.repository().clone())
+    }
+}
 
 /// The strategy to use when looking for packages in this cache.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
@@ -66,7 +115,7 @@ impl<'a, 'b> AvailablePackagesCacheQuery<'a, 'b> {
     }
 
     /// Perform the query
-    pub fn perform(&self) -> Result<Vec<Package>, Error> {
+    pub fn perform(&self) -> Result<Vec<QueryResult>, Error> {
         let mut results = Vec::new();
 
         let repositories = Self::get_cache_entries(&self.cache_root)?
@@ -74,20 +123,24 @@ impl<'a, 'b> AvailablePackagesCacheQuery<'a, 'b> {
                 Some(required_repo) => required_repo.as_str() == repo,
                 _ => true,
             })
-            .map(RepositoryName::from);
+            .map(|name| {
+                RepositoryName::parse(&name).expect("invalid repository name found in the cache")
+            });
 
         for repo in repositories {
-            let repo_cache_path = self.cache_root.join(&repo);
+            let repo_cache_path = self.cache_root.join(repo.as_str());
 
             let categories = Self::get_cache_entries(&repo_cache_path)?
                 .filter(|category| match self.requirement.category() {
                     Some(required_category) => required_category.as_str() == category,
                     _ => true,
                 })
-                .map(CategoryName::from);
+                .map(|name| {
+                    CategoryName::parse(&name).expect("invalid category name found in the cache")
+                });
 
             for category in categories {
-                let category_cache_path = repo_cache_path.join(category);
+                let category_cache_path = repo_cache_path.join(category.as_str());
 
                 // TODO: at the moment, we match the package name exactly. This should be configurable.
                 let packages = Self::get_cache_entries(&category_cache_path)?
@@ -95,10 +148,8 @@ impl<'a, 'b> AvailablePackagesCacheQuery<'a, 'b> {
 
                 for package in packages {
                     let package_cache_path = category_cache_path.join(package);
-
-                    let mut versions = Self::get_cache_entries(&package_cache_path)?
-                        .map(|ver_repr| Version::parse(&ver_repr))
-                        .collect::<Result<Vec<_>, _>>()?;
+                    let package_manifest = PackageManifest::load_from_cache(package_cache_path)?;
+                    let mut versions = package_manifest.versions().keys().collect::<Vec<_>>();
 
                     match self.strategy {
                         AvailablePackagesCacheQueryStrategy::BestMatch => {
@@ -107,8 +158,13 @@ impl<'a, 'b> AvailablePackagesCacheQuery<'a, 'b> {
                                 self.requirement.version_requirement().matches(version)
                             });
                             if let Some(version) = result {
-                                let path = package_cache_path.join(version.to_string());
-                                results.push(Package::load_from_cache(repo.clone(), &path)?);
+                                // FIXME: having to ask for a version that we already know exists is meh
+                                results.push(QueryResult::from(
+                                    repo.clone(),
+                                    package_manifest
+                                        .get_manifest_for_version((*version).clone())
+                                        .unwrap(),
+                                ));
                             }
                         }
                         AvailablePackagesCacheQueryStrategy::AllMatchesSorted => {
@@ -120,12 +176,14 @@ impl<'a, 'b> AvailablePackagesCacheQuery<'a, 'b> {
                                         self.requirement.version_requirement().matches(&version)
                                     })
                                     .map(|version| {
-                                        Package::load_from_cache(
+                                        QueryResult::from(
                                             repo.clone(),
-                                            &package_cache_path.join(version.to_string()),
+                                            package_manifest
+                                                .get_manifest_for_version((*version).clone())
+                                                .unwrap(),
                                         )
                                     })
-                                    .collect::<Result<Vec<_>, _>>()?,
+                                    .collect::<Vec<_>>(),
                             );
                         }
                         AvailablePackagesCacheQueryStrategy::AllMatchesUnsorted => {
@@ -136,12 +194,14 @@ impl<'a, 'b> AvailablePackagesCacheQuery<'a, 'b> {
                                         self.requirement.version_requirement().matches(&version)
                                     })
                                     .map(|version| {
-                                        Package::load_from_cache(
+                                        QueryResult::from(
                                             repo.clone(),
-                                            &package_cache_path.join(version.to_string()),
+                                            package_manifest
+                                                .get_manifest_for_version((*version).clone())
+                                                .unwrap(),
                                         )
                                     })
-                                    .collect::<Result<Vec<_>, _>>()?,
+                                    .collect::<Vec<_>>(),
                             );
                         }
                     }
