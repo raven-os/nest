@@ -123,7 +123,9 @@ impl<'a, 'b> AvailablePackagesCacheQuery<'a, 'b> {
                 Some(required_repo) => required_repo.as_str() == repo,
                 _ => true,
             })
-            .map(|name| RepositoryName::parse(&name).unwrap());
+            .map(|name| {
+                RepositoryName::parse(&name).expect("invalid repository name found in the cache")
+            });
 
         for repo in repositories {
             let repo_cache_path = self.cache_root.join(repo.as_str());
@@ -133,7 +135,9 @@ impl<'a, 'b> AvailablePackagesCacheQuery<'a, 'b> {
                     Some(required_category) => required_category.as_str() == category,
                     _ => true,
                 })
-                .map(|name| CategoryName::parse(&name).unwrap());
+                .map(|name| {
+                    CategoryName::parse(&name).expect("invalid category name found in the cache")
+                });
 
             for category in categories {
                 let category_cache_path = repo_cache_path.join(category.as_str());
@@ -145,11 +149,7 @@ impl<'a, 'b> AvailablePackagesCacheQuery<'a, 'b> {
                 for package in packages {
                     let package_cache_path = category_cache_path.join(package);
                     let package_manifest = PackageManifest::load_from_cache(package_cache_path)?;
-                    let mut versions = package_manifest
-                        .versions()
-                        .iter()
-                        .map(|(version, _)| version)
-                        .collect::<Vec<_>>();
+                    let mut versions = package_manifest.versions().keys().collect::<Vec<_>>();
 
                     match self.strategy {
                         AvailablePackagesCacheQueryStrategy::BestMatch => {

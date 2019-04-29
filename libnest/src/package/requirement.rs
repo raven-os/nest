@@ -219,13 +219,6 @@ impl std::fmt::Display for PackageRequirement {
     }
 }
 
-//impl Default for PackageRequirement {
-//    #[inline]
-//    fn default() -> PackageRequirement {
-//        PackageRequirement::new()
-//    }
-//}
-
 /// A structure represenging a hard package requirement.
 /// This type of requirement is said to be "hard", because only the version has yet to be selected.
 /// The other parts of the package information (repository, category and name) are already known.

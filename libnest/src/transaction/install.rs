@@ -69,6 +69,7 @@ impl InstallTransaction {
 
         let npf_explorer = NPFExplorer::from(self.target().name(), &npf_path)?;
 
+        // TODO: avoid failing if no tarball is found and the package is virtual
         let tarball_handle = npf_explorer
             .get_file("data.tar.gz")
             .with_context(|_| npf_path.display().to_string())?;
