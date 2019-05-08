@@ -154,3 +154,23 @@ pub struct TagParseError(pub String);
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Fail)]
 #[fail(display = "{}: invalid slot", 0)]
 pub struct SlotParseError(pub String);
+
+/// Type for errors related to the exploration of an NPF file
+#[derive(Debug)]
+pub struct NPFExplorationError {
+    inner: Context<NPFExplorationErrorKind>,
+}
+
+/// Kind for errors related to the exploration of an NPF file
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Fail)]
+pub enum NPFExplorationErrorKind {
+    /// A requested file could not be found in the NPF
+    #[fail(display = "the requested file not found in the NPF: {}", _0)]
+    FileNotFound(String),
+
+    #[fail(display = "the requested file in the NPF could not be opened: {}", _0)]
+    /// A requested file was found in an NPF, but could not be opened
+    FileOpenError(String),
+}
+
+use_as_error!(NPFExplorationError, NPFExplorationErrorKind);
