@@ -46,10 +46,20 @@ impl NPFExplorer {
     }
 
     /// Retrieves a handle over a file in the NPF
-    pub fn get_file<P: AsRef<Path>>(&self, path: P) -> Result<NPFFile, Error> {
+    fn get_file<P: AsRef<Path>>(&self, path: P) -> Result<NPFFile, Error> {
         let file = File::open(self.path.join(path))?;
 
         Ok(NPFFile::from(file, PhantomData))
+    }
+
+    /// Retrieves a handle over the NPF's manifest.toml
+    pub fn get_manifest(&self) -> Result<NPFFile, Error> {
+        self.get_file("manifest.toml")
+    }
+
+    /// Retrieves a handle over the NPF's data.tar.gz
+    pub fn get_data(&self) -> Result<NPFFile, Error> {
+        self.get_file("data.tar.gz")
     }
 }
 

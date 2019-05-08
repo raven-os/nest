@@ -71,7 +71,7 @@ impl InstallTransaction {
 
         // TODO: avoid failing if no tarball is found and the package is virtual
         let tarball_handle = npf_explorer
-            .get_file("data.tar.gz")
+            .get_data()
             .with_context(|_| npf_path.display().to_string())?;
         let mut tarball = tarball_handle.file();
         let mut archive = Archive::new(GzDecoder::new(tarball));
