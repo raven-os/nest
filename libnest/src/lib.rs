@@ -5,6 +5,7 @@
 #![warn(missing_docs)]
 #![warn(missing_debug_implementations)]
 #![feature(try_blocks)]
+#![feature(result_map_or_else)]
 
 #[macro_use]
 mod error;

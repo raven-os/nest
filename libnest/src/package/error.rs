@@ -154,3 +154,38 @@ pub struct TagParseError(pub String);
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Fail)]
 #[fail(display = "{}: invalid slot", 0)]
 pub struct SlotParseError(pub String);
+
+/// Type for errors related to the exploration of an NPF file
+#[derive(Debug)]
+pub struct NPFExplorationError {
+    inner: Context<NPFExplorationErrorKind>,
+}
+
+/// Kind for errors related to the exploration of an NPF file
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Fail)]
+pub enum NPFExplorationErrorKind {
+    /// An NPF file could not be unpacked for exploration
+    #[fail(display = "unable to unpack")]
+    UnpackError,
+
+    /// The mandatory manifest file for an NPF could not be found
+    #[fail(display = "the manifest.toml file could not be found")]
+    MissingManifest,
+
+    /// The mandatory manifest file for an NPF was found, but is invalid
+    #[fail(display = "invalid manifest.toml")]
+    InvalidManifest,
+
+    /// A requested file could not be found in the NPF
+    #[fail(display = "the requested file not found in the NPF: {:?}", _0)]
+    FileNotFound(std::path::PathBuf),
+
+    #[fail(
+        display = "the requested file in the NPF could not be opened: {:?}",
+        _0
+    )]
+    /// A requested file was found in an NPF, but could not be used
+    FileIOError(std::path::PathBuf),
+}
+
+use_as_error!(NPFExplorationError, NPFExplorationErrorKind);

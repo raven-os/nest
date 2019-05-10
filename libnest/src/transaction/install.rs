@@ -71,66 +71,70 @@ impl InstallTransaction {
 
         // TODO: avoid failing if no tarball is found and the package is virtual
         let tarball_handle = npf_explorer
-            .get_data()
+            .open_data()
             .with_context(|_| npf_path.display().to_string())?;
-        let mut tarball = tarball_handle.file();
-        let mut archive = Archive::new(GzDecoder::new(tarball));
-        let mut files = Vec::new();
 
-        // List all the files in the archive and check whether they already exist
-        for entry in archive
-            .entries()
-            .with_context(|_| npf_path.display().to_string())?
-        {
-            let entry = entry.with_context(|_| npf_path.display().to_string())?;
-            let entry_path = entry
-                .path()
-                .with_context(|_| npf_path.display().to_string())?;
-
-            let abs_path = Path::new("/").with_content(&entry_path);
-            let rel_path = config.paths().root().with_content(&entry_path);
-
-            // If the file exists and is not a directory, the installation would overwrite an
-            // existing file, return an error.
-            if let Ok(metadata) = fs::symlink_metadata(&rel_path) {
-                if !metadata.is_dir() {
-                    Err(format_err!("{}", abs_path.display())
-                        .context(InstallErrorKind::FileAlreadyExists))?;
-                }
-            }
-            files.push(abs_path.to_path_buf());
-        }
-
-        let log_dir = config
-            .paths()
-            .installed()
-            .join(self.target().repository().as_str())
-            .join(self.target().category().as_str())
-            .join(self.target().name().as_str());
-        fs::create_dir_all(&log_dir).with_context(|_| log_dir.display().to_string())?;
-
-        let log_path = log_dir.join(self.target.version().to_string());
-
-        // If the log file exists, the package is already installed
-        if log_path.exists() {
-            Err(format_err!("{}", &self.target).context(InstallErrorKind::PackageAlreadyInstalled))?;
-        }
-
-        let res: Result<_, Error> = try {
-            // Log each file to install to the log file
-            let mut log = File::create(&log_path)?;
-            for file in &files {
-                writeln!(log, "{}", file.display())?;
-            }
-
-            // Extract the tarball in the root folder
-            tarball.seek(SeekFrom::Start(0))?;
+        if let Some(tarball_handle) = tarball_handle {
+            let mut tarball = tarball_handle.file();
             let mut archive = Archive::new(GzDecoder::new(tarball));
-            for entry in archive.entries()? {
-                entry?.unpack_in(config.paths().root())?;
+            let mut files = Vec::new();
+
+            // List all the files in the archive and check whether they already exist
+            for entry in archive
+                .entries()
+                .with_context(|_| npf_path.display().to_string())?
+            {
+                let entry = entry.with_context(|_| npf_path.display().to_string())?;
+                let entry_path = entry
+                    .path()
+                    .with_context(|_| npf_path.display().to_string())?;
+
+                let abs_path = Path::new("/").with_content(&entry_path);
+                let rel_path = config.paths().root().with_content(&entry_path);
+
+                // If the file exists and is not a directory, the installation would overwrite an
+                // existing file, return an error.
+                if let Ok(metadata) = fs::symlink_metadata(&rel_path) {
+                    if !metadata.is_dir() {
+                        Err(format_err!("{}", abs_path.display())
+                            .context(InstallErrorKind::FileAlreadyExists))?;
+                    }
+                }
+                files.push(abs_path.to_path_buf());
             }
-        };
-        res.with_context(|_| npf_path.display().to_string())?;
+
+            let log_dir = config
+                .paths()
+                .installed()
+                .join(self.target().repository().as_str())
+                .join(self.target().category().as_str())
+                .join(self.target().name().as_str());
+            fs::create_dir_all(&log_dir).with_context(|_| log_dir.display().to_string())?;
+
+            let log_path = log_dir.join(self.target.version().to_string());
+
+            // If the log file exists, the package is already installed
+            if log_path.exists() {
+                Err(format_err!("{}", &self.target)
+                    .context(InstallErrorKind::PackageAlreadyInstalled))?;
+            }
+
+            let res: Result<_, Error> = try {
+                // Log each file to install to the log file
+                let mut log = File::create(&log_path)?;
+                for file in &files {
+                    writeln!(log, "{}", file.display())?;
+                }
+
+                // Extract the tarball in the root folder
+                tarball.seek(SeekFrom::Start(0))?;
+                let mut archive = Archive::new(GzDecoder::new(tarball));
+                for entry in archive.entries()? {
+                    entry?.unpack_in(config.paths().root())?;
+                }
+            };
+            res.with_context(|_| npf_path.display().to_string())?;
+        }
 
         Ok(())
     }
