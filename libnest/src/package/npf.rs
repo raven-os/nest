@@ -1,4 +1,5 @@
 use std::fs::{self, File};
+use std::io::Read;
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
@@ -7,8 +8,6 @@ use toml;
 
 use super::error::{NPFExplorationError, NPFExplorationErrorKind};
 use super::manifest::{Kind::Effective, Manifest};
-use crate::package::error::NPFExplorationErrorKind::FileOpenError;
-use std::io::Read;
 
 /// Structure representing a handle over a file contained in an NPF
 #[derive(Debug)]
@@ -39,12 +38,12 @@ impl NPFExplorer {
     fn load_manifest(path: &Path) -> Result<Manifest, NPFExplorationError> {
         let mut file = File::open(path.join("manifest.toml")).map_err(|err| match err.kind() {
             std::io::ErrorKind::NotFound => NPFExplorationErrorKind::MissingManifest,
-            _ => NPFExplorationErrorKind::FileOpenError(path.to_path_buf()),
+            _ => NPFExplorationErrorKind::FileIOError(path.to_path_buf()),
         })?;
 
         let mut content = String::new();
         file.read_to_string(&mut content)
-            .map_err(|_| FileOpenError(path.to_path_buf()))?;
+            .map_err(|_| NPFExplorationErrorKind::FileIOError(path.to_path_buf()))?;
 
         Ok(toml::from_str(&content).map_err(|_| NPFExplorationErrorKind::InvalidManifest)?)
     }
@@ -70,12 +69,12 @@ impl NPFExplorer {
     }
 
     /// Retrieves a handle over a file in the NPF
-    fn get_file(&self, path: &Path) -> Result<NPFFile, NPFExplorationError> {
+    fn open_file(&self, path: &Path) -> Result<NPFFile, NPFExplorationError> {
         let file = File::open(self.path.join(path)).map_err(|err| match err.kind() {
             std::io::ErrorKind::NotFound => {
                 NPFExplorationErrorKind::FileNotFound(path.to_path_buf())
             }
-            _ => NPFExplorationErrorKind::FileOpenError(path.to_path_buf()),
+            _ => NPFExplorationErrorKind::FileIOError(path.to_path_buf()),
         })?;
 
         Ok(NPFFile::from(file, PhantomData))
@@ -87,8 +86,8 @@ impl NPFExplorer {
     }
 
     /// Retrieves a handle over the NPF's data.tar.gz
-    pub fn get_data(&self) -> Result<Option<NPFFile>, NPFExplorationError> {
-        self.get_file(Path::new("data.tar.gz")).map_or_else(
+    pub fn open_data(&self) -> Result<Option<NPFFile>, NPFExplorationError> {
+        self.open_file(Path::new("data.tar.gz")).map_or_else(
             |e| match e.kind() {
                 NPFExplorationErrorKind::FileNotFound(_) if self.manifest.kind() != Effective => {
                     Ok(None)
@@ -100,8 +99,8 @@ impl NPFExplorer {
     }
 
     /// Retrieves a handle over the NPF's instructions.sh, if one exists
-    pub fn get_instructions(&self) -> Result<Option<NPFFile>, NPFExplorationError> {
-        self.get_file(Path::new("instructions.sh")).map_or_else(
+    pub fn open_instructions(&self) -> Result<Option<NPFFile>, NPFExplorationError> {
+        self.open_file(Path::new("instructions.sh")).map_or_else(
             |e| match e.kind() {
                 NPFExplorationErrorKind::FileNotFound(_) => Ok(None),
                 _ => Err(e),

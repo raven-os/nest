@@ -184,8 +184,8 @@ pub enum NPFExplorationErrorKind {
         display = "the requested file in the NPF could not be opened: {:?}",
         _0
     )]
-    /// A requested file was found in an NPF, but could not be opened
-    FileOpenError(std::path::PathBuf),
+    /// A requested file was found in an NPF, but could not be used
+    FileIOError(std::path::PathBuf),
 }
 
 use_as_error!(NPFExplorationError, NPFExplorationErrorKind);

@@ -71,7 +71,7 @@ impl InstallTransaction {
 
         // TODO: avoid failing if no tarball is found and the package is virtual
         let tarball_handle = npf_explorer
-            .get_data()
+            .open_data()
             .with_context(|_| npf_path.display().to_string())?;
 
         if let Some(tarball_handle) = tarball_handle {
