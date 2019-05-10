@@ -22,7 +22,7 @@ pub fn pull(config: &Config) -> Result<(), Error> {
 
     if !ask_confirmation(
         format!(
-            "Would you like to apply th{} transaction{} ?",
+            "Would you like to apply th{} transaction{}?",
             if transactions.len() <= 1 { "is" } else { "ese" },
             if transactions.len() <= 1 { "" } else { "s" },
         )
