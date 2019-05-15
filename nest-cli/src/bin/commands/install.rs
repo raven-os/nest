@@ -37,7 +37,6 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
                 ));
             }
             let matched_package = &matched_packages[0];
-            println!("{:?}", matched_package);
 
             let package_req = HardPackageRequirement::from(
                 matched_package.full_name(),

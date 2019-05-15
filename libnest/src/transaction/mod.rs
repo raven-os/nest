@@ -10,12 +10,14 @@
 
 mod errors;
 mod install;
+mod instructions;
 mod pull;
 mod remove;
 mod upgrade;
 
 pub use self::errors::*;
 pub use self::install::InstallTransaction;
+pub use self::instructions::{ExecutionOutput, InstructionsExecutor};
 pub use self::pull::PullTransaction;
 pub use self::remove::RemoveTransaction;
 pub use self::upgrade::UpgradeTransaction;

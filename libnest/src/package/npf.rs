@@ -8,6 +8,7 @@ use toml;
 
 use super::error::{NPFExplorationError, NPFExplorationErrorKind};
 use super::manifest::{Kind::Effective, Manifest};
+use crate::transaction::InstructionsExecutor;
 
 /// Structure representing a handle over a file contained in an NPF
 #[derive(Debug)]
@@ -24,6 +25,11 @@ impl<'explorer> NPFFile<'explorer> {
     /// Retrieves the file associated with this handle
     pub fn file(&self) -> &File {
         &self.file
+    }
+
+    /// Retrieves the file associated with this handle
+    pub fn file_mut(&mut self) -> &mut File {
+        &mut self.file
     }
 }
 
@@ -107,6 +113,22 @@ impl NPFExplorer {
             },
             |o| Ok(Some(o)),
         )
+    }
+
+    /// Loads the NPF's instructions.sh file for execution, if one exists
+    pub fn load_instructions(&self) -> Result<Option<InstructionsExecutor>, NPFExplorationError> {
+        let mut file = self.open_instructions()?;
+
+        if let Some(file) = &mut file {
+            let executor =
+                InstructionsExecutor::from_script_file(file.file_mut()).map_err(|_| {
+                    NPFExplorationErrorKind::FileIOError(PathBuf::from("instructions.sh"))
+                })?;
+
+            Ok(Some(executor))
+        } else {
+            Ok(None)
+        }
     }
 }
 
