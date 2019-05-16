@@ -55,19 +55,31 @@ pub struct RemoveError {
 }
 
 /// Error kind describing a kind of error related to package removal
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
+#[derive(Debug, Fail)]
 pub enum RemoveErrorKind {
     /// The package could not be removed because its log file could not be loaded
     #[fail(display = "log file not found")]
     LogFileLoadError,
 
     /// The package could not be completely removed because one of its files could not be removed
-    #[fail(display = "cannot remove package file")]
-    FileRemoveError,
+    #[fail(display = "cannot remove file: {:?}", _0)]
+    FileRemoveError(std::path::PathBuf),
 
     /// The package could not be completely removed because its log file could not be removed
     #[fail(display = "cannot remove log file")]
     LogFileRemoveError,
+
+    /// The package could not be removed because the previously downloaded NPF was invalid
+    #[fail(display = "invalid cached package file")]
+    InvalidCachedPackageFile,
+
+    /// The package could not be removed its pre-removed instructions returned an error
+    #[fail(display = "pre-remove instructions reported an error: {}", _0)]
+    PreRemoveInstructionsFailure(#[cause] InstructionsExecutionError),
+
+    /// The package could not be removed its post-remove instructions returned an error
+    #[fail(display = "post-remove instructions reported an error: {}", _0)]
+    PostRemoveInstructionsFailure(#[cause] InstructionsExecutionError),
 }
 
 use_as_error!(RemoveError, RemoveErrorKind);

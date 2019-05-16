@@ -67,18 +67,18 @@ impl InstructionsExecutor {
     }
 
     /// Executes the pre-uninstallation script
-    pub fn execute_before_uninstall(
+    pub fn execute_before_remove(
         &self,
         root: &std::path::Path,
     ) -> Result<ExecutionOutput, InstructionsExecutionError> {
-        self.execute_function("before_uninstall", root)
+        self.execute_function("before_remove", root)
     }
 
     /// Executes the post-uninstallation script
-    pub fn execute_after_uninstall(
+    pub fn execute_after_remove(
         &self,
         root: &std::path::Path,
     ) -> Result<ExecutionOutput, InstructionsExecutionError> {
-        self.execute_function("after_uninstall", root)
+        self.execute_function("after_remove", root)
     }
 }
