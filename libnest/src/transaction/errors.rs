@@ -69,8 +69,8 @@ pub enum RemoveErrorKind {
     #[fail(display = "cannot remove log file")]
     LogFileRemoveError,
 
-    /// The package could not be removed because the previously downloaded NPF was invalid
-    #[fail(display = "invalid cached package file")]
+    /// The package could not be removed because the previously downloaded NPF is corrupted
+    #[fail(display = "corrupted cached package file")]
     InvalidCachedPackageFile,
 
     /// The package could not be removed its pre-removed instructions returned an error
