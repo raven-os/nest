@@ -11,7 +11,7 @@ use crate::config::Config;
 use crate::lock_file::LockFileOwnership;
 use crate::package::{NPFExplorer, PackageID};
 
-use super::InstallErrorKind;
+use super::{InstallError, InstallErrorKind::*};
 
 /// Structure representing an "install" transaction
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
@@ -54,7 +54,7 @@ impl InstallTransaction {
     }
 
     /// Extracts the downloaded file and performs the installation
-    pub fn extract(&self, config: &Config, _: &LockFileOwnership) -> Result<(), Error> {
+    pub fn extract(&self, config: &Config, _: &LockFileOwnership) -> Result<(), InstallError> {
         let npf_path = config
             .paths()
             .downloaded()
@@ -67,12 +67,21 @@ impl InstallTransaction {
                 self.target().version()
             ));
 
-        let npf_explorer = NPFExplorer::from(self.target().name(), &npf_path)?;
+        let npf_explorer =
+            NPFExplorer::from(self.target().name(), &npf_path).map_err(|_| InvalidPackageFile)?;
 
         // TODO: avoid failing if no tarball is found and the package is virtual
-        let tarball_handle = npf_explorer
-            .open_data()
-            .with_context(|_| npf_path.display().to_string())?;
+        let tarball_handle = npf_explorer.open_data().map_err(|_| InvalidPackageFile)?;
+
+        let instructions_handle = npf_explorer
+            .load_instructions()
+            .map_err(|_| InvalidPackageFile)?;
+
+        if let Some(executor) = &instructions_handle {
+            executor
+                .execute_before_install(config.paths().root())
+                .map_err(PreInstallInstructionsFailure)?;
+        }
 
         if let Some(tarball_handle) = tarball_handle {
             let mut tarball = tarball_handle.file();
@@ -80,14 +89,9 @@ impl InstallTransaction {
             let mut files = Vec::new();
 
             // List all the files in the archive and check whether they already exist
-            for entry in archive
-                .entries()
-                .with_context(|_| npf_path.display().to_string())?
-            {
-                let entry = entry.with_context(|_| npf_path.display().to_string())?;
-                let entry_path = entry
-                    .path()
-                    .with_context(|_| npf_path.display().to_string())?;
+            for entry in archive.entries().map_err(|_| InvalidPackageData)? {
+                let entry = entry.map_err(|_| InvalidPackageData)?;
+                let entry_path = entry.path().map_err(|_| InvalidPackageData)?;
 
                 let abs_path = Path::new("/").with_content(&entry_path);
                 let rel_path = config.paths().root().with_content(&entry_path);
@@ -96,8 +100,7 @@ impl InstallTransaction {
                 // existing file, return an error.
                 if let Ok(metadata) = fs::symlink_metadata(&rel_path) {
                     if !metadata.is_dir() {
-                        Err(format_err!("{}", abs_path.display())
-                            .context(InstallErrorKind::FileAlreadyExists))?;
+                        return Err(FileAlreadyExists(abs_path).into());
                     }
                 }
                 files.push(abs_path.to_path_buf());
@@ -109,31 +112,39 @@ impl InstallTransaction {
                 .join(self.target().repository().as_str())
                 .join(self.target().category().as_str())
                 .join(self.target().name().as_str());
-            fs::create_dir_all(&log_dir).with_context(|_| log_dir.display().to_string())?;
+            fs::create_dir_all(&log_dir).map_err(LogCreationError)?;
 
             let log_path = log_dir.join(self.target.version().to_string());
 
             // If the log file exists, the package is already installed
             if log_path.exists() {
-                Err(format_err!("{}", &self.target)
-                    .context(InstallErrorKind::PackageAlreadyInstalled))?;
+                Err(format_err!("{}", &self.target).context(PackageAlreadyInstalled))?;
             }
 
-            let res: Result<_, Error> = try {
-                // Log each file to install to the log file
+            // Log each file to install to the log file
+            let res: Result<_, std::io::Error> = try {
                 let mut log = File::create(&log_path)?;
                 for file in &files {
                     writeln!(log, "{}", file.display())?;
                 }
+            };
+            res.map_err(LogCreationError)?;
 
-                // Extract the tarball in the root folder
+            // Extract the tarball in the root folder
+            let res: Result<_, std::io::Error> = try {
                 tarball.seek(SeekFrom::Start(0))?;
                 let mut archive = Archive::new(GzDecoder::new(tarball));
                 for entry in archive.entries()? {
                     entry?.unpack_in(config.paths().root())?;
                 }
             };
-            res.with_context(|_| npf_path.display().to_string())?;
+            res.map_err(ExtractError)?;
+        }
+
+        if let Some(executor) = &instructions_handle {
+            executor
+                .execute_after_install(config.paths().root())
+                .map_err(PostInstallInstructionsFailure)?;
         }
 
         Ok(())

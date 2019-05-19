@@ -2,6 +2,8 @@
 
 use failure::{Context, Fail};
 
+use super::ExecutionOutput;
+
 /// Error type for errors related to package installation
 #[derive(Debug)]
 pub struct InstallError {
@@ -9,15 +11,39 @@ pub struct InstallError {
 }
 
 /// Error kind describing a kind of error related to package installation
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
+#[derive(Debug, Fail)]
 pub enum InstallErrorKind {
     /// The package could not be installed because it would overwrite an existing file
     #[fail(display = "file already exists")]
-    FileAlreadyExists,
+    FileAlreadyExists(std::path::PathBuf),
 
     /// The package could not be installed because it is already installed
     #[fail(display = "package already installed")]
     PackageAlreadyInstalled,
+
+    /// The package could not be installed because the downloaded NPF was invalid
+    #[fail(display = "invalid package file")]
+    InvalidPackageFile,
+
+    /// The package could not be installed because the contained data.tar.gz was invalid
+    #[fail(display = "invalid package data")]
+    InvalidPackageData,
+
+    /// The package could not be installed because its data could not be extracted
+    #[fail(display = "unable to extract")]
+    ExtractError(#[cause] std::io::Error),
+
+    /// The package could not be installed because its associated log files could not be created
+    #[fail(display = "unable to create the log")]
+    LogCreationError(#[cause] std::io::Error),
+
+    /// The package could not be installed its pre-install instructions returned an error
+    #[fail(display = "pre-install instructions reported an error: {}", _0)]
+    PreInstallInstructionsFailure(#[cause] InstructionsExecutionError),
+
+    /// The package could not be installed its post-install instructions returned an error
+    #[fail(display = "post-install instructions reported an error: {}", _0)]
+    PostInstallInstructionsFailure(#[cause] InstructionsExecutionError),
 }
 
 use_as_error!(InstallError, InstallErrorKind);
@@ -29,19 +55,59 @@ pub struct RemoveError {
 }
 
 /// Error kind describing a kind of error related to package removal
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
+#[derive(Debug, Fail)]
 pub enum RemoveErrorKind {
     /// The package could not be removed because its log file could not be loaded
     #[fail(display = "log file not found")]
     LogFileLoadError,
 
     /// The package could not be completely removed because one of its files could not be removed
-    #[fail(display = "cannot remove package file")]
-    FileRemoveError,
+    #[fail(display = "cannot remove file: {:?}", _0)]
+    FileRemoveError(std::path::PathBuf),
 
     /// The package could not be completely removed because its log file could not be removed
     #[fail(display = "cannot remove log file")]
     LogFileRemoveError,
+
+    /// The package could not be removed because the previously downloaded NPF is corrupted
+    #[fail(display = "corrupted cached package file")]
+    InvalidCachedPackageFile,
+
+    /// The package could not be removed its pre-removed instructions returned an error
+    #[fail(display = "pre-remove instructions reported an error: {}", _0)]
+    PreRemoveInstructionsFailure(#[cause] InstructionsExecutionError),
+
+    /// The package could not be removed its post-remove instructions returned an error
+    #[fail(display = "post-remove instructions reported an error: {}", _0)]
+    PostRemoveInstructionsFailure(#[cause] InstructionsExecutionError),
 }
 
 use_as_error!(RemoveError, RemoveErrorKind);
+
+/// Error type for errors related to the execution of the instructions.sh script
+#[derive(Debug)]
+pub struct InstructionsExecutionError {
+    inner: Context<InstructionsExecutionErrorKind>,
+}
+
+/// Error kind describing a kind of error related to the execution of the instructions.sh script
+#[derive(Debug, Fail)]
+pub enum InstructionsExecutionErrorKind {
+    /// The given instructions.sh file could not be read
+    #[fail(display = "cannot read the given instructions.sh file")]
+    CannotReadInstructions,
+
+    /// No suitable shell program was found to execute the instructions.sh
+    #[fail(display = "cannot find a suitable shell to execute instructions.sh")]
+    CannotFindShell,
+
+    /// The chosen shell program could not be executed
+    #[fail(display = "cannot execute instructions.sh using the chosen shell")]
+    CannotExecuteShell,
+
+    /// The invoked script exited with a failure status
+    #[fail(display = "script exited with a failure status")]
+    FailureExitStatus(ExecutionOutput),
+}
+
+use_as_error!(InstructionsExecutionError, InstructionsExecutionErrorKind);
