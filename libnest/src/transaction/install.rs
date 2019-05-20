@@ -67,8 +67,7 @@ impl InstallTransaction {
                 self.target().version()
             ));
 
-        let npf_explorer =
-            NPFExplorer::from(self.target().name(), &npf_path).map_err(|_| InvalidPackageFile)?;
+        let npf_explorer = NPFExplorer::from(&npf_path).map_err(|_| InvalidPackageFile)?;
 
         // TODO: avoid failing if no tarball is found and the package is virtual
         let tarball_handle = npf_explorer.open_data().map_err(|_| InvalidPackageFile)?;
