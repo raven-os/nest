@@ -54,12 +54,26 @@ impl NPFExplorer {
         Ok(toml::from_str(&content).map_err(|_| NPFExplorationErrorKind::InvalidManifest)?)
     }
 
+    fn gen_tmp_filename() -> PathBuf {
+        use rand::distributions::Alphanumeric;
+        use rand::{thread_rng, Rng};
+        use std::iter;
+
+        let mut rng = thread_rng();
+        let name: String = iter::repeat(())
+            .map(|()| rng.sample(Alphanumeric))
+            .take(10)
+            .collect();
+
+        Path::new("/var/run/nest").join(&format!("nest_{}", name))
+    }
+
     /// Create a NPFExplorer from a name and a path to an NPF archive
-    pub fn from(name: &str, npf_path: &Path) -> Result<Self, NPFExplorationError> {
-        let path = std::env::temp_dir().join(name);
+    pub fn from(npf_path: &Path) -> Result<Self, NPFExplorationError> {
+        let path = Self::gen_tmp_filename();
 
         // Create a directory to extract the NPF
-        fs::create_dir(&path).map_err(|_| NPFExplorationErrorKind::UnpackError)?;
+        fs::create_dir_all(&path).map_err(|_| NPFExplorationErrorKind::UnpackError)?;
 
         // Unpack the NPF
         File::open(npf_path)

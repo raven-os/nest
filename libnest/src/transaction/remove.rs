@@ -42,8 +42,7 @@ impl RemoveTransaction {
                 self.target().version()
             ));
 
-        let npf_explorer = NPFExplorer::from(self.target().name(), &npf_path)
-            .map_err(|_| InvalidCachedPackageFile)?;
+        let npf_explorer = NPFExplorer::from(&npf_path).map_err(|_| InvalidCachedPackageFile)?;
 
         let instructions_handle = npf_explorer
             .load_instructions()
