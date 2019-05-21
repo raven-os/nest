@@ -65,7 +65,7 @@ impl NPFExplorer {
             .take(10)
             .collect();
 
-        Path::new("/var/run/").join(&format!("nest_{}", name))
+        Path::new("/var/run/nest").join(&format!("nest_{}", name))
     }
 
     /// Create a NPFExplorer from a name and a path to an NPF archive
@@ -73,7 +73,7 @@ impl NPFExplorer {
         let path = Self::gen_tmp_filename();
 
         // Create a directory to extract the NPF
-        fs::create_dir(&path).map_err(|_| NPFExplorationErrorKind::UnpackError)?;
+        fs::create_dir_all(&path).map_err(|_| NPFExplorationErrorKind::UnpackError)?;
 
         // Unpack the NPF
         File::open(npf_path)
