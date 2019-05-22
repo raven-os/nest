@@ -54,7 +54,7 @@ impl NPFExplorer {
         Ok(toml::from_str(&content).map_err(|_| NPFExplorationErrorKind::InvalidManifest)?)
     }
 
-    fn gen_tmp_filename() -> PathBuf {
+    fn gen_tmp_filename(base_dir: &Path) -> PathBuf {
         use rand::distributions::Alphanumeric;
         use rand::{thread_rng, Rng};
         use std::iter;
@@ -65,12 +65,13 @@ impl NPFExplorer {
             .take(10)
             .collect();
 
-        Path::new("/var/run/nest").join(&format!("nest_{}", name))
+        base_dir.join(&format!("nest_{}", name))
     }
 
-    /// Create a NPFExplorer from a name and a path to an NPF archive
-    pub fn from(npf_path: &Path) -> Result<Self, NPFExplorationError> {
-        let path = Self::gen_tmp_filename();
+    /// Create an NPFExplorer from a path to an NPF archive and the path to the directory in which
+    /// it should be extracted
+    pub fn open_at(npf_path: &Path, extract_dir: &Path) -> Result<Self, NPFExplorationError> {
+        let path = Self::gen_tmp_filename(extract_dir);
 
         // Create a directory to extract the NPF
         fs::create_dir_all(&path).map_err(|_| NPFExplorationErrorKind::UnpackError)?;
@@ -86,6 +87,11 @@ impl NPFExplorer {
         let manifest = Self::load_manifest(&path)?;
 
         Ok(Self { path, manifest })
+    }
+
+    /// Create an NPFExplorer from a path to an NPF archive
+    pub fn from(npf_path: &Path) -> Result<Self, NPFExplorationError> {
+        Self::open_at(npf_path, Path::new("/var/run/nest"))
     }
 
     /// Retrieves a handle over a file in the NPF
