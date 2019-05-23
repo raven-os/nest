@@ -70,7 +70,10 @@ impl NPFExplorer {
 
     /// Create an NPFExplorer from a path to an NPF archive and the path to the directory in which
     /// it should be extracted
-    pub fn open_at<P: AsRef<Path>, Q: AsRef<Path>>(npf_path: P, extract_dir: Q) -> Result<Self, NPFExplorationError> {
+    pub fn open_at<P: AsRef<Path>, Q: AsRef<Path>>(
+        npf_path: P,
+        extract_dir: Q,
+    ) -> Result<Self, NPFExplorationError> {
         let path = Self::gen_tmp_filename(extract_dir);
 
         // Create a directory to extract the NPF
