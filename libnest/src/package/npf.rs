@@ -119,14 +119,8 @@ impl NPFExplorer {
     ///
     /// Note that you do not need this function to retrieve the manifest's content. It is
     /// already made available thanks to the [`NPFExplorer::manifest()`] function.
-    pub fn open_manifest(&self) -> Result<Option<NPFFile>, NPFExplorationError> {
-        self.open_file("manifest.toml").map_or_else(
-            |e| match e.kind() {
-                NPFExplorationErrorKind::FileNotFound(_) => Ok(None),
-                _ => Err(e),
-            },
-            |o| Ok(Some(o)),
-        )
+    pub fn open_manifest(&self) -> Result<NPFFile, NPFExplorationError> {
+        self.open_file("manifest.toml")
     }
 
     /// Retrieves a handle over the NPF's data.tar.gz
