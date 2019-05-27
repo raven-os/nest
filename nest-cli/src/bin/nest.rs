@@ -57,6 +57,15 @@ fn main() {
                         .required(true),
                 )
         )
+        .subcommand(
+            SubCommand::with_name("list")
+                .about("List installed packages")
+                .arg(
+                    Arg::with_name("with-deps")
+                        .long("with-deps")
+                        .help("Include the dependencies of installed packages")
+                )
+        )
         .get_matches();
 
     let result: Result<(), failure::Error> = try {
@@ -71,6 +80,7 @@ fn main() {
             ("install", Some(matches)) => commands::install(&config, &matches),
             ("upgrade", _) => commands::upgrade(&config),
             ("uninstall", Some(matches)) => commands::uninstall(&config, &matches),
+            ("list", Some(matches)) => commands::list(&config, &matches),
             _ => unimplemented!(),
         }?;
     };
