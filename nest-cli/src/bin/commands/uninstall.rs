@@ -22,7 +22,7 @@ pub fn uninstall(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
 
             let matches = packages_cache.query(&requirement).perform()?;
 
-            let root_node = original_graph.nodes().get(&graph.root_id()).unwrap();
+            let root_node = graph.nodes().get(&graph.root_id()).unwrap().clone();
 
             let found = matches.iter().any(|pkg| {
                 root_node.requirements().iter().any(|req_id| {

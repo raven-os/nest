@@ -82,7 +82,6 @@ pub fn requirement_remove(
     } else {
         config.dependency_graph(&lock_file_ownership)?
     };
-    let original_graph = graph.clone();
 
     let group_id = *graph
         .groups()
@@ -97,7 +96,7 @@ pub fn requirement_remove(
 
             let matches = packages_cache.query(&requirement).perform()?;
 
-            let group_node = original_graph.nodes().get(&group_id).unwrap();
+            let group_node = graph.nodes().get(&group_id).unwrap().clone();
 
             let found = matches.iter().any(|pkg| {
                 group_node.requirements().iter().any(|req_id| {
