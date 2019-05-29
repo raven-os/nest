@@ -6,7 +6,7 @@ use libnest::transaction::RemoveTransaction;
 
 pub fn uninstall_package(
     config: &Config,
-    trans: &mut RemoveTransaction,
+    trans: &RemoveTransaction,
     ownernship: &LockFileOwnership,
 ) -> Result<(), Error> {
     let progress_bar = ProgressBar::new(80);

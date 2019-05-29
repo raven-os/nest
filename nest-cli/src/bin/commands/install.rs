@@ -6,7 +6,7 @@ use libnest::config::Config;
 use libnest::package::{HardPackageRequirement, PackageRequirement};
 use libnest::transaction::Transaction;
 
-use super::operations::install::install_package;
+use super::operations::install::{download_packages, install_package};
 use super::{ask_confirmation, print_transactions};
 
 pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
@@ -52,7 +52,7 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
 
     graph.solve(&config)?;
 
-    let mut transactions = DependencyGraphDiff::new().perform(&original_graph, &graph);
+    let transactions = DependencyGraphDiff::new().perform(&original_graph, &graph);
 
     if transactions.is_empty() {
         println!("All the given requirements are already satisfied, quitting.");
@@ -77,8 +77,17 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
         return Ok(());
     }
 
-    for mut transaction in &mut transactions.iter_mut() {
-        match &mut transaction {
+    println!("Downloading packages...");
+    download_packages(
+        config,
+        transactions.iter().filter_map(|trans| match trans {
+            Transaction::Install(install) => Some(install),
+            _ => None,
+        }),
+    )?;
+
+    for transaction in transactions.iter() {
+        match transaction {
             Transaction::Install(install) => {
                 install_package(config, install, &lock_file_ownership)?
             }

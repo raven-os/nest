@@ -3,7 +3,7 @@ use libnest::cache::depgraph::DependencyGraphDiff;
 use libnest::config::Config;
 use libnest::transaction::Transaction;
 
-use super::operations::install::install_package;
+use super::operations::install::{download_packages, install_package};
 use super::operations::uninstall::uninstall_package;
 use super::{ask_confirmation, print_transactions};
 
@@ -15,7 +15,7 @@ pub fn merge(config: &Config) -> Result<(), Error> {
         .with_context(|_| format_err!("no scratch dependency graph found"))?;
     let original_graph = config.dependency_graph(&lock_file_ownership)?;
 
-    let mut transactions = DependencyGraphDiff::new().perform(&original_graph, &graph);
+    let transactions = DependencyGraphDiff::new().perform(&original_graph, &graph);
 
     if transactions.is_empty() {
         println!("All the given requirements are already satisfied, quitting.");
@@ -40,8 +40,17 @@ pub fn merge(config: &Config) -> Result<(), Error> {
         return Ok(());
     }
 
-    for mut transaction in &mut transactions.iter_mut() {
-        match &mut transaction {
+    println!("Downloading packages...");
+    download_packages(
+        config,
+        transactions.iter().filter_map(|trans| match trans {
+            Transaction::Install(install) => Some(install),
+            _ => None,
+        }),
+    )?;
+
+    for transaction in transactions.iter() {
+        match transaction {
             Transaction::Install(install) => {
                 install_package(config, install, &lock_file_ownership)?
             }
