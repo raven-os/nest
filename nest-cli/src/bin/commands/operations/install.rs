@@ -1,16 +1,15 @@
+use std::iter::Iterator;
+use std::sync::mpsc::channel;
+
 use failure::{format_err, Error, ResultExt};
-use indicatif::{ProgressBar, ProgressStyle};
 use libnest::config::Config;
 use libnest::lock_file::LockFileOwnership;
 use libnest::transaction::InstallTransaction;
+use threadpool::ThreadPool;
 
 use super::download::Download;
 
-pub fn install_package(
-    config: &Config,
-    trans: &mut InstallTransaction,
-    ownership: &LockFileOwnership,
-) -> Result<(), Error> {
+pub fn download_package(config: &Config, trans: &InstallTransaction) -> Result<(), Error> {
     // Find the repository hosting the package
     let repo = config
         .repositories()
@@ -31,11 +30,7 @@ pub fn install_package(
         trans.target().version(),
     );
 
-    let progress_bar = ProgressBar::new(80);
-    progress_bar.set_style(ProgressStyle::default_bar().template("[{pos:>3}/{len:3}] {bar:80}"));
-
     // Download the package archive
-    progress_bar.println(format!("Downloading {}...", trans.target()));
     let download = Download::from(&target_url);
     download
         .perform_with_mirrors(
@@ -47,13 +42,46 @@ pub fn install_package(
             repo.name()
         ))?;
 
-    // Extract and install the package
-    progress_bar.println(format!("Extracting {}...", trans.target()));
+    Ok(())
+}
+
+pub fn download_packages<'a>(
+    config: &Config,
+    installs: impl Iterator<Item = &'a InstallTransaction>,
+) -> Result<(), Error> {
+    let pool = ThreadPool::new(num_cpus::get());
+    let (sender, receiver) = channel();
+    let mut n = 0;
+
+    for install in installs {
+        let sender = sender.clone();
+        let config = config.clone();
+        let install = install.clone();
+        pool.execute(move || {
+            let result = download_package(&config, &install);
+            sender
+                .send(result)
+                .expect("cannot communicate with main thread");
+        });
+        n += 1;
+    }
+    receiver
+        .into_iter()
+        .take(n)
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(())
+}
+
+pub fn install_package(
+    config: &Config,
+    trans: &InstallTransaction,
+    ownership: &LockFileOwnership,
+) -> Result<(), Error> {
     trans
         .extract(&config, ownership)
         .context(format_err!("unable to extract package"))?;
 
-    progress_bar.finish_and_clear();
     println!("Successfully installed {}", trans.target());
     Ok(())
 }
