@@ -194,7 +194,11 @@ impl Config {
     ) -> Result<DependencyGraph<'a>, Error> {
         let phantom: PhantomData<&'a LockFileOwnership> = PhantomData;
 
-        self.dependency_graph_internal(self.paths.scratch_depgraph(), phantom)
+        if self.paths.scratch_depgraph().exists() {
+            self.dependency_graph_internal(self.paths.scratch_depgraph(), phantom)
+        } else {
+            self.dependency_graph_internal(self.paths.depgraph(), phantom)
+        }
     }
 
     /// Acquire the ownership over Nest's lock file
