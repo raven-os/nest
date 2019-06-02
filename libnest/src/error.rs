@@ -5,7 +5,7 @@ macro_rules! use_as_error {
     ($Error:ident, $ErrorKind:ident) => {
         /// Forward the fail implementation to the inner context
         impl failure::Fail for $Error {
-            fn cause(&self) -> Option<&failure::Fail> {
+            fn cause(&self) -> Option<&dyn failure::Fail> {
                 self.inner.cause()
             }
 

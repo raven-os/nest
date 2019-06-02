@@ -7,7 +7,7 @@ use failure::ResultExt;
 use crate::chroot::Chroot;
 use crate::config::Config;
 use crate::lock_file::LockFileOwnership;
-use crate::package::{NPFExplorer, PackageID};
+use crate::package::{Kind, NPFExplorer, PackageID};
 
 use super::{RemoveError, RemoveErrorKind::*};
 
@@ -54,40 +54,43 @@ impl RemoveTransaction {
                 .map_err(PreRemoveInstructionsFailure)?;
         }
 
-        // Get the log file of the target package
-        let log_path = config
-            .paths()
-            .installed()
-            .join(self.target().repository().as_str())
-            .join(self.target().category().as_str())
-            .join(self.target().name().as_str())
-            .join(self.target.version().to_string());
+        // If the package is effective, installed files must be removed
+        if npf_explorer.manifest().kind() == Kind::Effective {
+            // Get the log file of the target package
+            let log_path = config
+                .paths()
+                .installed()
+                .join(self.target().repository().as_str())
+                .join(self.target().category().as_str())
+                .join(self.target().name().as_str())
+                .join(self.target.version().to_string());
 
-        let mut log_file = File::open(&log_path)
-            .with_context(|_| log_path.display().to_string())
-            .with_context(|_| LogFileLoadError)?;
+            let mut log_file = File::open(&log_path)
+                .with_context(|_| log_path.display().to_string())
+                .with_context(|_| LogFileLoadError)?;
 
-        // Remove all the files listed in the log file
-        log_file
-            .seek(SeekFrom::Start(0))
-            .with_context(|_| log_path.display().to_string())
-            .with_context(|_| LogFileLoadError)?;
+            // Remove all the files listed in the log file
+            log_file
+                .seek(SeekFrom::Start(0))
+                .with_context(|_| log_path.display().to_string())
+                .with_context(|_| LogFileLoadError)?;
 
-        for entry_path in BufReader::new(&log_file).lines() {
-            let entry_path = entry_path.map_err(|_| LogFileLoadError)?;
-            let abs_path = Path::new("/").with_content(&entry_path);
-            let rel_path = config.paths().root().with_content(&entry_path);
+            for entry_path in BufReader::new(&log_file).lines() {
+                let entry_path = entry_path.map_err(|_| LogFileLoadError)?;
+                let abs_path = Path::new("/").with_content(&entry_path);
+                let rel_path = config.paths().root().with_content(&entry_path);
 
-            if let Ok(metadata) = fs::symlink_metadata(&rel_path) {
-                if !metadata.is_dir() {
-                    fs::remove_file(&rel_path).with_context(|_| FileRemoveError(abs_path))?;
+                if let Ok(metadata) = fs::symlink_metadata(&rel_path) {
+                    if !metadata.is_dir() {
+                        fs::remove_file(&rel_path).with_context(|_| FileRemoveError(abs_path))?;
+                    }
                 }
             }
-        }
 
-        fs::remove_file(&log_path)
-            .with_context(|_| log_path.display().to_string())
-            .with_context(|_| LogFileRemoveError)?;
+            fs::remove_file(&log_path)
+                .with_context(|_| log_path.display().to_string())
+                .with_context(|_| LogFileRemoveError)?;
+        }
 
         if let Some(executor) = &instructions_handle {
             executor
