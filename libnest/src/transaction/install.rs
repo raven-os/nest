@@ -9,7 +9,7 @@ use tar::Archive;
 use crate::chroot::Chroot;
 use crate::config::Config;
 use crate::lock_file::LockFileOwnership;
-use crate::package::{NPFExplorer, PackageID};
+use crate::package::{Kind, NPFExplorer, PackageID};
 
 use super::{InstallError, InstallErrorKind::*};
 
@@ -69,9 +69,6 @@ impl InstallTransaction {
 
         let npf_explorer = NPFExplorer::from(&npf_path).map_err(|_| InvalidPackageFile)?;
 
-        // TODO: avoid failing if no tarball is found and the package is virtual
-        let tarball_handle = npf_explorer.open_data().map_err(|_| InvalidPackageFile)?;
-
         let instructions_handle = npf_explorer
             .load_instructions()
             .map_err(|_| InvalidPackageFile)?;
@@ -82,7 +79,12 @@ impl InstallTransaction {
                 .map_err(PreInstallInstructionsFailure)?;
         }
 
-        if let Some(tarball_handle) = tarball_handle {
+        if npf_explorer.manifest().kind() == Kind::Effective {
+            let tarball_handle = npf_explorer
+                .open_data()
+                .map_err(|_| InvalidPackageFile)?
+                .unwrap();
+
             let mut tarball = tarball_handle.file();
             let mut archive = Archive::new(GzDecoder::new(tarball));
             let mut files = Vec::new();

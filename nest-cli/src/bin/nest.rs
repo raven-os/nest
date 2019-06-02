@@ -88,7 +88,7 @@ fn main() {
     if let Err(e) = result {
         use std::process::exit;
 
-        let fail: &failure::Fail = e.as_fail();
+        let fail = e.as_fail();
         eprint!("error: {}", fail);
         for cause in fail.iter_causes() {
             eprint!(": {}", cause);
