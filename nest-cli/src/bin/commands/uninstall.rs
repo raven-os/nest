@@ -52,7 +52,8 @@ pub fn uninstall(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
     let mut transactions = DependencyGraphDiff::new().perform(&original_graph, &graph);
 
     if transactions.is_empty() {
-        println!("All the given requirements are already satisfied, quitting.");
+        println!("No transactions are required, quitting.");
+        graph.save_to_cache(config.paths().depgraph(), &lock_file_ownership)?;
         return Ok(());
     }
 
