@@ -150,6 +150,11 @@ pub struct RepositoryNameParseError(pub String);
 #[fail(display = "{}: invalid tag", 0)]
 pub struct TagParseError(pub String);
 
+/// Strong type to represent an error message related to the parsing of a package license
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Fail)]
+#[fail(display = "{}: invalid license", 0)]
+pub struct LicenseParseError(pub String);
+
 /// Strong type to represent an error message related to the parsing of a package slot
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Fail)]
 #[fail(display = "{}: invalid slot", 0)]
