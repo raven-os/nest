@@ -107,7 +107,7 @@ impl_serde_visitor!(Tag, TagVisitor);
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct License(String);
 
-strong_name_impl!(License, r"^[a-z0-9\-]+$", LicenseParseError);
+strong_name_impl!(License, r"^[a-z0-9_]+$", LicenseParseError);
 
 struct LicenseVisitor;
 
@@ -124,7 +124,7 @@ impl<'de> Visitor<'de> for LicenseVisitor {
     where
         E: serde::de::Error,
     {
-        License::try_from(value).map_err(|_| E::custom("the license doesn't follow the kebab-case"))
+        License::try_from(value).map_err(|_| E::custom("the license doesn't follow the snake_case"))
     }
 }
 
