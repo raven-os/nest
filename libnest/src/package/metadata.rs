@@ -6,7 +6,7 @@ use serde::de::Visitor;
 use serde_derive::{Deserialize, Serialize};
 use url_serde::SerdeUrl;
 
-use super::error::{TagParseError, LicenseParseError};
+use super::error::{LicenseParseError, TagParseError};
 
 /// A package's metadata, like its description, tags, maintainer etc.
 #[derive(Default, Serialize, Deserialize, Clone, Eq, PartialEq, Hash, Debug)]
