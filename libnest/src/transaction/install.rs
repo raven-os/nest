@@ -97,11 +97,26 @@ impl InstallTransaction {
                 let abs_path = Path::new("/").with_content(&entry_path);
                 let rel_path = config.paths().root().with_content(&entry_path);
 
-                // If the file exists and is not a directory, the installation would overwrite an
-                // existing file, return an error.
+                // Check whether the target file exists and retrieve its metadata (without following any symlink)
                 if let Ok(metadata) = fs::symlink_metadata(&rel_path) {
-                    if !metadata.is_dir() {
-                        return Err(FileAlreadyExists(abs_path).into());
+                    match (
+                        entry.header().entry_type().is_dir(),
+                        metadata.file_type().is_dir(),
+                    ) {
+                        // Both files are directories, there is no conflict
+                        (true, true) => (),
+
+                        // The file to extract is a directory, the existing file is a symlink, check if it resolves to a directory
+                        (true, false) if metadata.file_type().is_symlink() => {
+                            if let Ok(metadata) = fs::metadata(&rel_path) {
+                                if !metadata.is_dir() {
+                                    return Err(FileAlreadyExists(abs_path).into());
+                                }
+                            }
+                        }
+
+                        // Otherwise, there are conflicting files, and an error is returned
+                        _ => return Err(FileAlreadyExists(abs_path).into()),
                     }
                 }
                 files.push(abs_path.to_path_buf());
