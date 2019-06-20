@@ -17,6 +17,12 @@ pub struct RemoveTransaction {
     target: PackageID,
 }
 
+fn is_empty_directory(dir_path: &Path) -> std::io::Result<bool> {
+    let mut it = fs::read_dir(dir_path)?;
+
+    Ok(it.next().is_none())
+}
+
 impl RemoveTransaction {
     /// Creates a [`RemoveTransaction`] from a given [`PackageID`]
     pub fn from(target: PackageID) -> Self {
@@ -75,7 +81,10 @@ impl RemoveTransaction {
                 .with_context(|_| log_path.display().to_string())
                 .with_context(|_| LogFileLoadError)?;
 
-            for entry_path in BufReader::new(&log_file).lines() {
+            let files = BufReader::new(&log_file).lines().collect::<Vec<_>>();
+
+            // Iterate backwards to ensure removal of nested files before that of top-level directories
+            for entry_path in files.into_iter().rev() {
                 let entry_path = entry_path.map_err(|_| LogFileLoadError)?;
                 let abs_path = Path::new("/").with_content(&entry_path);
                 let rel_path = config.paths().root().with_content(&entry_path);
@@ -83,6 +92,8 @@ impl RemoveTransaction {
                 if let Ok(metadata) = fs::symlink_metadata(&rel_path) {
                     if !metadata.is_dir() {
                         fs::remove_file(&rel_path).with_context(|_| FileRemoveError(abs_path))?;
+                    } else if let Ok(true) = is_empty_directory(&rel_path) {
+                        fs::remove_dir(&rel_path).with_context(|_| FileRemoveError(abs_path))?;
                     }
                 }
             }

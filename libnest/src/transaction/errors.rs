@@ -14,7 +14,7 @@ pub struct InstallError {
 #[derive(Debug, Fail)]
 pub enum InstallErrorKind {
     /// The package could not be installed because it would overwrite an existing file
-    #[fail(display = "file already exists")]
+    #[fail(display = "{:?}: file already exists", _0)]
     FileAlreadyExists(std::path::PathBuf),
 
     /// The package could not be installed because it is already installed
