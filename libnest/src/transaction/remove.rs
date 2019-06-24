@@ -1,5 +1,4 @@
-use std::fs::{self, File};
-use std::io::{BufRead, BufReader, Seek, SeekFrom};
+use std::fs;
 use std::path::Path;
 
 use failure::ResultExt;
@@ -35,7 +34,11 @@ impl RemoveTransaction {
     }
 
     /// Performs the removal of the package
-    pub fn perform(&self, config: &Config, _: &LockFileOwnership) -> Result<(), RemoveError> {
+    pub fn perform(
+        &self,
+        config: &Config,
+        lock_ownership: &LockFileOwnership,
+    ) -> Result<(), RemoveError> {
         let npf_path = config
             .paths()
             .downloaded()
@@ -62,44 +65,42 @@ impl RemoveTransaction {
 
         // If the package is effective, installed files must be removed
         if npf_explorer.manifest().kind() == Kind::Effective {
-            // Get the log file of the target package
-            let log_path = config
-                .paths()
-                .installed()
-                .join(self.target().repository().as_str())
-                .join(self.target().category().as_str())
-                .join(self.target().name().as_str())
-                .join(self.target.version().to_string());
-
-            let mut log_file = File::open(&log_path)
-                .with_context(|_| log_path.display().to_string())
-                .with_context(|_| LogFileLoadError)?;
-
-            // Remove all the files listed in the log file
-            log_file
-                .seek(SeekFrom::Start(0))
-                .with_context(|_| log_path.display().to_string())
-                .with_context(|_| LogFileLoadError)?;
-
-            let files = BufReader::new(&log_file).lines().collect::<Vec<_>>();
+            // Open the log file, and remove all the files listed in it
+            let log = config
+                .installed_packages_cache(lock_ownership)
+                .package_log(self.target())
+                .map_err(LogFileLoadError)?;
 
             // Iterate backwards to ensure removal of nested files before that of top-level directories
-            for entry_path in files.into_iter().rev() {
-                let entry_path = entry_path.map_err(|_| LogFileLoadError)?;
-                let abs_path = Path::new("/").with_content(&entry_path);
-                let rel_path = config.paths().root().with_content(&entry_path);
+            for entry in log.files().into_iter().rev() {
+                let abs_path = Path::new("/").with_content(entry.path());
+                let rel_path = config.paths().root().with_content(entry.path());
 
                 if let Ok(metadata) = fs::symlink_metadata(&rel_path) {
-                    if !metadata.is_dir() {
-                        fs::remove_file(&rel_path).with_context(|_| FileRemoveError(abs_path))?;
-                    } else if let Ok(true) = is_empty_directory(&rel_path) {
-                        fs::remove_dir(&rel_path).with_context(|_| FileRemoveError(abs_path))?;
+                    match (entry.file_type().is_dir(), metadata.file_type().is_dir()) {
+                        // The file to remove is a directory, remove it if it is empty
+                        (true, true) => {
+                            if let Ok(true) = is_empty_directory(&rel_path) {
+                                fs::remove_dir(&rel_path)
+                            } else {
+                                Ok(())
+                            }
+                        }
+
+                        // The file was expected to be a directory, but is a symlink, leave it
+                        (true, false) if metadata.file_type().is_symlink() => Ok(()),
+
+                        // The file to remove is a regular file, remove it
+                        _ => fs::remove_file(&rel_path),
                     }
+                    .with_context(|_| FileRemoveError(abs_path))?;
                 }
             }
 
-            fs::remove_file(&log_path)
-                .with_context(|_| log_path.display().to_string())
+            config
+                .installed_packages_cache(lock_ownership)
+                .remove_package_log(self.target())
+                .with_context(|_| self.target().to_string())
                 .with_context(|_| LogFileRemoveError)?;
         }
 

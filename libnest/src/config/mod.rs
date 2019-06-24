@@ -33,6 +33,7 @@ use toml;
 
 use crate::cache::available::AvailablePackages;
 use crate::cache::depgraph::DependencyGraph;
+use crate::cache::installed::InstalledPackages;
 use crate::lock_file::LockFileOwnership;
 use crate::repository::Repository;
 
@@ -199,6 +200,23 @@ impl Config {
         } else {
             self.dependency_graph_internal(self.paths.depgraph(), phantom)
         }
+    }
+
+    pub(crate) fn installed_packages_cache_internal<'a, 'b>(
+        &'b self,
+        phantom: PhantomData<&'a LockFileOwnership>,
+    ) -> InstalledPackages<'b, 'a> {
+        InstalledPackages::from(self.paths().installed(), phantom)
+    }
+
+    /// Returns a handle over the cache containing logs of installed packages
+    pub fn installed_packages_cache<'a, 'b>(
+        &'b self,
+        _: &'a LockFileOwnership,
+    ) -> InstalledPackages<'b, 'a> {
+        let phantom: PhantomData<&'a LockFileOwnership> = PhantomData;
+
+        self.installed_packages_cache_internal(phantom)
     }
 
     /// Acquire the ownership over Nest's lock file

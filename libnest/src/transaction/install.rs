@@ -2,10 +2,11 @@ use std::fs::{self, File};
 use std::io::{Seek, SeekFrom, Write};
 use std::path::Path;
 
-use failure::{format_err, Error, ResultExt};
+use failure::{Error, ResultExt};
 use flate2::read::GzDecoder;
 use tar::Archive;
 
+use crate::cache::installed::log::{FileLogEntry, Log};
 use crate::chroot::Chroot;
 use crate::config::Config;
 use crate::lock_file::LockFileOwnership;
@@ -54,7 +55,11 @@ impl InstallTransaction {
     }
 
     /// Extracts the downloaded file and performs the installation
-    pub fn extract(&self, config: &Config, _: &LockFileOwnership) -> Result<(), InstallError> {
+    pub fn extract(
+        &self,
+        config: &Config,
+        lock_ownership: &LockFileOwnership,
+    ) -> Result<(), InstallError> {
         let npf_path = config
             .paths()
             .downloaded()
@@ -93,16 +98,14 @@ impl InstallTransaction {
             for entry in archive.entries().map_err(|_| InvalidPackageData)? {
                 let entry = entry.map_err(|_| InvalidPackageData)?;
                 let entry_path = entry.path().map_err(|_| InvalidPackageData)?;
+                let entry_type = entry.header().entry_type();
 
                 let abs_path = Path::new("/").with_content(&entry_path);
                 let rel_path = config.paths().root().with_content(&entry_path);
 
                 // Check whether the target file exists and retrieve its metadata (without following any symlink)
                 if let Ok(metadata) = fs::symlink_metadata(&rel_path) {
-                    match (
-                        entry.header().entry_type().is_dir(),
-                        metadata.file_type().is_dir(),
-                    ) {
+                    match (entry_type.is_dir(), metadata.file_type().is_dir()) {
                         // Both files are directories, there is no conflict
                         (true, true) => (),
 
@@ -119,32 +122,14 @@ impl InstallTransaction {
                         _ => return Err(FileAlreadyExists(abs_path).into()),
                     }
                 }
-                files.push(abs_path.to_path_buf());
-            }
-
-            let log_dir = config
-                .paths()
-                .installed()
-                .join(self.target().repository().as_str())
-                .join(self.target().category().as_str())
-                .join(self.target().name().as_str());
-            fs::create_dir_all(&log_dir).map_err(LogCreationError)?;
-
-            let log_path = log_dir.join(self.target.version().to_string());
-
-            // If the log file exists, the package is already installed
-            if log_path.exists() {
-                Err(format_err!("{}", &self.target).context(PackageAlreadyInstalled))?;
+                files.push(FileLogEntry::new(abs_path.to_path_buf(), entry_type.into()));
             }
 
             // Log each file to install to the log file
-            let res: Result<_, std::io::Error> = try {
-                let mut log = File::create(&log_path)?;
-                for file in &files {
-                    writeln!(log, "{}", file.display())?;
-                }
-            };
-            res.map_err(LogCreationError)?;
+            config
+                .installed_packages_cache(lock_ownership)
+                .save_package_log(self.target(), &Log::new(files))
+                .map_err(LogCreationError)?;
 
             // Extract the tarball in the root folder
             let res: Result<_, std::io::Error> = try {

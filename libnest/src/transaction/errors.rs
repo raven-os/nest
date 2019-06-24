@@ -58,8 +58,8 @@ pub struct RemoveError {
 #[derive(Debug, Fail)]
 pub enum RemoveErrorKind {
     /// The package could not be removed because its log file could not be loaded
-    #[fail(display = "log file not found")]
-    LogFileLoadError,
+    #[fail(display = "cannot load log file: {}", _0)]
+    LogFileLoadError(#[cause] std::io::Error),
 
     /// The package could not be completely removed because one of its files could not be removed
     #[fail(display = "cannot remove file: {:?}", _0)]
