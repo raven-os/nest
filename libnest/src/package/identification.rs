@@ -12,7 +12,7 @@ use super::error::{
     PackageIDParseError, PackageIDParseErrorKind, PackageNameParseError,
     PackageShortNameParseError, PackageShortNameParseErrorKind, RepositoryNameParseError,
 };
-use super::REGEX_PACKAGE_ID;
+use super::{PackageManifest, REGEX_PACKAGE_ID};
 
 /// Identitier of a package, which is the combination of a repository name, a category name,
 /// a package name and a version.
@@ -280,6 +280,12 @@ impl FromStr for PackageFullName {
                 repr.to_string(),
             ))),
         }
+    }
+}
+
+impl From<PackageManifest> for PackageFullName {
+    fn from(manifest: PackageManifest) -> Self {
+        manifest.full_name()
     }
 }
 
