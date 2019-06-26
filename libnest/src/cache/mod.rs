@@ -3,5 +3,6 @@
 pub mod available;
 pub mod depgraph;
 mod errors;
+pub mod installed;
 
 pub use self::errors::*;
