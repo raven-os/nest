@@ -13,8 +13,7 @@ pub fn list(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
     if matches.is_present("with-deps") {
         packages = depgraph
             .packages()
-            .iter()
-            .map(|(name, _)| format!("{}", name))
+            .map(|name| format!("{}", name))
             .collect();
     } else {
         for (_, req) in depgraph.requirements() {

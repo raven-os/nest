@@ -14,7 +14,7 @@ use crate::lock_file::LockFileOwnership;
 use crate::package::{HardPackageRequirement, PackageFullName};
 
 use super::super::errors::DependencyGraphErrorKind;
-use super::node::{GroupName, Node, NodeID, NodeKind, ROOT_ID};
+use super::node::{GroupName, Node, NodeID, NodeKind, NodeName, ROOT_ID};
 use super::requirement::{
     Requirement, RequirementID, RequirementKind, RequirementManagementMethod,
 };
@@ -27,8 +27,7 @@ pub struct DependencyGraph<'lock_file> {
     next_requirement_id: RequirementID,
     nodes: HashMap<NodeID, Node>,
     requirements: HashMap<RequirementID, Requirement>,
-    packages: HashMap<PackageFullName, NodeID>,
-    groups: HashMap<GroupName, NodeID>,
+    node_names: HashMap<NodeName, NodeID>,
     #[serde(skip)]
     phantom: PhantomData<&'lock_file LockFileOwnership>,
 }
@@ -38,7 +37,7 @@ impl<'lock_file> DependencyGraph<'lock_file> {
         phantom: PhantomData<&'lock_file LockFileOwnership>,
     ) -> DependencyGraph<'lock_file> {
         let mut nodes = HashMap::new();
-        let mut groups = HashMap::new();
+        let mut node_names = HashMap::new();
 
         nodes.insert(
             ROOT_ID,
@@ -47,15 +46,14 @@ impl<'lock_file> DependencyGraph<'lock_file> {
             }),
         );
 
-        groups.insert(GroupName::root_group(), ROOT_ID);
+        node_names.insert(NodeName::Group(GroupName::root_group()), ROOT_ID);
 
         DependencyGraph {
             next_node_id: ROOT_ID + 1,
             next_requirement_id: 0,
             nodes,
             requirements: HashMap::new(),
-            groups,
-            packages: HashMap::new(),
+            node_names,
             phantom,
         }
     }
@@ -130,22 +128,30 @@ impl<'lock_file> DependencyGraph<'lock_file> {
         &self.requirements
     }
 
-    /// Returns a reference over the internal [`HashMap`]<[`GroupName`], [`NodeID`]>.
+    /// Returns an iterator over the names of the groups in the graph.
     #[inline]
-    pub fn groups(&self) -> &HashMap<GroupName, NodeID> {
-        &self.groups
+    pub fn groups(&self) -> impl Iterator<Item = &GroupName> {
+        self.node_names.keys().filter_map(NodeName::group_name)
     }
 
-    /// Returns a reference over the internal [`HashMap`]<[`PackageFullName`], [`NodeID`]>.
+    /// Returns an iterator over the names of the packages in the graph.
     #[inline]
-    pub fn packages(&self) -> &HashMap<PackageFullName, NodeID> {
-        &self.packages
+    pub fn packages(&self) -> impl Iterator<Item = &PackageFullName> {
+        self.node_names.keys().filter_map(NodeName::package_name)
+    }
+
+    /// Returns a reference over the internal [`HashMap`]<[`NodeName`], [`NodeID`]>.
+    #[inline]
+    pub fn node_names(&self) -> &HashMap<NodeName, NodeID> {
+        &self.node_names
     }
 
     /// Returns the [`NodeID`] of a given package
     /// If no such ID is found, a [`DependencyGraphError`] is returned
     pub fn get_package_node_id(&self, name: &PackageFullName) -> Result<NodeID, Error> {
-        self.packages.get(&name).cloned().ok_or_else(|| {
+        let node_name = NodeName::Package(name.clone());
+
+        self.node_names.get(&node_name).cloned().ok_or_else(|| {
             format_err!("{}", name)
                 .context(DependencyGraphErrorKind::UnknownPackage)
                 .into()
@@ -292,10 +298,10 @@ impl<'lock_file> DependencyGraph<'lock_file> {
 
     /// Creates a new node with the given package
     pub fn add_package_node(&mut self, package: QueryResult) -> Result<NodeID, Error> {
-        let name = package.full_name();
+        let node_name = NodeName::Package(package.full_name());
 
-        if self.packages.contains_key(&name) {
-            Err(format_err!("{}", name)
+        if self.node_names.contains_key(&node_name) {
+            Err(format_err!("{}", &node_name)
                 .context(DependencyGraphErrorKind::PackageAlreadyExists)
                 .into())
         } else {
@@ -314,23 +320,25 @@ impl<'lock_file> DependencyGraph<'lock_file> {
                 self.node_add_requirement(node_id, kind, RequirementManagementMethod::Auto);
             }
 
-            self.packages.insert(package.full_name(), node_id);
+            self.node_names.insert(node_name, node_id);
             Ok(node_id)
         }
     }
 
     /// Creates a new node, which is a group of the given name
     pub fn add_group_node(&mut self, name: GroupName) -> Result<NodeID, Error> {
-        if self.groups.contains_key(&name) {
-            Err(format_err!("{}", name.as_str().to_string())
+        let node_name = NodeName::Group(name.clone());
+
+        if self.node_names.contains_key(&node_name) {
+            Err(format_err!("{}", &name.as_str().to_string())
                 .context(DependencyGraphErrorKind::GroupAlreadyExists)
                 .into())
         } else {
             let group_id = self.next_node_id();
-            let group = Node::from(NodeKind::Group { name: name.clone() });
+            let group = Node::from(NodeKind::Group { name });
 
-            // Insert the group in the group table
-            self.groups.insert(name, group_id);
+            // Insert the group in the node names table
+            self.node_names.insert(node_name, group_id);
 
             // Insert the group node in the nodes table
             self.nodes.insert(group_id, group);
@@ -400,10 +408,11 @@ impl<'lock_file> DependencyGraph<'lock_file> {
         // Remove the node from the node table and the groups/packages tables
         match self.nodes[&node_id].kind() {
             NodeKind::Group { name } => {
-                self.groups.remove(&name);
+                self.node_names.remove(&NodeName::Group(name.clone()));
             }
             NodeKind::Package { id } => {
-                self.packages.remove(&id.clone().into());
+                self.node_names
+                    .remove(&NodeName::Package(id.clone().into()));
             }
         }
 
@@ -450,9 +459,10 @@ impl<'lock_file> DependencyGraph<'lock_file> {
     ) -> Result<NodeID, Error> {
         // The list of requirements the package must fulfill.
         let mut requirements = Vec::new();
+        let node_name = NodeName::Package(requirement.full_name().clone());
 
         // Test whether a package with the same PackageFullName is already within the dependency graph
-        if let Some(package_node_id) = self.packages.get(requirement.full_name()) {
+        if let Some(package_node_id) = self.node_names.get(&node_name) {
             let node = &self.nodes[package_node_id];
 
             // Since a version of the package is already in the graph, test whether it matches the new requirement
@@ -510,7 +520,7 @@ impl<'lock_file> DependencyGraph<'lock_file> {
         })?;
 
         // If the new version is different from the old one, remove the old one
-        if let Some(node_id) = self.packages.get(requirement.full_name()).cloned() {
+        if let Some(node_id) = self.node_names.get(&node_name).cloned() {
             let node = self.nodes.get_mut(&node_id).expect("invalid node id");
             let id = package.id();
 
@@ -551,7 +561,7 @@ impl<'lock_file> DependencyGraph<'lock_file> {
                     self.solve_package_requirement(config, package_req.clone())?
                 }
                 RequirementKind::Group { name } => {
-                    let group_id = self.groups.get(&name).ok_or_else(|| {
+                    let group_id = self.node_names.get(&name.clone().into()).ok_or_else(|| {
                         format_err!("{}", name.as_str())
                             .context(DependencyGraphErrorKind::GroupNotFound)
                     })?;

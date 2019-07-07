@@ -13,8 +13,8 @@ pub fn group_add(config: &Config, parent_group: &str, matches: &ArgMatches) -> R
     let mut graph = config.scratch_dependency_graph(&lock_file_ownership)?;
 
     let parent_group_id = *graph
-        .groups()
-        .get(&parent_group)
+        .node_names()
+        .get(&parent_group.clone().into())
         .ok_or_else(|| format_err!("Unknown parent group {}", *parent_group))?;
 
     for group in matches.values_of_lossy("GROUP").unwrap() {
@@ -65,8 +65,8 @@ pub fn group_list(config: &Config) -> Result<(), Error> {
 
     let graph = config.scratch_dependency_graph(&lock_file_ownership)?;
 
-    for group_name in graph.groups().keys() {
-        println!("{}", **group_name);
+    for group_name in graph.groups() {
+        println!("{}", group_name.as_str());
     }
 
     Ok(())

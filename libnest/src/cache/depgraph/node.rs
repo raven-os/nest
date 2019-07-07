@@ -6,7 +6,7 @@ use lazy_static::lazy_static;
 use regex::Regex;
 use serde_derive::{Deserialize, Serialize};
 
-use crate::package::PackageID;
+use crate::package::{PackageFullName, PackageID};
 
 use super::super::errors::{GroupNameError, GroupNameErrorKind};
 use super::RequirementID;
@@ -144,5 +144,117 @@ impl std::fmt::Display for Node {
             NodeKind::Group { name, .. } => write!(f, "{}", name.as_str()),
             NodeKind::Package { id, .. } => write!(f, "{}", id),
         }
+    }
+}
+
+/// The name of a node (that is, the [`GroupName`] or the [`PackageFullName`] for this node)
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub enum NodeName {
+    /// The node name describes a group
+    Group(GroupName),
+
+    /// The node name describes a package
+    Package(PackageFullName),
+}
+
+impl NodeName {
+    /// Retrieves the [`GroupName`] if the node name describes a group
+    pub fn group_name(&self) -> Option<&GroupName> {
+        if let NodeName::Group(group_name) = self {
+            Some(group_name)
+        } else {
+            None
+        }
+    }
+
+    /// Retrieves the [`PackageFullName`] if the node name describes a package
+    pub fn package_name(&self) -> Option<&PackageFullName> {
+        if let NodeName::Package(full_name) = self {
+            Some(full_name)
+        } else {
+            None
+        }
+    }
+}
+
+impl std::fmt::Display for NodeName {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        match self {
+            NodeName::Group(group_name) => f.write_str(group_name.as_str()),
+            NodeName::Package(full_name) => f.write_fmt(format_args!("{}", full_name)),
+        }
+    }
+}
+
+impl From<NodeKind> for NodeName {
+    fn from(kind: NodeKind) -> Self {
+        match kind {
+            NodeKind::Group { name } => NodeName::Group(name),
+            NodeKind::Package { id } => NodeName::Package(id.into()),
+        }
+    }
+}
+
+impl From<GroupName> for NodeName {
+    fn from(group_name: GroupName) -> Self {
+        NodeName::Group(group_name)
+    }
+}
+
+impl From<PackageFullName> for NodeName {
+    fn from(full_name: PackageFullName) -> Self {
+        NodeName::Package(full_name)
+    }
+}
+
+impl serde::Serialize for NodeName {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::ser::Serializer,
+    {
+        match self {
+            NodeName::Group(name) => serializer.serialize_str(name),
+            NodeName::Package(full_name) => full_name.serialize(serializer),
+        }
+    }
+}
+
+struct NodeNameDeserializeVisitor;
+
+impl<'de> serde::de::Visitor<'de> for NodeNameDeserializeVisitor {
+    type Value = NodeName;
+
+    #[inline]
+    fn expecting(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+        fmt.write_str("a node name")
+    }
+
+    #[inline]
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        match value.chars().next() {
+            Some('@') => GroupName::from_str(value).map(NodeName::Group).map_err(|_| {
+                E::custom(
+                    "the group's name doesn't follow the convention `@name`",
+                )
+            }),
+            _ => PackageFullName::from_str(value).map(NodeName::Package).map_err(|_| {
+                E::custom(
+                    "the package's full name doesn't follow the convention `repository::category/name`",
+                )
+            }),
+        }
+    }
+}
+
+impl<'a> serde::Deserialize<'a> for NodeName {
+    #[inline]
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'a>,
+    {
+        deserializer.deserialize_str(NodeNameDeserializeVisitor)
     }
 }
