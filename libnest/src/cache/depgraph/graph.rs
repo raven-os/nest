@@ -330,7 +330,7 @@ impl<'lock_file> DependencyGraph<'lock_file> {
         let node_name = NodeName::Group(name.clone());
 
         if self.node_names.contains_key(&node_name) {
-            Err(format_err!("{}", &name.as_str().to_string())
+            Err(format_err!("{}", &name.as_str())
                 .context(DependencyGraphErrorKind::GroupAlreadyExists)
                 .into())
         } else {

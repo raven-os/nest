@@ -152,7 +152,7 @@ impl DependencyGraphDiff {
                     }
                 }
             }
-            _ => unimplemented!(),
+            _ => unreachable!(),
         }
     }
 
