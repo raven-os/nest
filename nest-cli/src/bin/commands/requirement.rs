@@ -23,8 +23,8 @@ pub fn requirement_add(
     };
 
     let group_id = *scratch_graph
-        .groups()
-        .get(&group)
+        .node_names()
+        .get(&group.clone().into())
         .ok_or_else(|| format_err!("Unknown group"))?;
     let packages_cache = config.available_packages_cache(&lock_file_ownership);
 
@@ -84,8 +84,8 @@ pub fn requirement_remove(
     };
 
     let group_id = *graph
-        .groups()
-        .get(&group)
+        .node_names()
+        .get(&group.clone().into())
         .ok_or_else(|| format_err!("Unknown group"))?;
 
     {
