@@ -6,6 +6,7 @@ pub mod operations;
 mod pull;
 mod requirement;
 mod uninstall;
+mod upgrade;
 
 pub use self::group::{group_add, group_list, group_remove};
 pub use self::install::install;
@@ -14,12 +15,12 @@ pub use self::merge::merge;
 pub use self::pull::pull;
 pub use self::requirement::{requirement_add, requirement_remove};
 pub use self::uninstall::uninstall;
+pub use self::upgrade::upgrade;
 
 use colored::*;
 use failure::{Error, ResultExt};
 use std::io::{self, Write};
 
-use libnest::config::Config;
 use libnest::transaction::Transaction;
 
 pub fn print_transactions(transactions: &[Transaction]) {
@@ -44,7 +45,9 @@ pub fn print_transactions(transactions: &[Transaction]) {
                     format!("{:>8.8} {}", "install".green(), i.target()).bold()
                 }
                 Transaction::Remove(r) => format!("{:>8.8} {}", "remove".red(), r.target()).bold(),
-                Transaction::Upgrade(_) => format!("{:>8.8}", "upgrade".yellow()).bold(),
+                Transaction::Upgrade(u) => {
+                    format!("{:>8.8} {}", "upgrade".yellow(), u.new_target()).bold()
+                }
             }
         );
     }
@@ -71,8 +74,4 @@ pub fn ask_confirmation(question: &str, default: bool) -> Result<bool, Error> {
             _ => print!("Please type \"yes\" or \"no\". [{}] ", hint),
         }
     }
-}
-
-pub fn upgrade(_config: &Config) -> Result<(), Error> {
-    Ok(())
 }

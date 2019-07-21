@@ -86,7 +86,7 @@ fn main() {
         match matches.subcommand() {
             ("pull", _) => commands::pull(&config),
             ("install", Some(matches)) => commands::install(&config, &matches),
-            ("upgrade", _) => commands::upgrade(&config),
+            ("upgrade", Some(matches)) => commands::upgrade(&config, &matches),
             ("uninstall", Some(matches)) => commands::uninstall(&config, &matches),
             ("list", Some(matches)) => commands::list(&config, &matches),
             _ => unimplemented!(),

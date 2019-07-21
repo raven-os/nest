@@ -3,9 +3,11 @@ use libnest::cache::depgraph::DependencyGraphDiff;
 use libnest::config::Config;
 use libnest::transaction::Transaction;
 
-use super::operations::install::{download_packages, install_package};
+use super::operations::download::download_packages;
+use super::operations::install::install_package;
 use super::operations::uninstall::uninstall_package;
 use super::{ask_confirmation, print_transactions};
+use crate::commands::operations::upgrade::upgrade_package;
 
 pub fn merge(config: &Config) -> Result<(), Error> {
     let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
@@ -45,7 +47,8 @@ pub fn merge(config: &Config) -> Result<(), Error> {
     download_packages(
         config,
         transactions.iter().filter_map(|trans| match trans {
-            Transaction::Install(install) => Some(install),
+            Transaction::Install(install) => Some(install.download()),
+            Transaction::Upgrade(upgrade) => Some(upgrade.associated_download()),
             _ => None,
         }),
     )?;
@@ -56,6 +59,9 @@ pub fn merge(config: &Config) -> Result<(), Error> {
                 install_package(config, install, &lock_file_ownership)?
             }
             Transaction::Remove(remove) => uninstall_package(config, remove, &lock_file_ownership)?,
+            Transaction::Upgrade(upgrade) => {
+                upgrade_package(config, upgrade, &lock_file_ownership)?
+            }
             _ => unimplemented!(),
         };
     }
