@@ -47,7 +47,7 @@ pub fn merge(config: &Config) -> Result<(), Error> {
     download_packages(
         config,
         transactions.iter().filter_map(|trans| match trans {
-            Transaction::Install(install) => Some(install.download()),
+            Transaction::Install(install) => Some(install.associated_download()),
             Transaction::Upgrade(upgrade) => Some(upgrade.associated_download()),
             _ => None,
         }),

@@ -25,7 +25,7 @@ impl InstallTransaction {
     }
 
     /// Create a download associated to this transaction
-    pub fn download(&self) -> PackageDownload {
+    pub fn associated_download(&self) -> PackageDownload {
         PackageDownload::from(self.target().clone())
     }
 
