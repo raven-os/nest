@@ -439,7 +439,7 @@ impl PackageName {
     }
 }
 
-strong_name_impl!(PackageName, r"^[a-z0-9\-]+$", PackageNameParseError);
+strong_name_impl!(PackageName, r"^[a-z0-9\-\+]+$", PackageNameParseError);
 
 struct PackageNameVisitor;
 
