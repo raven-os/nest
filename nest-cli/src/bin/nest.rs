@@ -22,6 +22,14 @@ fn main() {
                 .help("Set the level of verbosity"),
         )
         .arg(
+            Arg::with_name("config")
+                .short("c")
+                .long("config")
+                .help("Use the given path as a configuration file")
+                .takes_value(true)
+                .default_value("/etc/nest/config.toml")
+        )
+        .arg(
             Arg::with_name("chroot")
                 .long("chroot")
                 .help("Use the current configuration but operate on the given folder, as if it was the root folder")
@@ -69,7 +77,7 @@ fn main() {
         .get_matches();
 
     let result: Result<(), failure::Error> = try {
-        let mut config = config::Config::load()?;
+        let mut config = config::Config::load_from(matches.value_of("config").unwrap())?;
 
         if let Some(chroot_path) = matches.value_of("chroot") {
             *config.paths_mut() = config.paths().chroot(chroot_path);
