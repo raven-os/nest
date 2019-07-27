@@ -1,6 +1,6 @@
 use crate::config::Config;
 use crate::lock_file::LockFileOwnership;
-use crate::package::{NPFExplorer, PackageID};
+use crate::package::PackageID;
 
 use super::download::PackageDownload;
 use super::extract::extract_package;
@@ -35,19 +35,10 @@ impl InstallTransaction {
         config: &Config,
         lock_ownership: &LockFileOwnership,
     ) -> Result<(), InstallError> {
-        let npf_path = config
-            .paths()
-            .downloaded()
-            .join(self.target().repository().as_str())
-            .join(self.target().category().as_str())
-            .join(self.target().name().as_str())
-            .join(format!(
-                "{}-{}.nest",
-                self.target().name(),
-                self.target().version()
-            ));
-
-        let npf_explorer = NPFExplorer::from(&npf_path).map_err(|_| InvalidPackageFile)?;
+        let downloaded_packages = config.downloaded_packages_cache(lock_ownership);
+        let npf_explorer = downloaded_packages
+            .explore_package(self.target())
+            .map_err(|_| InvalidPackageFile)?;
 
         extract_package(config, lock_ownership, npf_explorer, self.target())
     }

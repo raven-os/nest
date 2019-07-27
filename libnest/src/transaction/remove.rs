@@ -33,19 +33,10 @@ impl RemoveTransaction {
         config: &Config,
         lock_ownership: &LockFileOwnership,
     ) -> Result<(), RemoveError> {
-        let npf_path = config
-            .paths()
-            .downloaded()
-            .join(self.target().repository().as_str())
-            .join(self.target().category().as_str())
-            .join(self.target().name().as_str())
-            .join(format!(
-                "{}-{}.nest",
-                self.target().name(),
-                self.target().version()
-            ));
-
-        let npf_explorer = NPFExplorer::from(&npf_path).map_err(|_| InvalidCachedPackageFile)?;
+        let downloaded_packages = config.downloaded_packages_cache(lock_ownership);
+        let npf_explorer = downloaded_packages
+            .explore_package(self.target())
+            .map_err(|_| InvalidCachedPackageFile)?;
 
         remove_package(config, lock_ownership, npf_explorer, self.target())
     }
