@@ -2,6 +2,7 @@
 
 pub mod available;
 pub mod depgraph;
+pub mod downloaded;
 mod errors;
 pub mod installed;
 

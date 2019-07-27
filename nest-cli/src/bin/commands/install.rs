@@ -79,11 +79,16 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
     }
 
     println!("Downloading packages...");
+    let downloaded = config.downloaded_packages_cache(&lock_file_ownership);
     download_packages(
         config,
         transactions.iter().filter_map(|trans| match trans {
-            Transaction::Install(install) => Some(install.associated_download()),
-            Transaction::Upgrade(upgrade) => Some(upgrade.associated_download()),
+            Transaction::Install(install) if !downloaded.has_package(install.target()) => {
+                Some(install.associated_download())
+            }
+            Transaction::Upgrade(upgrade) if !downloaded.has_package(upgrade.new_target()) => {
+                Some(upgrade.associated_download())
+            }
             _ => None,
         }),
     )?;

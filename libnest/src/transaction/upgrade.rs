@@ -64,19 +64,10 @@ impl UpgradeTransaction {
         config: &Config,
         lock_ownership: &LockFileOwnership,
     ) -> Result<(), InstallError> {
-        let npf_path = config
-            .paths()
-            .downloaded()
-            .join(self.new_target().repository().as_str())
-            .join(self.new_target().category().as_str())
-            .join(self.new_target().name().as_str())
-            .join(format!(
-                "{}-{}.nest",
-                self.new_target().name(),
-                self.new_target().version()
-            ));
-
-        let npf_explorer = NPFExplorer::from(&npf_path).map_err(|_| InvalidPackageFile)?;
+        let downloaded_packages = config.downloaded_packages_cache(lock_ownership);
+        let npf_explorer = downloaded_packages
+            .explore_package(self.new_target())
+            .map_err(|_| InvalidPackageFile)?;
 
         extract_package(config, lock_ownership, npf_explorer, self.new_target())
     }
