@@ -6,8 +6,8 @@ use libnest::config::Config;
 use libnest::package::{HardPackageRequirement, PackageRequirement};
 use libnest::transaction::Transaction;
 
-use super::operations::install::{download_packages, install_package};
-use super::{ask_confirmation, print_transactions};
+use super::operations::download::download_packages;
+use super::{ask_confirmation, print_transactions, process_transactions};
 
 pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
     let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
@@ -82,19 +82,13 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
     download_packages(
         config,
         transactions.iter().filter_map(|trans| match trans {
-            Transaction::Install(install) => Some(install),
+            Transaction::Install(install) => Some(install.associated_download()),
+            Transaction::Upgrade(upgrade) => Some(upgrade.associated_download()),
             _ => None,
         }),
     )?;
 
-    for transaction in transactions.iter() {
-        match transaction {
-            Transaction::Install(install) => {
-                install_package(config, install, &lock_file_ownership)?
-            }
-            _ => unimplemented!(),
-        };
-    }
+    process_transactions(config, &transactions, &lock_file_ownership)?;
 
     graph.save_to_cache(config.paths().depgraph(), &lock_file_ownership)?;
 

@@ -1,4 +1,5 @@
-use failure::{format_err, Error, ResultExt};
+use clap::ArgMatches;
+use failure::Error;
 use libnest::cache::depgraph::DependencyGraphDiff;
 use libnest::config::Config;
 use libnest::transaction::Transaction;
@@ -6,19 +7,17 @@ use libnest::transaction::Transaction;
 use super::operations::download::download_packages;
 use super::{ask_confirmation, print_transactions, process_transactions};
 
-pub fn merge(config: &Config) -> Result<(), Error> {
+pub fn upgrade(config: &Config, _: &ArgMatches) -> Result<(), Error> {
     let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
+    let mut graph = config.dependency_graph(&lock_file_ownership)?;
+    let original_graph = graph.clone();
 
-    let graph = config
-        .scratch_dependency_graph(&lock_file_ownership)
-        .with_context(|_| format_err!("no scratch dependency graph found"))?;
-    let original_graph = config.dependency_graph(&lock_file_ownership)?;
+    graph.update(config)?;
 
     let transactions = DependencyGraphDiff::new().perform(&original_graph, &graph);
 
     if transactions.is_empty() {
-        println!("No transactions are required, quitting.");
-        graph.save_to_cache(config.paths().depgraph(), &lock_file_ownership)?;
+        println!("All the given requirements are already satisfied, quitting.");
         return Ok(());
     }
 

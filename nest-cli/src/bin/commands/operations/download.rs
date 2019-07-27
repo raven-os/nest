@@ -1,8 +1,12 @@
 use std::io::{Seek, SeekFrom, Write};
+use std::iter::Iterator;
+use std::sync::mpsc::channel;
 
 use curl::easy::Easy;
-use failure::{format_err, Error};
-use libnest::config::MirrorUrl;
+use failure::{format_err, Error, ResultExt};
+use libnest::config::{Config, MirrorUrl};
+use libnest::transaction::PackageDownload;
+use threadpool::ThreadPool;
 
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct Download<'a> {
@@ -50,4 +54,67 @@ impl<'a> Download<'a> {
             Ok(())
         }
     }
+}
+
+pub fn download_package(config: &Config, package_download: &PackageDownload) -> Result<(), Error> {
+    // Find the repository hosting the package
+    let repo = config
+        .repositories()
+        .into_iter()
+        .find(|repository| repository.name() == **package_download.target().repository())
+        .ok_or_else(|| {
+            format_err!(
+                "unable to find repository '{}'",
+                package_download.target().repository()
+            )
+        })?;
+
+    // Build the target route
+    let target_url = format!(
+        "api/p/{}/{}/{}/download",
+        package_download.target().category(),
+        package_download.target().name(),
+        package_download.target().version(),
+    );
+
+    // Download the package archive
+    let download = Download::from(&target_url);
+    download
+        .perform_with_mirrors(
+            &mut package_download.create_download_file(config)?,
+            &repo.config().mirrors(),
+        )
+        .context(format_err!(
+            "unable to download package from repository '{}'",
+            repo.name()
+        ))?;
+
+    Ok(())
+}
+
+pub fn download_packages(
+    config: &Config,
+    downloads: impl Iterator<Item = PackageDownload>,
+) -> Result<(), Error> {
+    let pool = ThreadPool::new(num_cpus::get());
+    let (sender, receiver) = channel();
+    let mut n = 0;
+
+    for download in downloads {
+        let sender = sender.clone();
+        let config = config.clone();
+        pool.execute(move || {
+            let result = download_package(&config, &download);
+            sender
+                .send(result)
+                .expect("cannot communicate with main thread");
+        });
+        n += 1;
+    }
+    receiver
+        .into_iter()
+        .take(n)
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(())
 }

@@ -8,13 +8,16 @@
 //! - Upgrade
 //!
 
+mod download;
 mod errors;
+mod extract;
 mod install;
 mod instructions;
 mod pull;
 mod remove;
 mod upgrade;
 
+pub use self::download::PackageDownload;
 pub use self::errors::*;
 pub use self::install::InstallTransaction;
 pub use self::instructions::{ExecutionOutput, InstructionsExecutor};

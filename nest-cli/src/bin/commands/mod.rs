@@ -6,20 +6,26 @@ pub mod operations;
 mod pull;
 mod requirement;
 mod uninstall;
+mod upgrade;
 
 pub use self::group::{group_add, group_list, group_remove};
 pub use self::install::install;
 pub use self::list::list;
 pub use self::merge::merge;
+use self::operations::install::install_package;
+use self::operations::uninstall::uninstall_package;
+use self::operations::upgrade::upgrade_package;
 pub use self::pull::pull;
 pub use self::requirement::{requirement_add, requirement_remove};
 pub use self::uninstall::uninstall;
+pub use self::upgrade::upgrade;
 
 use colored::*;
 use failure::{Error, ResultExt};
 use std::io::{self, Write};
 
 use libnest::config::Config;
+use libnest::lock_file::LockFileOwnership;
 use libnest::transaction::Transaction;
 
 pub fn print_transactions(transactions: &[Transaction]) {
@@ -44,7 +50,9 @@ pub fn print_transactions(transactions: &[Transaction]) {
                     format!("{:>8.8} {}", "install".green(), i.target()).bold()
                 }
                 Transaction::Remove(r) => format!("{:>8.8} {}", "remove".red(), r.target()).bold(),
-                Transaction::Upgrade(_) => format!("{:>8.8}", "upgrade".yellow()).bold(),
+                Transaction::Upgrade(u) => {
+                    format!("{:>8.8} {}", "upgrade".yellow(), u.new_target()).bold()
+                }
             }
         );
     }
@@ -73,6 +81,22 @@ pub fn ask_confirmation(question: &str, default: bool) -> Result<bool, Error> {
     }
 }
 
-pub fn upgrade(_config: &Config) -> Result<(), Error> {
+pub fn process_transactions(
+    config: &Config,
+    transactions: &[Transaction],
+    lock_file_ownership: &LockFileOwnership,
+) -> Result<(), Error> {
+    for transaction in transactions.iter() {
+        match transaction {
+            Transaction::Install(install) => {
+                install_package(config, install, &lock_file_ownership)?
+            }
+            Transaction::Upgrade(upgrade) => {
+                upgrade_package(config, upgrade, &lock_file_ownership)?
+            }
+            Transaction::Remove(remove) => uninstall_package(config, remove, &lock_file_ownership)?,
+            _ => unimplemented!(),
+        };
+    }
     Ok(())
 }
