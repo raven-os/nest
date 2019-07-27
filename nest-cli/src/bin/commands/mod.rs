@@ -12,6 +12,9 @@ pub use self::group::{group_add, group_list, group_remove};
 pub use self::install::install;
 pub use self::list::list;
 pub use self::merge::merge;
+use self::operations::install::install_package;
+use self::operations::uninstall::uninstall_package;
+use self::operations::upgrade::upgrade_package;
 pub use self::pull::pull;
 pub use self::requirement::{requirement_add, requirement_remove};
 pub use self::uninstall::uninstall;
@@ -21,6 +24,8 @@ use colored::*;
 use failure::{Error, ResultExt};
 use std::io::{self, Write};
 
+use libnest::config::Config;
+use libnest::lock_file::LockFileOwnership;
 use libnest::transaction::Transaction;
 
 pub fn print_transactions(transactions: &[Transaction]) {
@@ -74,4 +79,24 @@ pub fn ask_confirmation(question: &str, default: bool) -> Result<bool, Error> {
             _ => print!("Please type \"yes\" or \"no\". [{}] ", hint),
         }
     }
+}
+
+pub fn process_transactions(
+    config: &Config,
+    transactions: &[Transaction],
+    lock_file_ownership: &LockFileOwnership,
+) -> Result<(), Error> {
+    for transaction in transactions.iter() {
+        match transaction {
+            Transaction::Install(install) => {
+                install_package(config, install, &lock_file_ownership)?
+            }
+            Transaction::Upgrade(upgrade) => {
+                upgrade_package(config, upgrade, &lock_file_ownership)?
+            }
+            Transaction::Remove(remove) => uninstall_package(config, remove, &lock_file_ownership)?,
+            _ => unimplemented!(),
+        };
+    }
+    Ok(())
 }

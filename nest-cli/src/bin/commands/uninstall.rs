@@ -3,10 +3,8 @@ use failure::{format_err, Error};
 use libnest::cache::depgraph::{DependencyGraphDiff, RequirementKind};
 use libnest::config::Config;
 use libnest::package::PackageRequirement;
-use libnest::transaction::Transaction;
 
-use super::operations::uninstall::uninstall_package;
-use super::{ask_confirmation, print_transactions};
+use super::{ask_confirmation, print_transactions, process_transactions};
 
 pub fn uninstall(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
     let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
@@ -49,7 +47,7 @@ pub fn uninstall(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
 
     graph.solve(&config)?;
 
-    let mut transactions = DependencyGraphDiff::new().perform(&original_graph, &graph);
+    let transactions = DependencyGraphDiff::new().perform(&original_graph, &graph);
 
     if transactions.is_empty() {
         println!("No transactions are required, quitting.");
@@ -75,12 +73,7 @@ pub fn uninstall(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
         return Ok(());
     }
 
-    for mut transaction in &mut transactions.iter_mut() {
-        match &mut transaction {
-            Transaction::Remove(remove) => uninstall_package(config, remove, &lock_file_ownership)?,
-            _ => unimplemented!(),
-        };
-    }
+    process_transactions(config, &transactions, &lock_file_ownership)?;
 
     graph.save_to_cache(config.paths().depgraph(), &lock_file_ownership)?;
 

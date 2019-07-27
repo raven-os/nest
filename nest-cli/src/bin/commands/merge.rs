@@ -4,10 +4,7 @@ use libnest::config::Config;
 use libnest::transaction::Transaction;
 
 use super::operations::download::download_packages;
-use super::operations::install::install_package;
-use super::operations::uninstall::uninstall_package;
-use super::{ask_confirmation, print_transactions};
-use crate::commands::operations::upgrade::upgrade_package;
+use super::{ask_confirmation, print_transactions, process_transactions};
 
 pub fn merge(config: &Config) -> Result<(), Error> {
     let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
@@ -53,18 +50,7 @@ pub fn merge(config: &Config) -> Result<(), Error> {
         }),
     )?;
 
-    for transaction in transactions.iter() {
-        match transaction {
-            Transaction::Install(install) => {
-                install_package(config, install, &lock_file_ownership)?
-            }
-            Transaction::Remove(remove) => uninstall_package(config, remove, &lock_file_ownership)?,
-            Transaction::Upgrade(upgrade) => {
-                upgrade_package(config, upgrade, &lock_file_ownership)?
-            }
-            _ => unimplemented!(),
-        };
-    }
+    process_transactions(config, &transactions, &lock_file_ownership)?;
 
     graph.save_to_cache(config.paths().depgraph(), &lock_file_ownership)?;
 
