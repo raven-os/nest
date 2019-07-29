@@ -1,28 +1,44 @@
 #!/usr/bin/env bash
 
 # Common variables shared among all tests
-export NEST="cargo run --bin=nest"
+export CARGO="env cargo"
+export NEST_SERVER="/tmp/nest-server"
+export PYTHONPATH=$(dirname "$0")
 
 # Colors
 export RED="\033[1;31m"
 export GREEN="\033[1;32m"
 export RESET="\033[0m"
 
-declare -i nb_tests=1
+if [ ! -d $NEST_SERVER ]; then
+    echo "Cloning latest nest-server..."
+    git clone https://github.com/raven-os/nest-server $NEST_SERVER
+elif [ ! -e $NEST_SERVER ]; then
+    echo "$NEST_SERVER already exists and is not a directory, aborting."
+    exit 1
+fi
+
+pushd $NEST_SERVER
+$CARGO build
+popd
+
+declare -i nb_tests=0
 declare -i success=0
 declare tests_dir=$(dirname "$0")
 
 # Run all tests
-for ((i=1; i <= $nb_tests; i++)) do
-	$tests_dir/test_$i/run.sh > /dev/null 2> /dev/null
+for test in $tests_dir/test_*; do
+	$test/run.py
 	declare -i out_code=$?
 
 	if [[ $out_code -eq 0 ]]; then
-		printf "[%02i] ${GREEN}OK${RESET}\n" $i
+		printf "[%02i] ${GREEN}OK${RESET}\n" $nb_tests
 		success=$(($success + 1))
 	else
-		printf "[%02i] ${RED}KO${RESET}\n" $i
+		printf "[%02i] ${RED}KO${RESET}\n" $nb_tests
 	fi
+	nb_tests=$(($nb_tests + 1))
+	rm -rf /tmp/chroot/
 done
 
 echo

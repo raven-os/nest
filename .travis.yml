@@ -5,12 +5,13 @@ before_script:
   - rustup component add rustfmt-preview
   - rustup update
   - cargo update
+  - pip3 install -r ./tests/requirements.txt
 
 script:
   - cargo fmt --all -- --check
   - cargo build --all
   - cargo test --all
-  - ./tests/run.sh
+  - sudo --preserve-env=PATH ./tests/run.sh
 
 # Discord notifications
 after_success:
