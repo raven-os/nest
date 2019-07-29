@@ -16,7 +16,8 @@ available_package = Package(
 )
 
 with nest_server(packages=[available_package]), create_config() as config_path:
-    nest = nest(chroot="/tmp/chroot", config=config_path)
+    nest = nest(config=config_path)
     assert nest.install("available-package").returncode == 1
     assert nest.pull().returncode == 0
     assert nest.install("available-package", confirm=False).returncode == 0
+    assert "tests::sys-apps/available-package" not in nest.depgraph().installed_packages()

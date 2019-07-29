@@ -21,7 +21,7 @@ some_package = Package(
 ).add_dependency(some_library, "1.0.0")
 
 with nest_server(packages=[some_library, some_package]), create_config() as config_path:
-    nest = nest(chroot="/tmp/chroot", config=config_path)
+    nest = nest(config=config_path)
     assert nest.pull().returncode == 0
     assert nest.install("some-package", confirm=True).returncode == 0
     assert "tests::sys-apps/some-package" in nest.depgraph().installed_packages()

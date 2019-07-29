@@ -148,7 +148,10 @@ def create_config(entries: Dict[str, Dict[str, Any]] = None):
 
 class _Depgraph:
     def __init__(self, path: str):
-        self.data = json.load(open(path, 'r'))
+        if os.path.exists(path):
+            self.data = json.load(open(path, 'r'))
+        else:
+            self.data = {"node_names": {}}
 
     def installed_packages(self):
         return filter(lambda name: name[0] != '@', self.data["node_names"])
@@ -191,6 +194,7 @@ class _Nest:
 
 
 def nest(config: str = None, chroot: str = None) -> _Nest:
+    chroot = chroot or os.getenv("NEST_CHROOT")
     return _Nest(config, chroot)
 
 
@@ -216,4 +220,5 @@ class _Finest:
 
 
 def finest(config: str = None, chroot: str = None) -> _Finest:
+    chroot = chroot or os.getenv("NEST_CHROOT")
     return _Finest(config, chroot)
