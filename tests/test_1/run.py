@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.7
 
 """
 Launching nest and finest with the --help option should succeed, even with an invalid configuration file

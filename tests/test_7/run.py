@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python3.7
 
 """
 Packages with dependencies should be installable, and their dependencies should be installed with them
