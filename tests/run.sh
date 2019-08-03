@@ -44,7 +44,7 @@ for test in $tests_dir/test_*; do
 	printf "[%02i] ${RED}KO${RESET}\n" $nb_tests
     fi
     nb_tests=$(($nb_tests + 1))
-    rm -rf $NEST_CHROOT
+    sudo rm -rf $NEST_CHROOT
 done
 
 echo

@@ -122,7 +122,7 @@ def nest_server(packages: List[Package] = None):
     _create_packages(packages or [])
     _create_configuration_file()
     nest_server_path = os.getenv("NEST_SERVER")
-    p = subprocess.Popen(["env", "cargo", "run", "-q"], cwd=nest_server_path, stdout=subprocess.DEVNULL)
+    p = subprocess.Popen(["cargo", "run", "-q"], cwd=nest_server_path, stdout=subprocess.DEVNULL)
     sleep(0.5)  # Wait a bit so the server initializes properly
     try:
         yield
@@ -166,7 +166,7 @@ class _Nest:
         self.chroot = chroot
 
     def _run(self, *args: str, input_str: str = None):
-        cmd = ["env", "cargo", "run", "-q", "--bin", "nest", "--"]
+        cmd = ["sudo", f"PATH={os.getenv('PATH')}", "env", "cargo", "run", "-q", "--bin", "nest", "--"]
         if self.config:
             cmd += ("--config", self.config)
         if self.chroot:
@@ -204,7 +204,7 @@ class _Finest:
         self.chroot = chroot
 
     def _run(self, *args: str, input_str: str = None):
-        cmd = ["env", "cargo", "run", "-q", "--bin", "finest", "--"]
+        cmd = ["sudo", f"PATH={os.getenv('PATH')}", "env", "cargo", "run", "-q", "--bin", "finest", "--"]
         if self.config:
             cmd += ("--config", self.config)
         if self.chroot:
