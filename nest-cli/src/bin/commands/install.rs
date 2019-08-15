@@ -3,7 +3,7 @@ use failure::{format_err, Error};
 use libnest::cache::available::AvailablePackagesCacheQueryStrategy;
 use libnest::cache::depgraph::{DependencyGraphDiff, RequirementKind, RequirementManagementMethod};
 use libnest::config::Config;
-use libnest::package::{HardPackageRequirement, PackageRequirement};
+use libnest::package::{HardPackageRequirement, SoftPackageRequirement};
 use libnest::transaction::Transaction;
 
 use super::operations::download::download_packages;
@@ -19,7 +19,7 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
         let packages_cache = config.available_packages_cache(&lock_file_ownership);
 
         for target in &matches.values_of_lossy("PACKAGE").unwrap() {
-            let requirement = PackageRequirement::parse(&target)?;
+            let requirement = SoftPackageRequirement::parse(&target)?;
 
             let matched_packages = packages_cache
                 .query(&requirement)

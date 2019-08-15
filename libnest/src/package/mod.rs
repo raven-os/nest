@@ -82,7 +82,7 @@ pub use identification::{
 pub use manifest::{Kind, Manifest, PackageManifest, VersionData};
 pub use metadata::{License, Maintainer, Metadata, Tag, UpstreamURL};
 pub use npf::{NPFExplorer, NPFFile};
-pub use requirement::{HardPackageRequirement, PackageRequirement};
+pub use requirement::{HardPackageRequirement, PackageRequirement, SoftPackageRequirement};
 
 lazy_static::lazy_static! {
     /// A regular expression to match and parse a package's string representation

@@ -5,7 +5,7 @@ use failure::{format_err, Error};
 use libnest::cache::available::AvailablePackagesCacheQueryStrategy;
 use libnest::cache::depgraph::{GroupName, RequirementKind, RequirementManagementMethod};
 use libnest::config::Config;
-use libnest::package::{HardPackageRequirement, PackageRequirement};
+use libnest::package::{HardPackageRequirement, SoftPackageRequirement};
 
 pub fn requirement_add(
     config: &Config,
@@ -29,7 +29,7 @@ pub fn requirement_add(
     let packages_cache = config.available_packages_cache(&lock_file_ownership);
 
     for target in &matches.values_of_lossy("PACKAGE").unwrap() {
-        let requirement = PackageRequirement::parse(&target)?;
+        let requirement = SoftPackageRequirement::parse(&target)?;
 
         let matched_packages = packages_cache
             .query(&requirement)
@@ -92,7 +92,7 @@ pub fn requirement_remove(
         let packages_cache = config.available_packages_cache(&lock_file_ownership);
 
         for target in &matches.values_of_lossy("PACKAGE").unwrap() {
-            let requirement = PackageRequirement::parse(&target)?;
+            let requirement = SoftPackageRequirement::parse(&target)?;
 
             let matches = packages_cache.query(&requirement).perform()?;
 
