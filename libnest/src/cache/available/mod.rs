@@ -18,7 +18,7 @@ use failure::{Error, ResultExt};
 use serde_json;
 
 use crate::lock_file::LockFileOwnership;
-use crate::package::{PackageManifest, PackageRequirement};
+use crate::package::{PackageManifest, SoftPackageRequirement};
 use crate::repository::Repository;
 
 /// Structure representing the cache of available packages
@@ -87,7 +87,7 @@ impl<'cache_root, 'lock_file> AvailablePackages<'cache_root, 'lock_file> {
     #[inline]
     pub fn query<'pkg_req>(
         &self,
-        requirement: &'pkg_req PackageRequirement,
+        requirement: &'pkg_req SoftPackageRequirement,
     ) -> AvailablePackagesCacheQuery<'cache_root, 'pkg_req> {
         AvailablePackagesCacheQuery::from(&self.cache_root, requirement)
     }

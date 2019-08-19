@@ -92,13 +92,51 @@ pub enum PackageShortNameParseErrorKind {
 
 use_as_error!(PackageShortNameParseError, PackageShortNameParseErrorKind);
 
-/// Type for errors related to the parsing of a [`PackageRequirement`]
+/// Type for errors related to the parsing of a [`SoftPackageRequirement`]
+#[derive(Debug)]
+pub struct SoftPackageRequirementParseError {
+    inner: Context<SoftPackageRequirementParseErrorKind>,
+}
+
+/// Type describing a kind of error related to the parsing of a [`SoftPackageRequirement`]
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Fail)]
+pub enum SoftPackageRequirementParseErrorKind {
+    /// The given string does not follow the format for package requirements
+    #[fail(
+        display = "\"{}\" doesn't follow the `repository::category/name#version` format",
+        _0
+    )]
+    InvalidFormat(String),
+
+    /// The name component of the package requirement has invalid characters
+    #[fail(display = "{}", _0)]
+    InvalidName(#[cause] PackageNameParseError),
+
+    /// The category component of the package requirement has invalid characters
+    #[fail(display = "{}", _0)]
+    InvalidCategory(#[cause] CategoryNameParseError),
+
+    /// The repository component of the package requirement has invalid characters
+    #[fail(display = "{}", _0)]
+    InvalidRepository(#[cause] RepositoryNameParseError),
+
+    /// The version component of the package requirement is not a valid version
+    #[fail(display = "invalid version syntax")]
+    InvalidVersion,
+}
+
+use_as_error!(
+    SoftPackageRequirementParseError,
+    SoftPackageRequirementParseErrorKind
+);
+
+/// Type for errors related to the parsing of a [`SoftPackageRequirement`]
 #[derive(Debug)]
 pub struct PackageRequirementParseError {
     inner: Context<PackageRequirementParseErrorKind>,
 }
 
-/// Type describing a kind of error related to the parsing of a [`PackageRequirement`]
+/// Type describing a kind of error related to the parsing of a [`SoftPackageRequirement`]
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Fail)]
 pub enum PackageRequirementParseErrorKind {
     /// The given string does not follow the format for package requirements

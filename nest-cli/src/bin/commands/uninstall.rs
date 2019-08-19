@@ -2,7 +2,7 @@ use clap::ArgMatches;
 use failure::{format_err, Error};
 use libnest::cache::depgraph::{DependencyGraphDiff, RequirementKind};
 use libnest::config::Config;
-use libnest::package::PackageRequirement;
+use libnest::package::SoftPackageRequirement;
 
 use super::{ask_confirmation, print_transactions, process_transactions};
 
@@ -16,7 +16,7 @@ pub fn uninstall(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
         let packages_cache = config.available_packages_cache(&lock_file_ownership);
 
         for target in &matches.values_of_lossy("PACKAGE").unwrap() {
-            let requirement = PackageRequirement::parse(&target)?;
+            let requirement = SoftPackageRequirement::parse(&target)?;
 
             let matches = packages_cache.query(&requirement).perform()?;
 

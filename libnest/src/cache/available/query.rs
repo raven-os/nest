@@ -4,8 +4,8 @@ use std::path::Path;
 use failure::{Error, ResultExt};
 
 use crate::package::{
-    CategoryName, Manifest, PackageFullName, PackageID, PackageManifest, PackageRequirement,
-    RepositoryName,
+    CategoryName, Manifest, PackageFullName, PackageID, PackageManifest, RepositoryName,
+    SoftPackageRequirement,
 };
 
 /// The result of a query to the packages cache
@@ -76,7 +76,7 @@ pub enum AvailablePackagesCacheQueryStrategy {
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub struct AvailablePackagesCacheQuery<'a, 'b> {
     cache_root: &'a Path,
-    requirement: &'b PackageRequirement,
+    requirement: &'b SoftPackageRequirement,
     strategy: AvailablePackagesCacheQueryStrategy,
 }
 
@@ -84,7 +84,7 @@ impl<'a, 'b> AvailablePackagesCacheQuery<'a, 'b> {
     #[inline]
     pub(crate) fn from(
         cache_root: &'a Path,
-        requirement: &'b PackageRequirement,
+        requirement: &'b SoftPackageRequirement,
     ) -> AvailablePackagesCacheQuery<'a, 'b> {
         AvailablePackagesCacheQuery {
             cache_root,
