@@ -1,6 +1,6 @@
 use serde_derive::{Deserialize, Serialize};
 
-use crate::package::HardPackageRequirement;
+use crate::package::PackageRequirement;
 
 use super::{GroupName, NodeID};
 
@@ -19,8 +19,8 @@ pub enum RequirementKind {
     },
     /// The node requires a package
     Package {
-        /// The [`HardPackageRequirement`] that the package must match.
-        package_req: HardPackageRequirement,
+        /// The [`PackageRequirement`] that the package must match.
+        package_req: PackageRequirement,
     },
 }
 
