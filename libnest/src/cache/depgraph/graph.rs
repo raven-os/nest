@@ -449,7 +449,7 @@ impl<'lock_file> DependencyGraph<'lock_file> {
             .for_each(|node_id| self.remove_node(node_id));
     }
 
-    fn find_node_for_requirement(&self, requirement: &PackageRequirement) -> Option<NodeID> {
+    fn find_package_node_matching_name(&self, requirement: &PackageRequirement) -> Option<NodeID> {
         self.node_names
             .iter()
             .find(|(node_name, _)| {
@@ -470,7 +470,7 @@ impl<'lock_file> DependencyGraph<'lock_file> {
     ) -> Result<NodeID, Error> {
         // The list of requirements the package must fulfill.
         let mut requirements = Vec::new();
-        let node_id_opt = self.find_node_for_requirement(&requirement);
+        let node_id_opt = self.find_package_node_matching_name(&requirement);
 
         // Test whether a package with the same PackageFullName is already within the dependency graph
         if let Some(package_node_id) = node_id_opt {
