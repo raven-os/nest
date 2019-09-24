@@ -11,7 +11,7 @@ use serde_json;
 use crate::cache::available::{AvailablePackagesCacheQueryStrategy, QueryResult};
 use crate::config::Config;
 use crate::lock_file::LockFileOwnership;
-use crate::package::{HardPackageRequirement, PackageFullName};
+use crate::package::{PackageFullName, PackageRequirement};
 
 use super::super::errors::DependencyGraphErrorKind;
 use super::node::{GroupName, Node, NodeID, NodeKind, NodeName, ROOT_ID};
@@ -312,10 +312,7 @@ impl<'lock_file> DependencyGraph<'lock_file> {
 
             for dependency in package.manifest().dependencies() {
                 let kind = RequirementKind::Package {
-                    package_req: HardPackageRequirement::from(
-                        dependency.0.clone(),
-                        dependency.1.clone(),
-                    ),
+                    package_req: dependency.clone(),
                 };
                 self.node_add_requirement(node_id, kind, RequirementManagementMethod::Auto);
             }
@@ -452,24 +449,38 @@ impl<'lock_file> DependencyGraph<'lock_file> {
             .for_each(|node_id| self.remove_node(node_id));
     }
 
+    fn find_package_node_matching_name(&self, requirement: &PackageRequirement) -> Option<NodeID> {
+        self.node_names
+            .iter()
+            .find(|(node_name, _)| {
+                if let Some(full_name) = node_name.package_name() {
+                    requirement.name() == full_name.name()
+                        && requirement.category() == full_name.category()
+                } else {
+                    false
+                }
+            })
+            .map(|(_, id)| *id)
+    }
+
     fn solve_package_requirement(
         &mut self,
         config: &Config,
-        requirement: HardPackageRequirement,
+        requirement: PackageRequirement,
     ) -> Result<NodeID, Error> {
         // The list of requirements the package must fulfill.
         let mut requirements = Vec::new();
-        let node_name = NodeName::Package(requirement.full_name().clone());
+        let node_id_opt = self.find_package_node_matching_name(&requirement);
 
         // Test whether a package with the same PackageFullName is already within the dependency graph
-        if let Some(package_node_id) = self.node_names.get(&node_name) {
-            let node = &self.nodes[package_node_id];
+        if let Some(package_node_id) = node_id_opt {
+            let node = &self.nodes[&package_node_id];
 
             // Since a version of the package is already in the graph, test whether it matches the new requirement
             if let NodeKind::Package { id } = node.kind() {
                 if requirement.matches(id) {
                     // If that's the case, we can stop here, as the requirement is already fulfilled
-                    return Ok(*package_node_id);
+                    return Ok(package_node_id);
                 }
             }
 
@@ -520,7 +531,7 @@ impl<'lock_file> DependencyGraph<'lock_file> {
         })?;
 
         // If the new version is different from the old one, remove the old one
-        if let Some(node_id) = self.node_names.get(&node_name).cloned() {
+        if let Some(node_id) = node_id_opt {
             let node = self.nodes.get_mut(&node_id).expect("invalid node id");
             let id = package.id();
 

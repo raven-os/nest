@@ -239,6 +239,24 @@ impl PackageFullName {
     pub fn name(&self) -> &PackageName {
         &self.name
     }
+
+    /// Moves the [`PackageFullName`] contents into a tuple
+    #[inline]
+    pub fn into_tuple(self) -> (RepositoryName, CategoryName, PackageName) {
+        let PackageFullName {
+            repository,
+            category,
+            name,
+        } = self;
+
+        (repository, category, name)
+    }
+}
+
+impl Into<(RepositoryName, CategoryName, PackageName)> for PackageFullName {
+    fn into(self) -> (RepositoryName, CategoryName, PackageName) {
+        self.into_tuple()
+    }
 }
 
 impl FromStr for PackageFullName {

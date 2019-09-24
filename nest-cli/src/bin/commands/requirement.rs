@@ -56,7 +56,9 @@ pub fn requirement_add(
         println!("Adding requirement {} to group {}...", package_req, *group);
         scratch_graph.node_add_requirement(
             group_id,
-            RequirementKind::Package { package_req },
+            RequirementKind::Package {
+                package_req: package_req.into(),
+            },
             RequirementManagementMethod::Static,
         );
     }
@@ -102,7 +104,7 @@ pub fn requirement_remove(
                 group_node.requirements().iter().any(|req_id| {
                     let req = graph.requirements().get(req_id).unwrap();
                     if let RequirementKind::Package { package_req } = req.kind() {
-                        if package_req.full_name() == &pkg.full_name() {
+                        if package_req.matches_full_name_precisely(&pkg.full_name()) {
                             println!(
                                 "Removing requirement {} from group {}...",
                                 package_req, *group

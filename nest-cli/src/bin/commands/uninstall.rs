@@ -27,7 +27,7 @@ pub fn uninstall(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
                     let req = graph.requirements().get(req_id).unwrap();
                     if let RequirementKind::Package { package_req } = req.kind() {
                         let full_name = pkg.full_name();
-                        if package_req.full_name() == &full_name {
+                        if package_req.matches_full_name_precisely(&full_name) {
                             graph.remove_requirement(*req_id);
                             return true;
                         }

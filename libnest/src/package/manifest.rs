@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::convert::TryFrom;
 use std::fmt::{self, Display, Formatter};
 use std::fs::File;
@@ -9,14 +9,15 @@ use chrono::{DateTime, Utc};
 use failure::{Error, ResultExt};
 use lazy_static::lazy_static;
 use regex::Regex;
-use semver::{Version, VersionReq};
+use semver::Version;
 use serde::de::Visitor;
 use serde_derive::{Deserialize, Serialize};
 
 use super::error::SlotParseError;
 use super::Metadata;
 use super::{
-    CategoryName, PackageFullName, PackageID, PackageName, PackageShortName, RepositoryName,
+    CategoryName, PackageFullName, PackageID, PackageName, PackageRequirement, PackageShortName,
+    RepositoryName,
 };
 
 /// A manifest that aggregates all versions of a package in one, compact structure.
@@ -172,7 +173,7 @@ pub struct Manifest {
     #[serde(default)]
     kind: Kind,
     wrap_date: DateTime<Utc>,
-    dependencies: HashMap<PackageFullName, VersionReq>,
+    dependencies: HashSet<PackageRequirement>,
 }
 
 impl Manifest {
@@ -283,13 +284,13 @@ impl Manifest {
 
     /// Returns a reference over the package's dependencies
     #[inline]
-    pub fn dependencies(&self) -> &HashMap<PackageFullName, VersionReq> {
+    pub fn dependencies(&self) -> &HashSet<PackageRequirement> {
         &self.dependencies
     }
 
     /// Returns a mutable reference over the package's dependencies
     #[inline]
-    pub fn dependencies_mut(&mut self) -> &mut HashMap<PackageFullName, VersionReq> {
+    pub fn dependencies_mut(&mut self) -> &mut HashSet<PackageRequirement> {
         &mut self.dependencies
     }
 
@@ -328,7 +329,7 @@ pub struct VersionData {
     #[serde(default)]
     kind: Kind,
     wrap_date: DateTime<Utc>,
-    dependencies: HashMap<PackageFullName, VersionReq>,
+    dependencies: HashSet<PackageRequirement>,
 }
 
 impl VersionData {
@@ -338,7 +339,7 @@ impl VersionData {
         slot: Slot,
         kind: Kind,
         wrap_date: DateTime<Utc>,
-        dependencies: HashMap<PackageFullName, VersionReq>,
+        dependencies: HashSet<PackageRequirement>,
     ) -> Self {
         Self {
             slot,
@@ -386,13 +387,13 @@ impl VersionData {
 
     /// Returns a reference over the package's dependencies
     #[inline]
-    pub fn dependencies(&self) -> &HashMap<PackageFullName, VersionReq> {
+    pub fn dependencies(&self) -> &HashSet<PackageRequirement> {
         &self.dependencies
     }
 
     /// Returns a mutable reference over the package's dependencies
     #[inline]
-    pub fn dependencies_mut(&mut self) -> &mut HashMap<PackageFullName, VersionReq> {
+    pub fn dependencies_mut(&mut self) -> &mut HashSet<PackageRequirement> {
         &mut self.dependencies
     }
 }

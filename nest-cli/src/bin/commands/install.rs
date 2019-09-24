@@ -44,7 +44,9 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
             );
             graph.node_add_requirement(
                 graph.root_id(),
-                RequirementKind::Package { package_req },
+                RequirementKind::Package {
+                    package_req: package_req.into(),
+                },
                 RequirementManagementMethod::Static,
             );
         }
