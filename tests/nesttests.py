@@ -32,7 +32,7 @@ class Package:
         self.maintainer = maintainer
         self.licenses = licenses or ["gpl_v3"]
         self.upstream_url = upstream_url or "https://google.com"
-        self.dependencies = {}
+        self.dependencies = []
         self.files = {}
 
     def full_name(self) -> str:
@@ -42,7 +42,7 @@ class Package:
         return f"tests::{self.category}/{self.name}#{self.version}"
 
     def add_dependency(self, dependency: 'Package', version_requirement: str) -> 'Package':
-        self.dependencies[dependency.full_name()] = version_requirement
+        self.dependencies.append(f"{dependency.full_name()}#{version_requirement}")
         return self
 
     def add_file(self, path, with_content=None, from_reader=None) -> 'Package':
