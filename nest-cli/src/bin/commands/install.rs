@@ -24,13 +24,8 @@ pub fn install(config: &Config, matches: &ArgMatches) -> Result<(), Error> {
             let matched_packages = packages_cache
                 .query(&requirement)
                 .set_strategy(AvailablePackagesCacheQueryStrategy::BestMatch)
-                .perform()?;
-            if matched_packages.len() > 1 {
-                for pkg in matched_packages {
-                    println!("{}", pkg.manifest().name());
-                }
-                return Err(format_err!("unable to select a best match"));
-            } else if matched_packages.is_empty() {
+                .perform_and_sort_by_preference(config)?;
+            if matched_packages.is_empty() {
                 return Err(format_err!(
                     "no package found for requirement '{}'",
                     &target

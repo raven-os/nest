@@ -36,6 +36,7 @@ use crate::cache::depgraph::DependencyGraph;
 use crate::cache::downloaded::DownloadedPackages;
 use crate::cache::installed::InstalledPackages;
 use crate::lock_file::LockFileOwnership;
+use crate::package::RepositoryName;
 use crate::repository::Repository;
 
 lazy_static! {
@@ -65,6 +66,8 @@ pub struct Config {
     paths: ConfigPaths,
     #[serde(default)]
     repositories: HashMap<String, RepositoryConfig>,
+    #[serde(default)]
+    repositories_order: Vec<RepositoryName>,
 }
 
 impl Config {
@@ -152,6 +155,11 @@ impl Config {
             .iter()
             .map(|(name, config)| Repository::from(name, config))
             .collect()
+    }
+
+    /// Returns the repositories, ordered from the most preferred to the least
+    pub fn repositories_order(&self) -> &Vec<RepositoryName> {
+        &self.repositories_order
     }
 
     pub(crate) fn available_packages_cache_internal<'a, 'b>(

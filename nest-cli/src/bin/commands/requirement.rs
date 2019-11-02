@@ -34,13 +34,8 @@ pub fn requirement_add(
         let matched_packages = packages_cache
             .query(&requirement)
             .set_strategy(AvailablePackagesCacheQueryStrategy::BestMatch)
-            .perform()?;
-        if matched_packages.len() > 1 {
-            for pkg in matched_packages {
-                println!("{}", pkg.full_name());
-            }
-            return Err(format_err!("unable to select a best match"));
-        } else if matched_packages.is_empty() {
+            .perform_and_sort_by_preference(config)?;
+        if matched_packages.is_empty() {
             return Err(format_err!(
                 "no package found for requirement '{}'",
                 &target
