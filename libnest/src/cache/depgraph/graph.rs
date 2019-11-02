@@ -512,7 +512,7 @@ impl<'lock_file> DependencyGraph<'lock_file> {
                 .available_packages_cache_internal(self.phantom)
                 .query(&requirement.clone().any_version().into())
                 .set_strategy(AvailablePackagesCacheQueryStrategy::AllMatchesSorted)
-                .perform();
+                .perform_and_sort_by_preference(config);
 
             for package in available_packages? {
                 let is_valid = requirements

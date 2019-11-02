@@ -1,8 +1,11 @@
+use std::collections::HashMap;
 use std::fs;
+use std::iter::FromIterator;
 use std::path::Path;
 
 use failure::{Error, ResultExt};
 
+use crate::config::Config;
 use crate::package::{
     CategoryName, Manifest, PackageFullName, PackageID, PackageManifest, RepositoryName,
     SoftPackageRequirement,
@@ -210,5 +213,24 @@ impl<'a, 'b> AvailablePackagesCacheQuery<'a, 'b> {
         }
 
         Ok(results)
+    }
+
+    /// Perform the query, and sort the repositories in order of preference
+    pub fn perform_and_sort_by_preference(
+        &self,
+        config: &Config,
+    ) -> Result<Vec<QueryResult>, Error> {
+        let map: HashMap<&RepositoryName, usize> = HashMap::from_iter(
+            config
+                .repositories_order()
+                .iter()
+                .enumerate()
+                .map(|(a, b)| (b, a)),
+        );
+
+        self.perform().map(|mut results| {
+            results.sort_by(|a, b| map[a.repository()].cmp(&map[b.repository()]));
+            results
+        })
     }
 }
