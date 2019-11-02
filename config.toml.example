@@ -17,5 +17,5 @@ mirrors = ["https://stable.raven-os.org"]
 # mirrors = ["https://beta.raven-os.org"]
 
 # Unstable repository (uncomment to enable)
-# [unstable.nightly]
+# [repositories.unstable]
 # mirrors = ["https://unstable.raven-os.org"]
