@@ -28,7 +28,9 @@ impl InstructionsExecutor {
                 return None;
             }
 
-            let mut cmd = Command::new(chrooted_shell);
+            let mut cmd = Command::new("chroot");
+            cmd.arg(root);
+            cmd.arg(shell);
             cmd.arg("-c");
             cmd.arg(":");
 
@@ -62,7 +64,7 @@ impl InstructionsExecutor {
         let shell = Self::find_suitable_shell(root).ok_or(CannotFindShell)?;
         let mut cmd = Command::new("chroot");
 
-        cmd.arg(root.display().to_string());
+        cmd.arg(root);
         cmd.arg(shell);
         cmd.arg("-c");
         cmd.arg(format!("{}\n{}", self.script_source, func_name));
