@@ -17,6 +17,24 @@ pub struct InstructionsExecutor {
     script_source: String,
 }
 
+static INSTRUCTIONS_PRELUDE: &str = "
+before_install() {
+    :
+}
+
+after_install() {
+    :
+}
+
+before_remove() {
+    :
+}
+
+after_remove() {
+    :
+}
+";
+
 impl InstructionsExecutor {
     fn find_suitable_shell(root: &Path) -> Option<std::path::PathBuf> {
         let shells = [Path::new("/bin/sh"), Path::new("/bin/bash")];
@@ -67,7 +85,10 @@ impl InstructionsExecutor {
         cmd.arg(root);
         cmd.arg(shell);
         cmd.arg("-c");
-        cmd.arg(format!("{}\n{}", self.script_source, func_name));
+        cmd.arg(format!(
+            "{}\n{}\n{}",
+            INSTRUCTIONS_PRELUDE, self.script_source, func_name
+        ));
 
         let output = cmd.output().map_err(|_| CannotExecuteShell)?;
 
