@@ -136,7 +136,10 @@ def nest_server(packages: List[Package] = None):
 
 @contextmanager
 def create_config(entries: Dict[str, Dict[str, Any]] = None):
-    entries = entries or {"repositories": {"tests": {"mirrors": ["http://localhost:8000"]}}}
+    entries = entries or {
+        "repositories": {"tests": {"mirrors": ["http://localhost:8000"]}},
+        "repositories_order": ["tests"]
+    }
     path = tempfile.NamedTemporaryFile().name
     with open(path, 'w') as f:
         toml.dump(entries, f)
@@ -153,11 +156,20 @@ class _Depgraph:
         else:
             self.data = {"node_names": {}}
 
+    def nodes(self):
+        return self.data["nodes"]
+
     def installed_packages(self):
         return filter(lambda name: name[0] != '@', self.data["node_names"])
 
     def groups(self):
         return filter(lambda name: name[0] == '@', self.data["node_names"])
+
+    def installed_packages_with_versions(self):
+        return map(
+            lambda kv: self.nodes()[str(kv[1])]["kind"]["Package"]["id"],
+            filter(lambda kv: kv[0][0] != '@', self.data["node_names"].items())
+        )
 
 
 class _Nest:
@@ -166,7 +178,8 @@ class _Nest:
         self.chroot = chroot
 
     def _run(self, *args: str, input_str: str = None):
-        cmd = ["sudo", f"PATH={os.getenv('PATH')}", "env", "cargo", "run", "-q", "--bin", "nest", "--"]
+        cmd = ["sudo", "RUST_BACKTRACE=1", f"PATH={os.getenv('PATH')}", "env", "cargo", "run", "-q", "--bin", "nest",
+               "--"]
         if self.config:
             cmd += ("--config", self.config)
         if self.chroot:
@@ -183,8 +196,11 @@ class _Nest:
     def uninstall(self, *packages: str, confirm=True):
         return self._run("uninstall", *packages, input_str="yes" if confirm else "no")
 
-    def list(self):
-        pass
+    def list(self, with_deps=False):
+        if with_deps:
+            return self._run("list", "--with-deps")
+        else:
+            return self._run("list")
 
     def depgraph(self) -> _Depgraph:
         return _Depgraph(f"{self.chroot}/var/nest/depgraph")
