@@ -71,6 +71,26 @@ pub enum NodeKind {
     },
 }
 
+impl NodeKind {
+    /// Retrieves the [`GroupName`] if the node kind describes a group
+    pub fn group(&self) -> Option<&GroupName> {
+        if let Self::Group { name } = self {
+            Some(name)
+        } else {
+            None
+        }
+    }
+
+    /// Retrieves the [`PackageID`] if the node kind describes a package
+    pub fn package(&self) -> Option<&PackageID> {
+        if let Self::Package { id } = self {
+            Some(id)
+        } else {
+            None
+        }
+    }
+}
+
 /// A node of the dependency graph.
 ///
 /// A node is represented by a [`NodeKind`][1], a set of [`NodeRequirement`][2] that must
