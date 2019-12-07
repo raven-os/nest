@@ -66,6 +66,16 @@ fn main() {
                 )
         )
         .subcommand(
+            SubCommand::with_name("reinstall")
+                .about("Reinstall an already-installed package")
+                .arg(
+                    Arg::with_name("PACKAGE")
+                        .help("Packages to reinstall")
+                        .multiple(true)
+                        .required(true),
+                )
+        )
+        .subcommand(
             SubCommand::with_name("list")
                 .about("List installed packages")
                 .arg(
@@ -88,6 +98,7 @@ fn main() {
             ("install", Some(matches)) => commands::install(&config, &matches),
             ("upgrade", Some(matches)) => commands::upgrade(&config, &matches),
             ("uninstall", Some(matches)) => commands::uninstall(&config, &matches),
+            ("reinstall", Some(matches)) => commands::reinstall(&config, &matches),
             ("list", Some(matches)) => commands::list(&config, &matches),
             _ => unimplemented!(),
         }?;
