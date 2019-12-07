@@ -538,14 +538,12 @@ impl<'lock_file> DependencyGraph<'lock_file> {
             if (*node.kind() != NodeKind::Package { id: id.clone() }) {
                 *node.kind_mut() = NodeKind::Package { id };
                 node.requirements_mut().clear();
-                self.solve_node(config, node_id)?;
                 Ok(node_id)
             } else {
                 Ok(node_id)
             }
         } else {
             let node_id = self.add_package_node(package)?;
-            self.solve_node(config, node_id)?;
             Ok(node_id)
         }
     }
@@ -586,7 +584,12 @@ impl<'lock_file> DependencyGraph<'lock_file> {
         Ok(())
     }
 
-    fn solve_node(&mut self, config: &Config, node_id: NodeID) -> Result<(), Error> {
+    fn solve_node(
+        &mut self,
+        config: &Config,
+        node_id: NodeID,
+        visited_nodes: &mut HashSet<NodeID>,
+    ) -> Result<(), Error> {
         let requirements = self.nodes[&node_id].requirements().clone();
 
         // Solve all requirements
@@ -599,14 +602,17 @@ impl<'lock_file> DependencyGraph<'lock_file> {
             let node_id = self.requirements[&requirement_id]
                 .fulfilling_node_id()
                 .expect("expected a fulfilling node after solving the dependent node");
-            self.solve_node(config, node_id)?;
+            if !visited_nodes.contains(&node_id) {
+                visited_nodes.insert(node_id);
+                self.solve_node(config, node_id, visited_nodes)?;
+            }
         }
         Ok(())
     }
 
     /// Solves the graph (attempts to fulfill every requirement)
     pub fn solve(&mut self, config: &Config) -> Result<(), Error> {
-        self.solve_node(config, ROOT_ID)?;
+        self.solve_node(config, ROOT_ID, &mut HashSet::new())?;
         self.remove_orphan_nodes();
         Ok(())
     }
