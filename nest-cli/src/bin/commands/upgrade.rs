@@ -2,10 +2,10 @@ use clap::ArgMatches;
 use failure::Error;
 use libnest::cache::depgraph::DependencyGraphDiff;
 use libnest::config::Config;
-use libnest::transaction::Transaction;
 
-use super::operations::download::download_packages;
-use super::{ask_confirmation, print_transactions, process_transactions};
+use super::{
+    ask_confirmation, download_required_packages, print_transactions, process_transactions,
+};
 
 pub fn upgrade(config: &Config, _: &ArgMatches) -> Result<(), Error> {
     let lock_file_ownership = config.acquire_lock_file_ownership(true)?;
@@ -39,20 +39,7 @@ pub fn upgrade(config: &Config, _: &ArgMatches) -> Result<(), Error> {
         return Ok(());
     }
 
-    println!("Downloading packages...");
-    let downloaded = config.downloaded_packages_cache(&lock_file_ownership);
-    download_packages(
-        config,
-        transactions.iter().filter_map(|trans| match trans {
-            Transaction::Install(install) if !downloaded.has_package(install.target()) => {
-                Some(install.associated_download())
-            }
-            Transaction::Upgrade(upgrade) if !downloaded.has_package(upgrade.new_target()) => {
-                Some(upgrade.associated_download())
-            }
-            _ => None,
-        }),
-    )?;
+    download_required_packages(config, &transactions, &lock_file_ownership)?;
 
     process_transactions(config, &transactions, &lock_file_ownership)?;
 
