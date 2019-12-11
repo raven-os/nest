@@ -13,6 +13,7 @@ pub use self::group::{group_add, group_list, group_remove};
 pub use self::install::install;
 pub use self::list::list;
 pub use self::merge::merge;
+use self::operations::download::{download_hashes, download_packages};
 use self::operations::install::install_package;
 use self::operations::uninstall::uninstall_package;
 use self::operations::upgrade::upgrade_package;
@@ -46,14 +47,15 @@ pub fn print_transactions(transactions: &[Transaction]) {
             "{}",
             match transaction {
                 Transaction::Pull(p) => {
-                    format!("{:>8.8} {}", "pull".cyan(), p.target_repository().name()).bold()
+                    format!("{:>10.10} {}", "pull".cyan(), p.target_repository().name()).bold()
                 }
                 Transaction::Install(i) => {
-                    format!("{:>8.8} {}", "install".green(), i.target()).bold()
+                    format!("{:>10.10} {}", "install".green(), i.target()).bold()
                 }
-                Transaction::Remove(r) => format!("{:>8.8} {}", "remove".red(), r.target()).bold(),
+                Transaction::Remove(r) =>
+                    format!("{:>10.10} {}", "remove".red(), r.target()).bold(),
                 Transaction::Upgrade(u) => {
-                    format!("{:>8.8} {}", "upgrade".yellow(), u.new_target()).bold()
+                    format!("{:>10.10} {}", "upgrade".yellow(), u.new_target()).bold()
                 }
             }
         );
@@ -101,4 +103,76 @@ pub fn process_transactions(
         };
     }
     Ok(())
+}
+
+pub fn download_required_packages(
+    config: &Config,
+    transactions: &[Transaction],
+    lock_file_ownership: &LockFileOwnership,
+) -> Result<(), Error> {
+    println!("Checking for packages to download...");
+
+    let downloaded_cache = config.downloaded_packages_cache(lock_file_ownership);
+
+    let downloads = transactions.iter().filter_map(|trans| match trans {
+        Transaction::Install(install) => Some(install.associated_download()),
+        Transaction::Upgrade(upgrade) => Some(upgrade.associated_download()),
+        _ => None,
+    });
+
+    // List all the packages that are not present in the download cache, and thus must be downloaded
+    let never_downloaded = downloads
+        .clone()
+        .filter(|download| !downloaded_cache.has_package(download.target()));
+
+    // List the packages that are already in the cache
+    let already_downloaded =
+        downloads.filter(|download| downloaded_cache.has_package(download.target()));
+
+    // Retrieve (download, server-issued hash) pairs for packages that are in the cache
+    let downloads_with_hashes = download_hashes(config, already_downloaded)?;
+
+    // Check correspondence of each served-issued hash with the local hash
+    let downloads_with_validities = downloads_with_hashes
+        .map(|(download, hash)| {
+            downloaded_cache
+                .has_package_matching_hash(download.target(), &hash)
+                .map(|valid| (download, valid))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+
+    // Keep only the packages that are in the cache but whose hashes do not match the server's
+    let downloaded_with_stale_hashes =
+        downloads_with_validities
+            .into_iter()
+            .filter_map(
+                |(download, valid)| {
+                    if !valid {
+                        Some(download)
+                    } else {
+                        None
+                    }
+                },
+            );
+
+    // Get a full list of the packages that need to be downloaded
+    let to_download = never_downloaded.chain(downloaded_with_stale_hashes);
+
+    let mut downloads_to_print = to_download.clone().peekable();
+    if downloads_to_print.peek().is_some() {
+        println!();
+        for download in downloads_to_print {
+            println!(
+                "{}",
+                format!("{:>10.10} {}", "download".cyan(), download.target()).bold()
+            );
+        }
+        println!();
+
+        println!("Downloading packages...");
+        download_packages(config, to_download)
+    } else {
+        println!("No packages need to be downloaded.");
+        Ok(())
+    }
 }
