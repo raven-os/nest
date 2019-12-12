@@ -18,6 +18,10 @@ pub enum ConfigErrorKind {
     /// The data in the configuration file could not be parsed
     #[fail(display = "unable to parse the configuration file")]
     ConfigParseError,
+
+    /// The data in the configuration file is invalid
+    #[fail(display = "invalid configuration file")]
+    InvalidConfigFile,
 }
 
 use_as_error!(ConfigError, ConfigErrorKind);
