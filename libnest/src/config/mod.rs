@@ -25,6 +25,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use std::marker::PhantomData;
+use std::ops::Deref;
 use std::path::Path;
 
 use lazy_static::lazy_static;
@@ -119,9 +120,19 @@ impl Config {
             .context(path.display().to_string())
             .context(ConfigErrorKind::ConfigLoadError)?;
 
-        Ok(toml::from_str(&s)
+        let config: Config = toml::from_str(&s)
             .context(path.display().to_string())
-            .context(ConfigErrorKind::ConfigParseError)?)
+            .context(ConfigErrorKind::ConfigParseError)?;
+
+        if !config
+            .repositories_order()
+            .iter()
+            .all(|x| config.repositories_config().contains_key(x.deref()))
+        {
+            Err(ConfigErrorKind::InvalidConfigFile.into())
+        } else {
+            Ok(config)
+        }
     }
 
     /// Returns a reference to an intermediate structure holding all important paths that are used by `libnest`.
